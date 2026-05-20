@@ -22,6 +22,8 @@ const reportSchema = z.object({
 interface ReportFormProps {
   lat: number;
   lng: number;
+  submitting?: boolean;
+  serverError?: string | null;
   onSubmit: (input: PointInput) => void;
   onCancel: () => void;
 }
@@ -29,19 +31,22 @@ interface ReportFormProps {
 export default function ReportForm({
   lat,
   lng,
+  submitting = false,
+  serverError = null,
   onSubmit,
   onCancel,
 }: ReportFormProps) {
   const [category, setCategory] = useState<CategoryKey>('infraestructural');
   const [subcategory, setSubcategory] = useState('');
   const [description, setDescription] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const subcategoryOptions = CATEGORIES[category].subcategories;
+  const displayedError = serverError ?? localError;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    setLocalError(null);
 
     const result = reportSchema.safeParse({
       lat,
@@ -52,7 +57,7 @@ export default function ReportForm({
     });
 
     if (!result.success) {
-      setError(result.error.issues[0]?.message ?? 'Error de validacion');
+      setLocalError(result.error.issues[0]?.message ?? 'Error de validacion');
       return;
     }
 
@@ -77,8 +82,9 @@ export default function ReportForm({
           <button
             type="button"
             onClick={onCancel}
+            disabled={submitting}
             aria-label="Cerrar"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
           >
             x
           </button>
@@ -95,7 +101,8 @@ export default function ReportForm({
                 setCategory(e.target.value as CategoryKey);
                 setSubcategory('');
               }}
-              className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none"
+              disabled={submitting}
+              className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none disabled:opacity-60"
               required
             >
               {Object.entries(CATEGORIES).map(([key, value]) => (
@@ -116,7 +123,8 @@ export default function ReportForm({
             <select
               value={subcategory}
               onChange={(e) => setSubcategory(e.target.value)}
-              className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none"
+              disabled={submitting}
+              className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none disabled:opacity-60"
             >
               <option value="">(opcional)</option>
               {subcategoryOptions.map((sc) => (
@@ -135,8 +143,9 @@ export default function ReportForm({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              disabled={submitting}
               rows={3}
-              className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none"
+              className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none disabled:opacity-60"
               placeholder="Bache profundo en la curva, peligroso especialmente de noche..."
               required
               minLength={10}
@@ -148,12 +157,12 @@ export default function ReportForm({
           </label>
         </div>
 
-        {error && (
+        {displayedError && (
           <div
             role="alert"
             className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
           >
-            {error}
+            {displayedError}
           </div>
         )}
 
@@ -161,22 +170,19 @@ export default function ReportForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            disabled={submitting}
+            className="rounded px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="rounded bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            disabled={submitting}
+            className="rounded bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
           >
-            Reportar
+            {submitting ? 'Enviando...' : 'Reportar'}
           </button>
         </div>
-
-        <p className="mt-3 text-xs text-slate-400">
-          Reportes temporales: viven solo en esta sesion. La persistencia en
-          base de datos se activa en la siguiente iteracion (Dia 3).
-        </p>
       </form>
     </div>
   );

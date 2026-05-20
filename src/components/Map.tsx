@@ -2,26 +2,27 @@
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useState } from 'react';
 import {
   MapContainer,
-  TileLayer,
   Marker,
   Popup,
+  TileLayer,
   useMapEvents,
 } from 'react-leaflet';
 
 import {
   CATEGORIES,
+  RD_BOUNDS,
   RD_CENTER,
   RD_DEFAULT_ZOOM,
-  RD_BOUNDS,
   STATUS_LABELS,
 } from '@/lib/constants';
 import type { Point } from '@/lib/types';
 
-// Fix de iconos por defecto de Leaflet.
-// Sin esto los markers se renderizan como cuadrados grises rotos
-// porque el bundler de Next no resuelve los assets relativos del paquete.
+// Fix de iconos por defecto de Leaflet con Next.
+// Sin esto los markers se renderizan como cuadrados grises rotos porque
+// el bundler no resuelve los assets relativos del paquete.
 const DefaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl:
@@ -34,6 +35,8 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+type ConfirmResult = { ok: true } | { ok: false; message: string };
+
 function ClickCapture({
   onPick,
 }: {
@@ -42,7 +45,6 @@ function ClickCapture({
   useMapEvents({
     click(e) {
       const { lat, lng } = e.latlng;
-      // Validamos que el click este dentro del bounding box de RD
       if (
         lat >= RD_BOUNDS.minLat &&
         lat <= RD_BOUNDS.maxLat &&
@@ -56,12 +58,75 @@ function ClickCapture({
   return null;
 }
 
+function PointPopup({
+  point,
+  onConfirm,
+}: {
+  point: Point;
+  onConfirm: (id: string) => Promise<ConfirmResult>;
+}) {
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>(
+    'idle'
+  );
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleClick() {
+    setState('loading');
+    setMessage(null);
+    const res = await onConfirm(point.id);
+    if (res.ok) {
+      setState('ok');
+    } else {
+      setState('err');
+      setMessage(res.message);
+    }
+  }
+
+  return (
+    <div className="min-w-[180px] space-y-1 text-xs">
+      <div className="font-semibold text-slate-900">
+        {CATEGORIES[point.category].label}
+        {point.subcategory ? ` - ${point.subcategory}` : ''}
+      </div>
+      <div className="text-slate-700">{point.description}</div>
+      <div className="text-slate-500">
+        Estado: {STATUS_LABELS[point.status] ?? point.status}
+      </div>
+      <div className="text-slate-500">
+        Confirmaciones: {point.confirmation_count}
+      </div>
+
+      <div className="mt-2 border-t border-slate-200 pt-2">
+        {state === 'ok' && (
+          <span className="text-xs font-medium text-green-700">
+            ✓ Gracias, tu confirmacion suma.
+          </span>
+        )}
+        {state === 'err' && (
+          <span className="text-xs text-red-700">{message}</span>
+        )}
+        {(state === 'idle' || state === 'loading') && (
+          <button
+            type="button"
+            onClick={handleClick}
+            disabled={state === 'loading'}
+            className="rounded bg-brand-accent px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {state === 'loading' ? 'Confirmando...' : 'Yo tambien lo veo'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface MapProps {
   points: Point[];
   onMapClick: (lat: number, lng: number) => void;
+  onConfirm: (id: string) => Promise<ConfirmResult>;
 }
 
-export default function Map({ points, onMapClick }: MapProps) {
+export default function Map({ points, onMapClick, onConfirm }: MapProps) {
   return (
     <MapContainer
       center={RD_CENTER}
@@ -77,19 +142,7 @@ export default function Map({ points, onMapClick }: MapProps) {
       {points.map((p) => (
         <Marker key={p.id} position={[p.lat, p.lng]}>
           <Popup>
-            <div className="space-y-1 text-xs">
-              <div className="font-semibold">
-                {CATEGORIES[p.category].label}
-                {p.subcategory ? ` - ${p.subcategory}` : ''}
-              </div>
-              <div>{p.description}</div>
-              <div className="text-slate-500">
-                Estado: {STATUS_LABELS[p.status] ?? p.status}
-              </div>
-              <div className="text-slate-500">
-                Confirmaciones: {p.confirmation_count}
-              </div>
-            </div>
+            <PointPopup point={p} onConfirm={onConfirm} />
           </Popup>
         </Marker>
       ))}

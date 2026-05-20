@@ -1,13 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { Point, PointInput } from '@/lib/types';
 import ReportForm from './ReportForm';
 
-// Carga diferida sin SSR: Leaflet usa window y crashea durante el render
-// en el servidor. Este wrapper lo carga solo despues de hidratacion.
 const Map = dynamic(() => import('./Map'), {
   ssr: false,
   loading: () => (
@@ -17,54 +15,131 @@ const Map = dynamic(() => import('./Map'), {
   ),
 });
 
+type ConfirmResult = { ok: true } | { ok: false; message: string };
+
 export default function MapClient() {
   const [points, setPoints] = useState<Point[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(
     null
   );
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Fetch inicial de puntos visibles
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch('/api/points', { cache: 'no-store' });
+        const json = await res.json();
+        if (cancelled) return;
+        if (json.ok) {
+          setPoints(json.data);
+        } else {
+          console.error('GET /api/points error:', json.error);
+        }
+      } catch (e) {
+        if (!cancelled) console.error('Fetch points falló:', e);
+      } finally {
+        if (!cancelled) setIsFetching(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleMapClick(lat: number, lng: number) {
+    setSubmitError(null);
     setPicked({ lat, lng });
   }
 
-  function handleSubmit(input: PointInput) {
-    const now = new Date().toISOString();
-    const newPoint: Point = {
-      id: crypto.randomUUID(),
-      lat: input.lat,
-      lng: input.lng,
-      category: input.category,
-      subcategory: input.subcategory ?? null,
-      description: input.description,
-      status: 'nuevo',
-      photo_url: null,
-      province: input.province ?? null,
-      municipality: input.municipality ?? null,
-      created_at: now,
-      updated_at: now,
-      confirmation_count: 0,
-    };
-    setPoints((prev) => [...prev, newPoint]);
+  function handleCancel() {
     setPicked(null);
+    setSubmitError(null);
   }
+
+  async function handleSubmit(input: PointInput) {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setSubmitError(json.error?.message ?? 'No se pudo guardar el reporte');
+        return;
+      }
+      setPoints((prev) => [json.data as Point, ...prev]);
+      setPicked(null);
+    } catch (e) {
+      console.error('POST /api/points falló:', e);
+      setSubmitError('Error de red. Revisa tu conexión.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const handleConfirm = useCallback(
+    async (pointId: string): Promise<ConfirmResult> => {
+      try {
+        const res = await fetch(`/api/points/${pointId}/confirm`, {
+          method: 'POST',
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          return {
+            ok: false,
+            message: json.error?.message ?? 'No se pudo confirmar',
+          };
+        }
+        const newCount = json.data?.confirmation_count as number;
+        setPoints((prev) =>
+          prev.map((p) =>
+            p.id === pointId ? { ...p, confirmation_count: newCount } : p
+          )
+        );
+        return { ok: true };
+      } catch (e) {
+        console.error('POST confirm falló:', e);
+        return { ok: false, message: 'Error de red' };
+      }
+    },
+    []
+  );
 
   return (
     <div className="relative h-full w-full">
-      <Map points={points} onMapClick={handleMapClick} />
+      <Map
+        points={points}
+        onMapClick={handleMapClick}
+        onConfirm={handleConfirm}
+      />
 
       {picked && (
         <ReportForm
           lat={picked.lat}
           lng={picked.lng}
+          submitting={submitting}
+          serverError={submitError}
           onSubmit={handleSubmit}
-          onCancel={() => setPicked(null)}
+          onCancel={handleCancel}
         />
       )}
 
       <div className="pointer-events-none absolute bottom-4 left-4 z-[1000] rounded bg-white/95 px-3 py-2 text-xs text-slate-700 shadow ring-1 ring-slate-200">
-        {points.length === 0
-          ? 'Haz click en cualquier punto del mapa para reportar.'
-          : `${points.length} reporte${points.length === 1 ? '' : 's'} en esta sesion (aun no persisten).`}
+        {isFetching
+          ? 'Cargando reportes...'
+          : points.length === 0
+            ? 'Sin reportes todavia. Haz click en el mapa para empezar.'
+            : `${points.length} reporte${points.length === 1 ? '' : 's'} en el mapa.`}
       </div>
     </div>
   );
