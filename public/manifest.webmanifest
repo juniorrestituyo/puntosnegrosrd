@@ -1,0 +1,21 @@
+{
+  "name": "PuntosNegrosRD",
+  "short_name": "PuntosNegrosRD",
+  "description": "Mapa ciudadano abierto de riesgo vial en Republica Dominicana",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0F172A",
+  "lang": "es-DO",
+  "categories": ["maps", "navigation", "utilities", "social"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
