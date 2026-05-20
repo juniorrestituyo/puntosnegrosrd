@@ -54,11 +54,14 @@ function buildMarkerIcon(count: number): L.DivIcon {
 
 function ClickCapture({
   onPick,
+  enabled,
 }: {
   onPick: (lat: number, lng: number) => void;
+  enabled: boolean;
 }) {
   useMapEvents({
     click(e) {
+      if (!enabled) return;
       const { lat, lng } = e.latlng;
       if (
         lat >= RD_BOUNDS.minLat &&
@@ -174,23 +177,29 @@ function PointPopup({
 
 interface MapProps {
   points: Point[];
+  selectMode: boolean;
   onMapClick: (lat: number, lng: number) => void;
   onConfirm: (id: string) => Promise<ConfirmResult>;
 }
 
-export default function Map({ points, onMapClick, onConfirm }: MapProps) {
+export default function Map({
+  points,
+  selectMode,
+  onMapClick,
+  onConfirm,
+}: MapProps) {
   return (
     <MapContainer
       center={RD_CENTER}
       zoom={RD_DEFAULT_ZOOM}
       scrollWheelZoom
-      className="h-full w-full"
+      className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <ClickCapture onPick={onMapClick} />
+      <ClickCapture onPick={onMapClick} enabled={selectMode} />
       {points.map((p) => (
         <Marker
           key={p.id}
