@@ -1,0 +1,85 @@
+'use client';
+
+interface UserLocationButtonProps {
+  isTracking: boolean;
+  isLoading: boolean;
+  onToggle: () => void;
+}
+
+/**
+ * Boton estilo "locate me" de Google/Apple Maps.
+ * - Inactivo: blanco con icono outline.
+ * - Activo (tracking): azul solido con icono filled.
+ * - Cargando: spinner.
+ *
+ * Ubicado arriba del FAB de reporte. Cuando el menu del FAB abre,
+ * queda detras del backdrop (z-1080 < z-1090 del backdrop).
+ */
+export default function UserLocationButton({
+  isTracking,
+  isLoading,
+  onToggle,
+}: UserLocationButtonProps) {
+  const label = isTracking
+    ? 'Ocultar mi ubicacion'
+    : 'Mostrar mi ubicacion';
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={isLoading}
+      aria-label={label}
+      aria-pressed={isTracking}
+      title={label}
+      className={`absolute bottom-20 right-3 z-[1080] flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-1 transition-colors sm:bottom-24 sm:right-6 sm:h-14 sm:w-14 ${
+        isTracking
+          ? 'bg-blue-600 text-white ring-blue-900 hover:bg-blue-700'
+          : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50'
+      } ${isLoading ? 'cursor-wait opacity-60' : ''}`}
+    >
+      {isLoading ? (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="animate-spin"
+          aria-hidden
+        >
+          <path d="M21 12a9 9 0 11-6.219-8.56" />
+        </svg>
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="2" x2="12" y2="6" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="6" y2="12" />
+          <line x1="18" y1="12" x2="22" y2="12" />
+          <circle
+            cx="12"
+            cy="12"
+            r="2.5"
+            fill={isTracking ? 'currentColor' : 'none'}
+          />
+        </svg>
+      )}
+    </button>
+  );
+}

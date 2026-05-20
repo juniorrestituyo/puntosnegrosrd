@@ -3,12 +3,14 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Circle,
   MapContainer,
   Marker,
   Popup,
   TileLayer,
+  useMap,
   useMapEvents,
 } from 'react-leaflet';
 
@@ -20,7 +22,7 @@ import {
   STATUS_LABELS,
 } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
-import type { Point } from '@/lib/types';
+import type { Point, UserLocation } from '@/lib/types';
 
 type ConfirmResult = { ok: true } | { ok: false; message: string };
 
@@ -50,6 +52,53 @@ function buildMarkerIcon(count: number): L.DivIcon {
     iconAnchor: [20, 20],
     popupAnchor: [0, -20],
   });
+}
+
+// "Blue dot" del usuario estilo Google Maps. Sin numero, sin popup,
+// con un halo azul para distinguirlo de los markers de reportes.
+const UserLocationIcon = L.divIcon({
+  className: 'pn-user-marker',
+  html: `
+    <div style="
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:#2563eb;
+      border:3px solid #ffffff;
+      box-shadow:0 0 0 1px rgba(15,23,42,0.4), 0 0 14px rgba(37,99,235,0.55);
+    "></div>
+  `,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+  popupAnchor: [0, -9],
+});
+
+/**
+ * Centra el mapa en la ubicacion del usuario la PRIMERA vez que llega.
+ * Despues no vuelve a interferir (el usuario puede explorar libre).
+ * Si se apaga el tracking, resetea el flag para que la proxima
+ * activacion centre de nuevo.
+ */
+function CenterOnUserLocation({
+  userLocation,
+}: {
+  userLocation: UserLocation | null;
+}) {
+  const map = useMap();
+  const centeredOnceRef = useRef(false);
+
+  useEffect(() => {
+    if (!userLocation) {
+      centeredOnceRef.current = false;
+      return;
+    }
+    if (!centeredOnceRef.current) {
+      map.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 0.8 });
+      centeredOnceRef.current = true;
+    }
+  }, [userLocation, map]);
+
+  return null;
 }
 
 function ClickCapture({
@@ -178,6 +227,7 @@ function PointPopup({
 interface MapProps {
   points: Point[];
   selectMode: boolean;
+  userLocation: UserLocation | null;
   onMapClick: (lat: number, lng: number) => void;
   onConfirm: (id: string) => Promise<ConfirmResult>;
 }
@@ -185,6 +235,7 @@ interface MapProps {
 export default function Map({
   points,
   selectMode,
+  userLocation,
   onMapClick,
   onConfirm,
 }: MapProps) {
@@ -200,6 +251,30 @@ export default function Map({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ClickCapture onPick={onMapClick} enabled={selectMode} />
+      <CenterOnUserLocation userLocation={userLocation} />
+
+      {userLocation && (
+        <>
+          <Circle
+            center={[userLocation.lat, userLocation.lng]}
+            radius={Math.max(userLocation.accuracy, 10)}
+            pathOptions={{
+              color: '#2563eb',
+              weight: 1,
+              fillColor: '#3b82f6',
+              fillOpacity: 0.12,
+            }}
+          />
+          <Marker
+            position={[userLocation.lat, userLocation.lng]}
+            icon={UserLocationIcon}
+            zIndexOffset={1000}
+            interactive={false}
+            keyboard={false}
+          />
+        </>
+      )}
+
       {points.map((p) => (
         <Marker
           key={p.id}

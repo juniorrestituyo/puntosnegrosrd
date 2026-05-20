@@ -4,10 +4,11 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RD_BOUNDS } from '@/lib/constants';
-import type { Point, PointInput } from '@/lib/types';
+import type { Point, PointInput, UserLocation } from '@/lib/types';
 import Filters, { DEFAULT_FILTERS, type FilterState } from './Filters';
 import ReportFAB from './ReportFAB';
 import ReportForm from './ReportForm';
+import UserLocationButton from './UserLocationButton';
 
 const Map = dynamic(() => import('./Map'), {
   ssr: false,
@@ -38,6 +39,11 @@ export default function MapClient() {
   const [reportMode, setReportMode] = useState<ReportMode>('idle');
   const [banner, setBanner] = useState<BannerMessage | null>(null);
 
+  // Tracking continuo de la ubicacion del usuario (blue dot)
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  const [isAcquiringLocation, setIsAcquiringLocation] = useState(false);
+
   // Carga inicial de puntos
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +70,66 @@ export default function MapClient() {
       cancelled = true;
     };
   }, []);
+
+  // Tracking de ubicacion del usuario. Cuando isTrackingLocation cambia
+  // a true arrancamos watchPosition. Cleanup llama clearWatch al cambiar
+  // a false o al desmontar el componente.
+  useEffect(() => {
+    if (!isTrackingLocation) return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setBanner({
+        type: 'error',
+        text: 'Tu navegador no soporta geolocalizacion.',
+      });
+      autoDismissBanner();
+      setIsTrackingLocation(false);
+      return;
+    }
+
+    setIsAcquiringLocation(true);
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setIsAcquiringLocation(false);
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+      },
+      (err) => {
+        setIsAcquiringLocation(false);
+        setIsTrackingLocation(false);
+        let text = 'No se pudo obtener tu ubicacion';
+        if (err.code === 1) {
+          text =
+            'Permiso de ubicacion denegado. Activalo desde el icono del candado en la barra de direcciones.';
+        } else if (err.code === 2) {
+          text = 'No se pudo determinar tu ubicacion.';
+        } else if (err.code === 3) {
+          text = 'Tiempo agotado al buscar tu ubicacion.';
+        }
+        setBanner({ type: 'error', text });
+        autoDismissBanner(7000);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTrackingLocation]);
+
+  function toggleLocationTracking() {
+    if (isTrackingLocation) {
+      setIsTrackingLocation(false);
+      setUserLocation(null);
+      setIsAcquiringLocation(false);
+      setBanner(null);
+    } else {
+      setIsTrackingLocation(true);
+    }
+  }
 
   const filteredPoints = useMemo(() => {
     return points.filter(
@@ -230,6 +296,7 @@ export default function MapClient() {
       <Map
         points={filteredPoints}
         selectMode={reportMode === 'select-on-map'}
+        userLocation={userLocation}
         onMapClick={handleMapClick}
         onConfirm={handleConfirm}
       />
@@ -277,6 +344,15 @@ export default function MapClient() {
           total={points.length}
           shown={filteredPoints.length}
           onChange={setFilters}
+        />
+      )}
+
+      {/* Boton "locate me" estilo Google Maps */}
+      {!fabHidden && (
+        <UserLocationButton
+          isTracking={isTrackingLocation}
+          isLoading={isAcquiringLocation}
+          onToggle={toggleLocationTracking}
         />
       )}
 

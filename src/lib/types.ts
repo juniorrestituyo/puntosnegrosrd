@@ -43,3 +43,9 @@ export interface StatusHistoryEntry {
   changed_by: string | null;
   created_at: string;
 }
+
+export interface UserLocation {
+  lat: number;
+  lng: number;
+  accuracy: number; // metros de precision reportados por el navegador
+}
