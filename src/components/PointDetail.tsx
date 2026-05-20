@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
+import ShareWithAuthority from './ShareWithAuthority';
 
 interface PointDetailProps {
   point: Point;
@@ -32,6 +33,7 @@ export default function PointDetail({
   >('idle');
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
+  const [shareAuthorityOpen, setShareAuthorityOpen] = useState(false);
 
   const color = colorForConfirmations(point.confirmation_count);
 
@@ -190,11 +192,10 @@ export default function PointDetail({
 
           <button
             type="button"
-            disabled
-            title="Disponible en el Dia 8"
-            className="rounded border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-400"
+            onClick={() => setShareAuthorityOpen(true)}
+            className="rounded border border-brand-accent bg-white px-4 py-2 text-sm font-medium text-brand-accent hover:bg-red-50"
           >
-            Compartir con autoridad (proximamente)
+            Compartir con autoridad
           </button>
         </div>
 
@@ -253,6 +254,13 @@ export default function PointDetail({
         Identificador del punto:{' '}
         <code className="rounded bg-slate-100 px-1 py-0.5">{point.id}</code>
       </footer>
+
+      {shareAuthorityOpen && (
+        <ShareWithAuthority
+          point={point}
+          onClose={() => setShareAuthorityOpen(false)}
+        />
+      )}
     </div>
   );
 }
