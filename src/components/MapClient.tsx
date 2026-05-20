@@ -1,9 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { Point, PointInput } from '@/lib/types';
+import Filters, { DEFAULT_FILTERS, type FilterState } from './Filters';
 import ReportForm from './ReportForm';
 
 const Map = dynamic(() => import('./Map'), {
@@ -25,8 +26,8 @@ export default function MapClient() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
-  // Fetch inicial de puntos visibles
   useEffect(() => {
     let cancelled = false;
 
@@ -41,7 +42,7 @@ export default function MapClient() {
           console.error('GET /api/points error:', json.error);
         }
       } catch (e) {
-        if (!cancelled) console.error('Fetch points falló:', e);
+        if (!cancelled) console.error('Fetch points fallo:', e);
       } finally {
         if (!cancelled) setIsFetching(false);
       }
@@ -52,6 +53,14 @@ export default function MapClient() {
       cancelled = true;
     };
   }, []);
+
+  const filteredPoints = useMemo(() => {
+    return points.filter(
+      (p) =>
+        filters.categories.has(p.category) &&
+        p.confirmation_count >= filters.minConfirmations
+    );
+  }, [points, filters]);
 
   function handleMapClick(lat: number, lng: number) {
     setSubmitError(null);
@@ -80,8 +89,8 @@ export default function MapClient() {
       setPoints((prev) => [json.data as Point, ...prev]);
       setPicked(null);
     } catch (e) {
-      console.error('POST /api/points falló:', e);
-      setSubmitError('Error de red. Revisa tu conexión.');
+      console.error('POST /api/points fallo:', e);
+      setSubmitError('Error de red. Revisa tu conexion.');
     } finally {
       setSubmitting(false);
     }
@@ -108,7 +117,7 @@ export default function MapClient() {
         );
         return { ok: true };
       } catch (e) {
-        console.error('POST confirm falló:', e);
+        console.error('POST confirm fallo:', e);
         return { ok: false, message: 'Error de red' };
       }
     },
@@ -118,9 +127,16 @@ export default function MapClient() {
   return (
     <div className="relative h-full w-full">
       <Map
-        points={points}
+        points={filteredPoints}
         onMapClick={handleMapClick}
         onConfirm={handleConfirm}
+      />
+
+      <Filters
+        state={filters}
+        total={points.length}
+        shown={filteredPoints.length}
+        onChange={setFilters}
       />
 
       {picked && (
@@ -139,7 +155,7 @@ export default function MapClient() {
           ? 'Cargando reportes...'
           : points.length === 0
             ? 'Sin reportes todavia. Haz click en el mapa para empezar.'
-            : `${points.length} reporte${points.length === 1 ? '' : 's'} en el mapa.`}
+            : `${filteredPoints.length} de ${points.length} reporte${points.length === 1 ? '' : 's'}.`}
       </div>
     </div>
   );

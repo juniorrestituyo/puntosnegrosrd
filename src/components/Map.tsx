@@ -2,7 +2,8 @@
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useState } from 'react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import {
   MapContainer,
   Marker,
@@ -18,24 +19,38 @@ import {
   RD_DEFAULT_ZOOM,
   STATUS_LABELS,
 } from '@/lib/constants';
+import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point } from '@/lib/types';
 
-// Fix de iconos por defecto de Leaflet con Next.
-// Sin esto los markers se renderizan como cuadrados grises rotos porque
-// el bundler no resuelve los assets relativos del paquete.
-const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl:
-    'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
 type ConfirmResult = { ok: true } | { ok: false; message: string };
+
+function buildMarkerIcon(count: number): L.DivIcon {
+  const c = colorForConfirmations(count);
+  const display = count > 0 ? String(count) : '·';
+  return L.divIcon({
+    className: 'pn-marker',
+    html: `
+      <div style="
+        background:${c.bg};
+        border:2px solid ${c.border};
+        color:${c.text};
+        width:32px;
+        height:32px;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:600;
+        font-size:12px;
+        font-family:system-ui,sans-serif;
+        box-shadow:0 1px 3px rgba(0,0,0,0.3);
+      ">${display}</div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
+  });
+}
 
 function ClickCapture({
   onPick,
@@ -70,6 +85,11 @@ function PointPopup({
   );
   const [message, setMessage] = useState<string | null>(null);
 
+  const color = useMemo(
+    () => colorForConfirmations(point.confirmation_count),
+    [point.confirmation_count]
+  );
+
   async function handleClick() {
     setState('loading');
     setMessage(null);
@@ -83,23 +103,35 @@ function PointPopup({
   }
 
   return (
-    <div className="min-w-[180px] space-y-1 text-xs">
+    <div className="min-w-[220px] space-y-1 text-xs">
       <div className="font-semibold text-slate-900">
         {CATEGORIES[point.category].label}
         {point.subcategory ? ` - ${point.subcategory}` : ''}
       </div>
       <div className="text-slate-700">{point.description}</div>
+
+      <div className="flex items-center justify-between pt-1">
+        <span
+          className="inline-block rounded px-2 py-0.5 text-[10px] font-medium"
+          style={{
+            background: color.bg,
+            color: color.text,
+            border: `1px solid ${color.border}`,
+          }}
+        >
+          {point.confirmation_count} confirmacion
+          {point.confirmation_count === 1 ? '' : 'es'} - {color.label}
+        </span>
+      </div>
+
       <div className="text-slate-500">
         Estado: {STATUS_LABELS[point.status] ?? point.status}
       </div>
-      <div className="text-slate-500">
-        Confirmaciones: {point.confirmation_count}
-      </div>
 
-      <div className="mt-2 border-t border-slate-200 pt-2">
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-200 pt-2">
         {state === 'ok' && (
           <span className="text-xs font-medium text-green-700">
-            ✓ Gracias, tu confirmacion suma.
+            ✓ Confirmacion sumada
           </span>
         )}
         {state === 'err' && (
@@ -115,6 +147,13 @@ function PointPopup({
             {state === 'loading' ? 'Confirmando...' : 'Yo tambien lo veo'}
           </button>
         )}
+
+        <Link
+          href={`/punto/${point.id}`}
+          className="text-xs font-medium text-brand hover:underline"
+        >
+          Ver detalle &rarr;
+        </Link>
       </div>
     </div>
   );
@@ -140,7 +179,11 @@ export default function Map({ points, onMapClick, onConfirm }: MapProps) {
       />
       <ClickCapture onPick={onMapClick} />
       {points.map((p) => (
-        <Marker key={p.id} position={[p.lat, p.lng]}>
+        <Marker
+          key={p.id}
+          position={[p.lat, p.lng]}
+          icon={buildMarkerIcon(p.confirmation_count)}
+        >
           <Popup>
             <PointPopup point={p} onConfirm={onConfirm} />
           </Popup>
