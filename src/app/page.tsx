@@ -1,21 +1,20 @@
 import MapClient from '@/components/MapClient';
+import SiteNav from '@/components/SiteNav';
 
 export default function HomePage() {
   return (
     <main className="flex h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white px-6 py-3">
+      <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-brand">
               PuntosNegros<span className="text-brand-accent">RD</span>
             </h1>
-            <p className="text-xs text-slate-600">
+            <p className="hidden text-xs text-slate-600 sm:block">
               Mapa ciudadano abierto de riesgo vial - iniciativa independiente
             </p>
           </div>
-          <div className="hidden text-xs text-slate-500 sm:block">
-            Haz click en el mapa para reportar un punto
-          </div>
+          <SiteNav current="mapa" />
         </div>
       </header>
 
@@ -23,7 +22,7 @@ export default function HomePage() {
         <MapClient />
       </div>
 
-      <footer className="border-t border-slate-200 bg-white px-6 py-2 text-xs text-slate-500">
+      <footer className="border-t border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 sm:px-6">
         Complemento ciudadano al trabajo del{' '}
         <a
           href="https://www.intrant.gob.do"
