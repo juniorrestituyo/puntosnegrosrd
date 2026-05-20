@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function AcercaDePage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-8">
-      <header className="mb-6 flex items-center justify-between">
+    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+      <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link href="/" className="text-xl font-bold tracking-tight text-brand">
           PuntosNegros<span className="text-brand-accent">RD</span>
         </Link>

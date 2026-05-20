@@ -76,7 +76,7 @@ export default function PointDetail({
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
       <div className="mb-6">
         <Link
           href="/"
@@ -87,20 +87,20 @@ export default function PointDetail({
       </div>
 
       <header className="mb-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-brand">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl font-bold text-brand sm:text-2xl">
               {CATEGORIES[point.category].label}
               {point.subcategory ? (
                 <span className="text-slate-600"> - {point.subcategory}</span>
               ) : null}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
               Reportado el {formatDate(point.created_at)}
             </p>
           </div>
           <span
-            className="inline-block rounded px-3 py-1 text-xs font-medium"
+            className="inline-block whitespace-nowrap rounded px-3 py-1 text-xs font-medium"
             style={{
               background: color.bg,
               color: color.text,

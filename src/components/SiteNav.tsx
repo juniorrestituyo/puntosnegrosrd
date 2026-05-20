@@ -13,7 +13,7 @@ const links: { href: string; key: SiteNavProps['current']; label: string }[] = [
 
 export default function SiteNav({ current }: SiteNavProps) {
   return (
-    <nav className="flex items-center gap-1 text-sm sm:gap-3">
+    <nav className="flex flex-wrap items-center gap-1 text-sm sm:gap-3">
       {links.map((l) => {
         const isActive = current === l.key;
         return (

@@ -4,10 +4,10 @@ import SiteNav from '@/components/SiteNav';
 export default function HomePage() {
   return (
     <main className="flex h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-        <div className="flex items-center justify-between gap-4">
+      <header className="border-b border-slate-200 bg-white px-3 py-2 sm:px-6 sm:py-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-brand">
+            <h1 className="text-lg font-bold tracking-tight text-brand sm:text-xl">
               PuntosNegros<span className="text-brand-accent">RD</span>
             </h1>
             <p className="hidden text-xs text-slate-600 sm:block">

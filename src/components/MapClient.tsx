@@ -150,12 +150,12 @@ export default function MapClient() {
         />
       )}
 
-      <div className="pointer-events-none absolute bottom-4 left-4 z-[1000] rounded bg-white/95 px-3 py-2 text-xs text-slate-700 shadow ring-1 ring-slate-200">
+      <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] max-w-[calc(100vw-7rem)] rounded bg-white/95 px-3 py-2 text-xs text-slate-700 shadow ring-1 ring-slate-200 sm:bottom-4 sm:left-4 sm:max-w-none">
         {isFetching
-          ? 'Cargando reportes...'
+          ? 'Cargando...'
           : points.length === 0
-            ? 'Sin reportes todavia. Haz click en el mapa para empezar.'
-            : `${filteredPoints.length} de ${points.length} reporte${points.length === 1 ? '' : 's'}.`}
+            ? 'Toca el mapa para reportar'
+            : `${filteredPoints.length} de ${points.length} reporte${points.length === 1 ? '' : 's'}`}
       </div>
     </div>
   );

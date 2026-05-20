@@ -49,7 +49,7 @@ export default function Filters({
   const filtered = activeCount < 4 || state.minConfirmations > 0;
 
   return (
-    <div className="pointer-events-auto absolute right-4 top-4 z-[1000] w-[260px] rounded-lg bg-white shadow-lg ring-1 ring-slate-200">
+    <div className="pointer-events-auto absolute right-3 top-3 z-[1000] w-[calc(100vw-1.5rem)] max-w-[260px] rounded-lg bg-white shadow-lg ring-1 ring-slate-200 sm:right-4 sm:top-4">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

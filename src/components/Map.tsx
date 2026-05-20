@@ -34,21 +34,21 @@ function buildMarkerIcon(count: number): L.DivIcon {
         background:${c.bg};
         border:2px solid ${c.border};
         color:${c.text};
-        width:32px;
-        height:32px;
+        width:40px;
+        height:40px;
         border-radius:50%;
         display:flex;
         align-items:center;
         justify-content:center;
-        font-weight:600;
-        font-size:12px;
+        font-weight:700;
+        font-size:14px;
         font-family:system-ui,sans-serif;
-        box-shadow:0 1px 3px rgba(0,0,0,0.3);
+        box-shadow:0 2px 4px rgba(0,0,0,0.3);
       ">${display}</div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -16],
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20],
   });
 }
 

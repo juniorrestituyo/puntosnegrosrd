@@ -50,9 +50,9 @@ export default function ShareWithAuthority({
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4">
-      <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl max-h-[90vh]">
-        <div className="flex items-start justify-between border-b border-slate-200 px-5 py-3">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-2 sm:p-4">
+      <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl max-h-[95vh] sm:max-h-[90vh]">
+        <div className="flex items-start justify-between border-b border-slate-200 px-4 py-3 sm:px-5">
           <div>
             <h2 className="text-lg font-semibold text-brand">
               Compartir con autoridad
@@ -72,7 +72,7 @@ export default function ShareWithAuthority({
           </button>
         </div>
 
-        <div className="space-y-4 overflow-y-auto px-5 py-4">
+        <div className="space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
           <section>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Destinatarios sugeridos
@@ -134,7 +134,7 @@ export default function ShareWithAuthority({
           </section>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 sm:px-5">
           <p className="text-xs text-slate-500">
             {selected
               ? `Listo para enviar a: ${selected.name}`

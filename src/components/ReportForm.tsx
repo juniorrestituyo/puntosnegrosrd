@@ -125,10 +125,10 @@ export default function ReportForm({
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-2 sm:p-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
+        className="w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg bg-white p-4 shadow-xl sm:p-6"
       >
         <div className="flex items-start justify-between">
           <div>
