@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 
 import { CATEGORIES, type CategoryKey } from '@/lib/constants';
+import { processImage } from '@/lib/image-process';
 import type { PointInput } from '@/lib/types';
 
 const reportSchema = z.object({
@@ -17,6 +18,7 @@ const reportSchema = z.object({
     .max(1000),
   province: z.string().optional(),
   municipality: z.string().optional(),
+  photo_url: z.string().url().optional(),
 });
 
 interface ReportFormProps {
@@ -41,20 +43,78 @@ export default function ReportForm({
   const [description, setDescription] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
   const subcategoryOptions = CATEGORIES[category].subcategories;
   const displayedError = serverError ?? localError;
+  const busy = submitting || photoUploading;
+
+  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setPhotoError(null);
+    setPhotoUploading(true);
+    setPhotoUrl(null);
+    setPhotoPreview(null);
+
+    try {
+      // Procesar client-side: redimensiona y elimina EXIF
+      const processed = await processImage(file);
+      const previewUrl = URL.createObjectURL(processed.blob);
+      setPhotoPreview(previewUrl);
+
+      // Subir al servidor
+      const formData = new FormData();
+      formData.append('file', processed.blob, 'photo.jpg');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setPhotoError(json.error?.message ?? 'No se pudo subir la foto');
+        setPhotoPreview(null);
+        URL.revokeObjectURL(previewUrl);
+        return;
+      }
+      setPhotoUrl(json.data.url as string);
+    } catch (err) {
+      console.error('Photo upload fallo:', err);
+      setPhotoError(
+        err instanceof Error ? err.message : 'Error al procesar la imagen'
+      );
+      setPhotoPreview(null);
+    } finally {
+      setPhotoUploading(false);
+    }
+  }
+
+  function clearPhoto() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    setPhotoUrl(null);
+    setPhotoError(null);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLocalError(null);
 
-    const result = reportSchema.safeParse({
+    const payload = {
       lat,
       lng,
       category,
       subcategory: subcategory || undefined,
       description,
-    });
+      photo_url: photoUrl ?? undefined,
+    };
+
+    const result = reportSchema.safeParse(payload);
 
     if (!result.success) {
       setLocalError(result.error.issues[0]?.message ?? 'Error de validacion');
@@ -68,7 +128,7 @@ export default function ReportForm({
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+        className="w-full max-w-md max-h-[95vh] overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -82,7 +142,7 @@ export default function ReportForm({
           <button
             type="button"
             onClick={onCancel}
-            disabled={submitting}
+            disabled={busy}
             aria-label="Cerrar"
             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
           >
@@ -101,7 +161,7 @@ export default function ReportForm({
                 setCategory(e.target.value as CategoryKey);
                 setSubcategory('');
               }}
-              disabled={submitting}
+              disabled={busy}
               className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none disabled:opacity-60"
               required
             >
@@ -123,7 +183,7 @@ export default function ReportForm({
             <select
               value={subcategory}
               onChange={(e) => setSubcategory(e.target.value)}
-              disabled={submitting}
+              disabled={busy}
               className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none disabled:opacity-60"
             >
               <option value="">(opcional)</option>
@@ -143,7 +203,7 @@ export default function ReportForm({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={submitting}
+              disabled={busy}
               rows={3}
               className="mt-1 block w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none disabled:opacity-60"
               placeholder="Bache profundo en la curva, peligroso especialmente de noche..."
@@ -155,6 +215,70 @@ export default function ReportForm({
               {description.length}/1000
             </p>
           </label>
+
+          <div>
+            <span className="text-sm font-medium text-slate-700">
+              Foto (opcional)
+            </span>
+            {!photoUrl && !photoUploading && (
+              <label
+                htmlFor="photo-input"
+                className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 hover:border-brand-accent hover:bg-red-50/30"
+              >
+                Toca para tomar o seleccionar
+                <span className="mt-1 text-xs text-slate-400">
+                  JPEG/PNG hasta 3 MB. La metadata EXIF se elimina antes de subir.
+                </span>
+              </label>
+            )}
+            <input
+              id="photo-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoSelect}
+              disabled={busy}
+              className="hidden"
+            />
+
+            {photoUploading && (
+              <div className="mt-2 rounded border border-slate-200 bg-slate-50 px-3 py-3 text-center text-sm text-slate-600">
+                Procesando y subiendo imagen...
+              </div>
+            )}
+
+            {photoPreview && photoUrl && (
+              <div className="mt-2 flex items-center gap-3 rounded border border-slate-200 bg-white p-2">
+                <img
+                  src={photoPreview}
+                  alt="Vista previa"
+                  className="h-20 w-20 rounded object-cover"
+                />
+                <div className="flex-1 text-xs text-slate-600">
+                  <p className="font-medium text-green-700">
+                    ✓ Foto lista para enviar
+                  </p>
+                  <p className="mt-1">
+                    Metadata EXIF removida. Solo se publicara junto al
+                    reporte.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearPhoto}
+                  disabled={busy}
+                  className="text-xs text-slate-500 hover:text-red-700"
+                >
+                  Quitar
+                </button>
+              </div>
+            )}
+
+            {photoError && (
+              <p className="mt-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {photoError}
+              </p>
+            )}
+          </div>
         </div>
 
         {displayedError && (
@@ -170,14 +294,14 @@ export default function ReportForm({
           <button
             type="button"
             onClick={onCancel}
-            disabled={submitting}
+            disabled={busy}
             className="rounded px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={busy}
             className="rounded bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
           >
             {submitting ? 'Enviando...' : 'Reportar'}

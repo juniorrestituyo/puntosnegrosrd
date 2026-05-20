@@ -64,6 +64,16 @@ puntosnegrosrd/
 5. Click **RUN**
 6. Verificar en **Table Editor** que están las tablas: `points`, `confirmations`, `status_history`.
 
+## Paso 3.5 — Crear el bucket de Storage para fotos
+
+1. **Storage → New bucket** en el dashboard de Supabase.
+2. Nombre: `point-photos`
+3. Marcar como **público** (lectura pública). La escritura sigue siendo solo del servidor con service_role.
+4. Restricciones opcionales recomendadas:
+   - Allowed MIME types: `image/jpeg, image/png, image/webp`
+   - Max file size: 5 MB
+5. Si no se crea el bucket, el endpoint `/api/upload` devolverá 500 al subir foto, pero el resto de la app funciona normal.
+
 ## Paso 4 — Configurar variables de entorno
 
 1. Copiar `.env.local.example` a `.env.local`:

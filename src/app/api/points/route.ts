@@ -17,6 +17,7 @@ const pointInputSchema = z.object({
     .max(1000),
   province: z.string().max(100).optional(),
   municipality: z.string().max(100).optional(),
+  photo_url: z.string().url().max(500).optional(),
 });
 
 /**
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
       description: parsed.data.description,
       province: parsed.data.province ?? null,
       municipality: parsed.data.municipality ?? null,
+      photo_url: parsed.data.photo_url ?? null,
       ip_hash: ipHash,
     })
     .select(

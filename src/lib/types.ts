@@ -31,6 +31,7 @@ export interface PointInput {
   description: string;
   province?: string;
   municipality?: string;
+  photo_url?: string;
 }
 
 export interface StatusHistoryEntry {

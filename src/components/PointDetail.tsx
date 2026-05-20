@@ -115,6 +115,21 @@ export default function PointDetail({
       </header>
 
       <section className="space-y-4">
+        {point.photo_url && (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+            <img
+              src={point.photo_url}
+              alt="Foto ciudadana del reporte"
+              className="block max-h-[480px] w-full object-contain"
+              loading="lazy"
+            />
+            <p className="px-3 py-2 text-xs text-slate-500">
+              Foto aportada por quien reporto el punto. Metadata EXIF removida
+              antes de subir.
+            </p>
+          </div>
+        )}
+
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Descripcion

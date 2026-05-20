@@ -108,6 +108,19 @@ function PointPopup({
         {CATEGORIES[point.category].label}
         {point.subcategory ? ` - ${point.subcategory}` : ''}
       </div>
+      {point.photo_url && (
+        <a
+          href={`/punto/${point.id}`}
+          className="block overflow-hidden rounded"
+        >
+          <img
+            src={point.photo_url}
+            alt="Foto del reporte"
+            className="h-24 w-full object-cover"
+            loading="lazy"
+          />
+        </a>
+      )}
       <div className="text-slate-700">{point.description}</div>
 
       <div className="flex items-center justify-between pt-1">
