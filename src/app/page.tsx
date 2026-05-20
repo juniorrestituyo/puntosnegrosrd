@@ -1,45 +1,48 @@
+import MapClient from '@/components/MapClient';
+
 export default function HomePage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <header className="mb-10">
-        <h1 className="text-4xl font-bold tracking-tight text-brand">
-          PuntosNegros<span className="text-brand-accent">RD</span>
-        </h1>
-        <p className="mt-3 text-lg text-slate-600">
-          Mapa ciudadano abierto de riesgo vial en la Republica Dominicana.
-        </p>
+    <main className="flex h-screen flex-col">
+      <header className="border-b border-slate-200 bg-white px-6 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-brand">
+              PuntosNegros<span className="text-brand-accent">RD</span>
+            </h1>
+            <p className="text-xs text-slate-600">
+              Mapa ciudadano abierto de riesgo vial - iniciativa independiente
+            </p>
+          </div>
+          <div className="hidden text-xs text-slate-500 sm:block">
+            Haz click en el mapa para reportar un punto
+          </div>
+        </div>
       </header>
 
-      <section className="space-y-4 text-slate-700">
-        <p>
-          Iniciativa ciudadana independiente. Complemento al trabajo del{' '}
-          <a
-            href="https://www.intrant.gob.do"
-            target="_blank"
-            rel="noreferrer"
-            className="text-brand-accent underline"
-          >
-            INTRANT
-          </a>
-          . Datos abiertos bajo licencia CC-BY 4.0.
-        </p>
+      <div className="flex-1">
+        <MapClient />
+      </div>
 
-        <div className="rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-          <strong>Estado:</strong> bootstrap inicial. El mapa interactivo
-          aparecera en la siguiente iteracion.
-        </div>
-      </section>
-
-      <footer className="mt-16 text-xs text-slate-500">
-        Codigo abierto en{' '}
+      <footer className="border-t border-slate-200 bg-white px-6 py-2 text-xs text-slate-500">
+        Complemento ciudadano al trabajo del{' '}
+        <a
+          href="https://www.intrant.gob.do"
+          target="_blank"
+          rel="noreferrer"
+          className="underline"
+        >
+          INTRANT
+        </a>
+        . Datos abiertos bajo CC-BY 4.0. Codigo en{' '}
         <a
           href="https://github.com/w0rkm4n/puntosnegrosrd"
           target="_blank"
           rel="noreferrer"
           className="underline"
         >
-          github.com/w0rkm4n/puntosnegrosrd
+          GitHub
         </a>
+        .
       </footer>
     </main>
   );
