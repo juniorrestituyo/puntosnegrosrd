@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0F172A" rx="64"/>
-  <circle cx="256" cy="240" r="120" fill="none" stroke="#DC2626" stroke-width="16"/>
-  <circle cx="256" cy="240" r="40" fill="#DC2626"/>
-  <text x="256" y="450" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="64" font-weight="700" text-anchor="middle" fill="#ffffff">PNRD</text>
+  <rect width="512" height="512" fill="#ffffff" rx="80"/>
+  <!-- Teardrop pin in blue -->
+  <path d="M256 80 C176 80 128 144 128 224 C128 320 256 432 256 432 C256 432 384 320 384 224 C384 144 336 80 256 80 Z" fill="#2563eb"/>
+  <!-- Inner white circle with emoji-like dot -->
+  <circle cx="256" cy="220" r="64" fill="#ffffff"/>
+  <text x="256" y="252" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="60" font-weight="800" text-anchor="middle" fill="#2563eb">PN</text>
 </svg>

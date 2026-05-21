@@ -75,3 +75,61 @@ export const RD_BOUNDS = {
 
 // Rate limit: máximo de reportes por IP por hora
 export const RATE_LIMIT_REPORTS_PER_HOUR = 5;
+
+// ============================================================
+// Emojis por categoria y subcategoria
+// Se usan en los markers del mapa y en chips/UI.
+// ============================================================
+
+export const CATEGORY_EMOJI: Record<CategoryKey, string> = {
+  humano: '🚶',
+  vehicular: '🏍️',
+  infraestructural: '🚧',
+  climatico: '🌧️',
+};
+
+export const SUBCATEGORY_EMOJI: Record<string, string> = {
+  // Humano
+  'Exceso de velocidad recurrente': '⚡',
+  'Cruce peatonal imprudente': '🚶',
+  'Conducción agresiva habitual': '😤',
+  'Manejo en estado de embriaguez observado': '🍺',
+  'Otros (comportamiento)': '👤',
+
+  // Vehicular
+  'Motocicletas sin luces o frenos': '🏍️',
+  'Vehículos sobrecargados de pasajeros': '👨‍👩‍👧',
+  'Vehículos pesados en zona residencial': '🚚',
+  'Otros (estado vehicular)': '🚙',
+
+  // Infraestructural
+  'Bache peligroso': '🕳️',
+  'Semáforo dañado o apagado': '🚦',
+  'Falta de señalización': '🪧',
+  'Paso peatonal borrado': '🦓',
+  'Curva ciega o intersección sin visibilidad': '↪️',
+  'Falta de iluminación': '💡',
+  'Acera invadida o inexistente': '🚷',
+  'Otros (infraestructura)': '🛣️',
+
+  // Climático
+  'Zona que se inunda': '🌊',
+  'Neblina recurrente': '🌫️',
+  'Riesgo de deslizamiento': '⛰️',
+  'Otros (clima)': '🌦️',
+};
+
+/**
+ * Devuelve el emoji mas especifico disponible para un punto.
+ * Si hay subcategoria reconocida, usa esa. Si no, fallback a la
+ * categoria principal.
+ */
+export function emojiForPoint(
+  category: CategoryKey,
+  subcategory: string | null | undefined
+): string {
+  if (subcategory && SUBCATEGORY_EMOJI[subcategory]) {
+    return SUBCATEGORY_EMOJI[subcategory];
+  }
+  return CATEGORY_EMOJI[category];
+}

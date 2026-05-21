@@ -6,15 +6,6 @@ interface UserLocationButtonProps {
   onToggle: () => void;
 }
 
-/**
- * Boton estilo "locate me" de Google/Apple Maps.
- * - Inactivo: blanco con icono outline.
- * - Activo (tracking): azul solido con icono filled.
- * - Cargando: spinner.
- *
- * Ubicado arriba del FAB de reporte. Cuando el menu del FAB abre,
- * queda detras del backdrop (z-1080 < z-1090 del backdrop).
- */
 export default function UserLocationButton({
   isTracking,
   isLoading,
@@ -32,11 +23,11 @@ export default function UserLocationButton({
       aria-label={label}
       aria-pressed={isTracking}
       title={label}
-      className={`absolute bottom-24 right-3 z-[1080] flex h-14 w-14 items-center justify-center rounded-full shadow-lg ring-1 transition-colors sm:bottom-28 sm:right-6 sm:h-16 sm:w-16 ${
+      className={`absolute bottom-24 right-3 z-[1080] flex h-14 w-14 items-center justify-center rounded-full shadow-float ring-1 transition-colors sm:bottom-28 sm:right-6 sm:h-16 sm:w-16 ${
         isTracking
-          ? 'bg-blue-600 text-white ring-blue-900 hover:bg-blue-700'
-          : 'bg-white text-slate-700 ring-slate-300 hover:bg-slate-50'
-      } ${isLoading ? 'cursor-wait opacity-60' : ''}`}
+          ? 'bg-brand text-white ring-brand-accent hover:bg-brand-accent'
+          : 'bg-surface-card text-fg ring-surface-border hover:bg-surface-raised'
+      } ${isLoading ? 'cursor-wait opacity-70' : ''}`}
     >
       {isLoading ? (
         <svg

@@ -20,65 +20,58 @@ import {
   RD_CENTER,
   RD_DEFAULT_ZOOM,
   STATUS_LABELS,
+  emojiForPoint,
 } from '@/lib/constants';
-import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, UserLocation } from '@/lib/types';
 
 type ConfirmResult = { ok: true } | { ok: false; message: string };
 
-function buildMarkerIcon(count: number): L.DivIcon {
-  const c = colorForConfirmations(count);
-  const display = count > 0 ? String(count) : '·';
+/**
+ * Marker tipo teardrop blanco con emoji en el bulbo y badge azul de
+ * confirmaciones en la esquina cuando hay alguna.
+ */
+function buildMarkerIcon(point: Point): L.DivIcon {
+  const emoji = emojiForPoint(point.category, point.subcategory);
+  const count = point.confirmation_count;
+  const badge =
+    count > 0
+      ? `<span style="position:absolute;top:-4px;right:-4px;background:#2563eb;color:#ffffff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #ffffff;padding:0 4px;box-shadow:0 1px 2px rgba(15,23,42,0.3);">${count}</span>`
+      : '';
+
   return L.divIcon({
     className: 'pn-marker',
     html: `
-      <div style="
-        background:${c.bg};
-        border:2px solid ${c.border};
-        color:${c.text};
-        width:40px;
-        height:40px;
-        border-radius:50%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:700;
-        font-size:14px;
-        font-family:system-ui,sans-serif;
-        box-shadow:0 2px 4px rgba(0,0,0,0.3);
-      ">${display}</div>
+      <div style="position:relative;width:36px;height:46px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.2));">
+        <svg viewBox="0 0 36 46" width="36" height="46" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 0 C8.06 0 0 8.06 0 18 C0 30 18 46 18 46 C18 46 36 30 36 18 C36 8.06 27.94 0 18 0 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+        </svg>
+        <span style="position:absolute;top:1px;left:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">${emoji}</span>
+        ${badge}
+      </div>
     `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20],
+    iconSize: [36, 46],
+    iconAnchor: [18, 46],
+    popupAnchor: [0, -46],
   });
 }
 
-// "Blue dot" del usuario estilo Google Maps. Sin numero, sin popup,
-// con un halo azul para distinguirlo de los markers de reportes.
 const UserLocationIcon = L.divIcon({
   className: 'pn-user-marker',
   html: `
     <div style="
-      width:18px;
-      height:18px;
+      width:20px;
+      height:20px;
       border-radius:50%;
       background:#2563eb;
       border:3px solid #ffffff;
-      box-shadow:0 0 0 1px rgba(15,23,42,0.4), 0 0 14px rgba(37,99,235,0.55);
+      box-shadow:0 0 0 1px rgba(15,23,42,0.3), 0 0 14px rgba(37,99,235,0.55);
     "></div>
   `,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-  popupAnchor: [0, -9],
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
 });
 
-/**
- * Centra el mapa en la ubicacion del usuario la PRIMERA vez que llega.
- * Despues no vuelve a interferir (el usuario puede explorar libre).
- * Si se apaga el tracking, resetea el flag para que la proxima
- * activacion centre de nuevo.
- */
 function CenterOnUserLocation({
   userLocation,
 }: {
@@ -137,9 +130,9 @@ function PointPopup({
   );
   const [message, setMessage] = useState<string | null>(null);
 
-  const color = useMemo(
-    () => colorForConfirmations(point.confirmation_count),
-    [point.confirmation_count]
+  const emoji = useMemo(
+    () => emojiForPoint(point.category, point.subcategory),
+    [point.category, point.subcategory]
   );
 
   async function handleClick() {
@@ -155,15 +148,30 @@ function PointPopup({
   }
 
   return (
-    <div className="min-w-[220px] space-y-1 text-xs">
-      <div className="font-semibold text-slate-900">
-        {CATEGORIES[point.category].label}
-        {point.subcategory ? ` - ${point.subcategory}` : ''}
+    <div className="min-w-[220px] space-y-2 text-xs">
+      <div className="flex items-center gap-2">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-xl"
+          aria-hidden
+        >
+          {emoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-fg">
+            {CATEGORIES[point.category].label}
+          </div>
+          {point.subcategory && (
+            <div className="truncate text-[11px] text-fg-muted">
+              {point.subcategory}
+            </div>
+          )}
+        </div>
       </div>
+
       {point.photo_url && (
         <a
           href={`/punto/${point.id}`}
-          className="block overflow-hidden rounded"
+          className="block overflow-hidden rounded-md"
         >
           <img
             src={point.photo_url}
@@ -173,41 +181,32 @@ function PointPopup({
           />
         </a>
       )}
-      <div className="text-slate-700">{point.description}</div>
 
-      <div className="flex items-center justify-between pt-1">
-        <span
-          className="inline-block rounded px-2 py-0.5 text-[10px] font-medium"
-          style={{
-            background: color.bg,
-            color: color.text,
-            border: `1px solid ${color.border}`,
-          }}
-        >
-          {point.confirmation_count} confirmacion
-          {point.confirmation_count === 1 ? '' : 'es'} - {color.label}
+      <div className="text-fg/90">{point.description}</div>
+
+      <div className="flex items-center gap-2 text-[10px] text-fg-muted">
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 font-semibold text-brand">
+          {point.confirmation_count}{' '}
+          confirmacion{point.confirmation_count === 1 ? '' : 'es'}
         </span>
+        <span>{STATUS_LABELS[point.status] ?? point.status}</span>
       </div>
 
-      <div className="text-slate-500">
-        Estado: {STATUS_LABELS[point.status] ?? point.status}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-200 pt-2">
+      <div className="flex items-center justify-between gap-2 border-t border-surface-border pt-2">
         {state === 'ok' && (
-          <span className="text-xs font-medium text-green-700">
-            ✓ Confirmacion sumada
+          <span className="text-[11px] font-medium text-emerald-600">
+            ✓ Sumada
           </span>
         )}
         {state === 'err' && (
-          <span className="text-xs text-red-700">{message}</span>
+          <span className="text-[11px] text-red-600">{message}</span>
         )}
         {(state === 'idle' || state === 'loading') && (
           <button
             type="button"
             onClick={handleClick}
             disabled={state === 'loading'}
-            className="rounded bg-brand-accent px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="rounded-md bg-brand px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-brand-accent disabled:opacity-50"
           >
             {state === 'loading' ? 'Confirmando...' : 'Yo tambien lo veo'}
           </button>
@@ -215,9 +214,9 @@ function PointPopup({
 
         <Link
           href={`/punto/${point.id}`}
-          className="text-xs font-medium text-brand hover:underline"
+          className="text-[11px] font-medium text-brand hover:underline"
         >
-          Ver detalle &rarr;
+          Detalle &rarr;
         </Link>
       </div>
     </div>
@@ -245,10 +244,14 @@ export default function Map({
       zoom={RD_DEFAULT_ZOOM}
       scrollWheelZoom
       className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
+      zoomControl={false}
     >
+      {/* Tiles light de CartoDB Positron (datos OSM, render claro minimalista) */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        subdomains="abcd"
+        maxZoom={19}
       />
       <ClickCapture onPick={onMapClick} enabled={selectMode} />
       <CenterOnUserLocation userLocation={userLocation} />
@@ -276,11 +279,7 @@ export default function Map({
       )}
 
       {points.map((p) => (
-        <Marker
-          key={p.id}
-          position={[p.lat, p.lng]}
-          icon={buildMarkerIcon(p.confirmation_count)}
-        >
+        <Marker key={p.id} position={[p.lat, p.lng]} icon={buildMarkerIcon(p)}>
           <Popup>
             <PointPopup point={p} onConfirm={onConfirm} />
           </Popup>

@@ -50,34 +50,51 @@ export default function ShareWithAuthority({
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 p-2 sm:p-4">
-      <div className="flex w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl max-h-[95vh] sm:max-h-[90vh]">
-        <div className="flex items-start justify-between border-b border-slate-200 px-4 py-3 sm:px-5">
-          <div>
-            <h2 className="text-lg font-semibold text-brand">
-              Compartir con autoridad
-            </h2>
-            <p className="text-xs text-slate-500">
-              Envia este reporte a una institucion para que sea evaluado y,
-              de ser procedente, intervenido.
-            </p>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/30 p-2 backdrop-blur-sm sm:p-4">
+      <div className="flex max-h-[95vh] w-full max-w-2xl flex-col rounded-2xl bg-surface-card shadow-float ring-1 ring-surface-border sm:max-h-[90vh]">
+        <div className="flex items-start justify-between border-b border-surface-border px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-subtle text-xl" aria-hidden>
+              📧
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-fg">
+                Compartir con autoridad
+              </h2>
+              <p className="text-xs text-fg-muted">
+                Envia este reporte a una institucion.
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-md p-1.5 text-fg-muted hover:bg-surface-raised hover:text-fg"
           >
-            x
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
 
         <div className="space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
               Destinatarios sugeridos
             </h3>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="mt-1 text-xs text-fg-muted">
               Tu eliges a quien enviar. No mandamos el correo por ti.
             </p>
             <div className="mt-2 space-y-2">
@@ -88,14 +105,14 @@ export default function ShareWithAuthority({
                     type="button"
                     key={r.name}
                     onClick={() => setSelected(isSelected ? null : r)}
-                    className={`block w-full rounded border p-3 text-left text-sm transition-colors ${
+                    className={`block w-full rounded-lg border p-3 text-left text-sm transition-colors ${
                       isSelected
-                        ? 'border-brand-accent bg-red-50'
-                        : 'border-slate-200 bg-white hover:bg-slate-50'
+                        ? 'border-brand bg-brand-subtle'
+                        : 'border-surface-border bg-surface-card hover:bg-surface-raised'
                     }`}
                   >
-                    <div className="font-medium text-slate-800">{r.name}</div>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                    <div className="font-medium text-fg">{r.name}</div>
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-muted">
                       {r.email && <span>Correo: {r.email}</span>}
                       {r.phone && <span>Tel: {r.phone}</span>}
                       {r.website && (
@@ -103,7 +120,7 @@ export default function ShareWithAuthority({
                           href={r.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-brand-accent hover:underline"
+                          className="text-brand hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Sitio web
@@ -111,9 +128,7 @@ export default function ShareWithAuthority({
                       )}
                     </div>
                     {r.note && (
-                      <div className="mt-1 text-xs text-slate-500">
-                        {r.note}
-                      </div>
+                      <div className="mt-1 text-xs text-fg-dim">{r.note}</div>
                     )}
                   </button>
                 );
@@ -122,38 +137,38 @@ export default function ShareWithAuthority({
           </section>
 
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
               Mensaje
             </h3>
-            <div className="mt-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">
-              <div className="font-medium">{message.subject}</div>
-              <pre className="mt-2 whitespace-pre-wrap font-sans text-xs leading-relaxed text-slate-700">
+            <div className="mt-2 rounded-lg border border-surface-border bg-surface-raised px-3 py-2 text-sm">
+              <div className="font-medium text-fg">{message.subject}</div>
+              <pre className="mt-2 whitespace-pre-wrap font-sans text-xs leading-relaxed text-fg/90">
                 {message.body}
               </pre>
             </div>
           </section>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 sm:px-5">
-          <p className="text-xs text-slate-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-border px-4 py-3 sm:px-5">
+          <p className="text-xs text-fg-muted">
             {selected
               ? `Listo para enviar a: ${selected.name}`
-              : 'Selecciona un destinatario para abrir tu correo, o solo copia el mensaje.'}
+              : 'Selecciona un destinatario o solo copia el mensaje.'}
           </p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleCopy}
-              className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-fg hover:bg-surface-raised"
             >
               {copied ? '✓ Copiado' : 'Copiar mensaje'}
             </button>
             <a
               href={mailtoLink()}
-              className={`rounded px-4 py-2 text-sm font-medium ${
+              className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-card ${
                 selected
-                  ? 'bg-brand-accent text-white hover:bg-red-700'
-                  : 'bg-slate-200 text-slate-400 pointer-events-none'
+                  ? 'bg-brand text-white hover:bg-brand-accent'
+                  : 'pointer-events-none bg-surface-raised text-fg-dim'
               }`}
               aria-disabled={!selected}
             >

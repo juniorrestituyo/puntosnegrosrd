@@ -153,12 +153,12 @@ export default function AdminPanel() {
             value={secretInput}
             onChange={(e) => setSecretInput(e.target.value)}
             placeholder="ADMIN_SECRET"
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand-accent focus:outline-none"
+            className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
             autoFocus
           />
           <button
             type="submit"
-            className="w-full rounded bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            className="w-full rounded bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-accent"
           >
             Entrar
           </button>
@@ -343,7 +343,7 @@ function AdminRow({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded bg-brand-accent px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-60"
+            className="rounded bg-brand px-3 py-1 text-xs font-semibold text-white hover:bg-brand-accent disabled:opacity-60"
           >
             {submitting ? 'Guardando...' : 'Aplicar'}
           </button>
