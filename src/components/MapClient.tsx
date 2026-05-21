@@ -45,7 +45,10 @@ export default function MapClient() {
   const [banner, setBanner] = useState<BannerMessage | null>(null);
 
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  // Tracking arranca en true: queremos auto-focus en la ubicacion del
+  // usuario al entrar al mapa. Si rechaza el permiso, el handler de
+  // error lo regresa a false y muestra un banner.
+  const [isTrackingLocation, setIsTrackingLocation] = useState(true);
   const [isAcquiringLocation, setIsAcquiringLocation] = useState(false);
 
   // Punto seleccionado para mostrar el bottom sheet con su detalle.
