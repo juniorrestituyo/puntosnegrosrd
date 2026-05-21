@@ -322,18 +322,30 @@ export default function MapClient() {
         onConfirm={handleConfirm}
       />
 
-      {/* Hamburger flotante con navegacion del sitio */}
-      {!chromeHidden && <SideDrawer current="mapa" />}
+      {/* Hamburger y filtros: en estados focales (sheet abierto, modo
+          seleccion, etc.) NO desaparecen — solo se atenuan visualmente
+          y se desactiva el pointer para que parezcan estar "debajo" del
+          sombreado del spotlight. */}
+      <div
+        className={`transition-opacity duration-300 ${
+          chromeHidden ? 'pointer-events-none opacity-40' : 'opacity-100'
+        }`}
+      >
+        <SideDrawer current="mapa" />
+      </div>
 
-      {/* Boton de filtros (independiente del drawer) en top-right */}
-      {!chromeHidden && (
+      <div
+        className={`transition-opacity duration-300 ${
+          chromeHidden ? 'pointer-events-none opacity-40' : 'opacity-100'
+        }`}
+      >
         <FilterPanel
           state={filters}
           total={points.length}
           shown={filteredPoints.length}
           onChange={setFilters}
         />
-      )}
+      </div>
 
       {/* Banner de modo seleccion */}
       {reportMode === 'select-on-map' && (

@@ -235,7 +235,21 @@ function FocusableMarker({
       icon={icon}
       eventHandlers={{
         click: () => {
-          map.panTo([point.lat, point.lng], { animate: true, duration: 0.6 });
+          // Pan offsetado: en vez de dejar el marker en el centro
+          // del viewport (donde lo taparia el bottom sheet), lo
+          // dejamos en el ~30% superior. Asi siempre queda iluminado
+          // por el spotlight con espacio claro arriba del sheet.
+          const containerPt = map.latLngToContainerPoint([
+            point.lat,
+            point.lng,
+          ]);
+          const size = map.getSize();
+          const desiredX = size.x / 2;
+          const desiredY = size.y * 0.3;
+          map.panBy(
+            [containerPt.x - desiredX, containerPt.y - desiredY],
+            { animate: true, duration: 0.6 }
+          );
           onSelect(point);
         },
       }}
