@@ -28,7 +28,7 @@ type ConfirmResult = { ok: true } | { ok: false; message: string };
 
 // Por debajo de este zoom mostramos solo un dot pequeno (vista regional).
 // Por encima, teardrop completo con badge de confirmaciones.
-const FAR_ZOOM_THRESHOLD = 15;
+const FAR_ZOOM_THRESHOLD = 16;
 
 type MarkerMode = 'dot' | 'teardrop';
 
