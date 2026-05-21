@@ -22,10 +22,6 @@ Endpoints (cuando estén disponibles):
 - `GET /api/export.csv`
 - `GET /api/export.geojson`
 
-## Setup
-
-Ver [SETUP.md](./SETUP.md).
-
 ## Privacidad
 
 - Sin login obligatorio para reportar

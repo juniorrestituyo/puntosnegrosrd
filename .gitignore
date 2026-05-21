@@ -39,3 +39,7 @@ next-env.d.ts
 
 # claude code (user-specific permissions y settings locales)
 .claude/
+
+# docs operacionales con info especifica del setup (mantener locales)
+SETUP.md
+DEPLOY.md
