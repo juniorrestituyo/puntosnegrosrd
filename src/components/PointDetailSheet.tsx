@@ -94,7 +94,7 @@ export default function PointDetailSheet({
         </div>
 
         {p && (
-          <div className="px-4 pt-3 pb-3">
+          <div className="px-4 pt-3 pb-5">
             <div className="flex items-start gap-3">
               {/* Pin grande con color del marker */}
               {accent && (
@@ -166,7 +166,7 @@ export default function PointDetailSheet({
             </p>
 
             {/* Contador grande de confirmaciones */}
-            <div className="mt-4 flex items-center gap-3 rounded-2xl bg-brand-subtle px-4 py-3 ring-1 ring-brand-soft">
+            <div className="mt-5 flex items-center gap-4 rounded-2xl bg-brand-subtle px-5 py-4 ring-1 ring-brand-soft">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-card">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -197,7 +197,7 @@ export default function PointDetailSheet({
             </div>
 
             {/* Acciones grandes lado a lado */}
-            <div className="mt-3 flex gap-2.5">
+            <div className="mt-4 flex gap-3">
               <button
                 type="button"
                 onClick={handleConfirm}
