@@ -324,15 +324,21 @@ export default function OnboardingTour() {
           </p>
         </div>
 
-        {/* Footer: Atras + Saltar + Siguiente/Comenzar */}
+        {/* Footer: Atras + Saltar + Siguiente/Comenzar
+            Los tres botones comparten shape (rounded-lg), padding y
+            font-weight para que se sientan emparejados visualmente.
+            La jerarquia la marca el color de fondo:
+              - Siguiente/Comenzar: bg-brand (primario, accion principal)
+              - Atras / Saltar: bg-surface-raised + ring (secundarios,
+                tangibles pero claramente no la accion primaria). */}
         <div className="flex items-center justify-between gap-3 border-t border-surface-border px-5 py-4">
           <button
             type="button"
             onClick={back}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
               isFirst
                 ? 'invisible'
-                : 'text-fg-muted hover:bg-surface-raised hover:text-fg'
+                : 'bg-surface-raised text-fg ring-1 ring-surface-border hover:bg-surface-border'
             }`}
             aria-hidden={isFirst}
             tabIndex={isFirst ? -1 : 0}
@@ -342,7 +348,7 @@ export default function OnboardingTour() {
           <button
             type="button"
             onClick={finish}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-surface-raised hover:text-fg"
+            className="rounded-lg bg-surface-raised px-4 py-2 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border"
           >
             Saltar
           </button>
