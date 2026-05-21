@@ -159,6 +159,54 @@ function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
 }
 
 /**
+ * Oscurece el mapa con un radial-gradient dejando un circulo de luz
+ * alrededor del point seleccionado. Sigue la posicion del marker en
+ * pixel-space cuando el usuario pana o zoomea con el sheet abierto.
+ */
+function SpotlightOverlay({ point }: { point: Point | null }) {
+  const map = useMap();
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!point) {
+      return;
+    }
+    function update() {
+      if (!point) return;
+      const px = map.latLngToContainerPoint([point.lat, point.lng]);
+      setPos({ x: px.x, y: px.y });
+    }
+    update();
+    map.on('move', update);
+    map.on('zoom', update);
+    map.on('resize', update);
+    return () => {
+      map.off('move', update);
+      map.off('zoom', update);
+      map.off('resize', update);
+    };
+  }, [point, map]);
+
+  const visible = !!point && !!pos;
+
+  return (
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute inset-0 z-[800] transition-opacity duration-300 ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+      style={
+        pos
+          ? {
+              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 65px, rgba(15,23,42,0.6) 220px)`,
+            }
+          : undefined
+      }
+    />
+  );
+}
+
+/**
  * Marker que al clic hace pan al punto y notifica al padre para que
  * abra el bottom sheet con el detalle. Ya no usa Popup de Leaflet.
  */
@@ -199,6 +247,7 @@ interface MapProps {
   points: Point[];
   selectMode: boolean;
   userLocation: UserLocation | null;
+  spotlightPoint: Point | null;
   onMapClick: (lat: number, lng: number) => void;
   onPointSelect: (point: Point) => void;
   onBackgroundClick: () => void;
@@ -208,6 +257,7 @@ export default function Map({
   points,
   selectMode,
   userLocation,
+  spotlightPoint,
   onMapClick,
   onPointSelect,
   onBackgroundClick,
@@ -267,6 +317,8 @@ export default function Map({
           zoom={zoom}
         />
       ))}
+
+      <SpotlightOverlay point={spotlightPoint} />
     </MapContainer>
   );
 }

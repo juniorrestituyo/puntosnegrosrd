@@ -308,6 +308,7 @@ export default function MapClient() {
         points={filteredPoints}
         selectMode={reportMode === 'select-on-map'}
         userLocation={userLocation}
+        spotlightPoint={selectedPoint}
         onMapClick={handleMapClick}
         onPointSelect={setSelectedPoint}
         onBackgroundClick={() => setSelectedPoint(null)}
