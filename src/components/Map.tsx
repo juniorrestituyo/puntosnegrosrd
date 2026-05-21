@@ -356,14 +356,10 @@ export default function Map({
       className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
       zoomControl={false}
     >
-      {/* Tiles de CartoDB Voyager — datos OSM con paleta tipo Waze:
-          avenidas principales amarillas, parques verdes vivos,
-          agua azul fuerte, calles regulares en gris claro. Mantiene
-          el look minimalista de Positron pero con colores naturales
-          en lugar de la paleta lavada. Misma atribucion, sin API key. */}
+      {/* Tiles light de CartoDB Positron (datos OSM, render claro minimalista) */}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         subdomains="abcd"
         maxZoom={19}
       />

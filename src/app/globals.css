@@ -22,13 +22,14 @@ body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Boost leve de saturacion sobre el pane de tiles. Voyager ya viene
-   con paleta tipo Waze (avenidas amarillas, parques verdes, agua
-   azul), asi que solo subimos un toque para que los verdes saturen
-   mas en pantalla. Si subes mucho mas, las avenidas se ven neon.
-   No afecta markers, controles ni overlays (viven en panes separados). */
+/* Boost de saturacion + contraste leve solo sobre el pane de tiles
+   (parques, agua, vegetacion). No afecta markers, controles ni
+   overlays porque viven en panes separados. Positron es muy
+   desaturado por diseno; con saturate alto + un toque de contrast
+   los verdes de los parques de RD se ven "verdes de verdad" sobre
+   el Positron-light sin cambiar la paleta minimalista general. */
 .leaflet-tile-pane {
-  filter: saturate(1.25);
+  filter: saturate(3.4) contrast(1.08);
 }
 
 .leaflet-popup-content-wrapper {
