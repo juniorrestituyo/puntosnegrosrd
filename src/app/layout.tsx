@@ -1,5 +1,15 @@
 import type { Metadata, Viewport } from 'next';
+import { Space_Grotesk } from 'next/font/google';
 import './globals.css';
+
+// Fuente del logo / wordmark "PuntosNegrosRD".
+// Space Grotesk: geometrica, moderna, con personalidad sin ser trendy.
+const logoFont = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['500', '700'],
+  variable: '--font-logo',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'PuntosNegrosRD - Mapa ciudadano de riesgo vial',
@@ -47,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={logoFont.variable}>
       <body className="min-h-screen bg-surface-base text-fg antialiased">
         {children}
       </body>

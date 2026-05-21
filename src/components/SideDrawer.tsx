@@ -85,15 +85,12 @@ export default function SideDrawer({ current }: SideDrawerProps) {
         }`}
         aria-hidden={!open}
       >
-        <div className="flex items-center gap-3 border-b border-surface-border p-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-card">
-            <span className="text-base font-black tracking-tight">PN</span>
-          </div>
+        <div className="flex items-start justify-between gap-3 border-b border-surface-border p-5">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-base font-bold tracking-tight text-fg">
-              PuntosNegrosRD
+            <h2 className="truncate font-logo text-xl font-bold tracking-tight text-fg">
+              Puntos<span className="text-brand">Negros</span>RD
             </h2>
-            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-fg-muted">
               Mapa ciudadano
             </p>
           </div>
