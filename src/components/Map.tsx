@@ -217,9 +217,8 @@ function PointPopup({
 }
 
 /**
- * Marker que al clic hace flyTo y asegura un zoom minimo street-level
- * para que el usuario vea el contexto del punto. Si el usuario ya
- * esta mas cerca, respeta su zoom.
+ * Marker que al clic hace pan al punto sin cambiar el zoom del usuario.
+ * Solo centra el viewport en el marker para que el popup quede visible.
  */
 function FocusableMarker({
   point,
@@ -235,8 +234,7 @@ function FocusableMarker({
       icon={buildMarkerIcon(point)}
       eventHandlers={{
         click: () => {
-          const targetZoom = Math.max(map.getZoom(), 17);
-          map.flyTo([point.lat, point.lng], targetZoom, { duration: 0.6 });
+          map.panTo([point.lat, point.lng], { animate: true, duration: 0.6 });
         },
       }}
     >
