@@ -64,7 +64,7 @@ function buildTeardropIcon(point: Point): L.DivIcon {
   const display =
     point.confirmation_count > 99 ? '99+' : String(point.confirmation_count);
   const fontSize =
-    display.length >= 3 ? 8 : display.length === 2 ? 10 : 12;
+    display.length >= 3 ? 7 : display.length === 2 ? 9 : 10;
 
   const badge = hasVotes
     ? `<span style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:${fontSize}px;font-weight:800;color:${c.text};line-height:1;">${display}</span>`
