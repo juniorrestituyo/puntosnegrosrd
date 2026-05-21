@@ -305,7 +305,7 @@ export default function MapClient() {
     selectedPoint !== null;
 
   return (
-    <div className="relative h-screen w-full bg-surface-base">
+    <div className="relative h-dvh w-full bg-surface-base">
       <Map
         points={filteredPoints}
         selectMode={reportMode === 'select-on-map'}

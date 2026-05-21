@@ -51,6 +51,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  // viewportFit: 'cover' permite que el contenido se extienda detras
+  // de las barras del sistema (gesture bar en Android, notch en iOS).
+  // Sin esto la PWA deja una franja vacia abajo en Android.
+  viewportFit: 'cover',
   themeColor: '#2563eb',
 };
 
