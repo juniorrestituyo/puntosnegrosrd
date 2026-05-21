@@ -8,28 +8,9 @@
 
 html,
 body {
-  /* 100dvh refleja la altura REAL del viewport en cover mode
-     (incluye el area detras del gesture bar / nav bar de Android).
-     Fallback a 100% para navegadores viejos que no soportan dvh. */
   height: 100%;
-  height: 100dvh;
-  margin: 0;
-  padding: 0;
-  color: #0f172a;
-  /* overscroll-behavior: none evita el bounce/scroll-chaining en mobile
-     que a veces revela la franja del bg de html debajo del contenido. */
-  overscroll-behavior: none;
-}
-
-/* IMPORTANTE: el html lleva fondo negro para que la franja que Android
-   pinta entre el WebView y la barra de gestos (cuando viewport-fit
-   cover no extiende del todo) se vea coherente con el sistema, no
-   como un parche blanco. El body mantiene el fondo claro de la app. */
-html {
-  background: #000000;
-}
-body {
   background: #f8fafc;
+  color: #0f172a;
 }
 
 /* ============================================================
