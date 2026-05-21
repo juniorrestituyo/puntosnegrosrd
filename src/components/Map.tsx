@@ -28,7 +28,7 @@ type ConfirmResult = { ok: true } | { ok: false; message: string };
 
 // Por debajo de este zoom mostramos solo un dot pequeno (vista regional).
 // Por encima, teardrop completo con badge de confirmaciones.
-const FAR_ZOOM_THRESHOLD = 16;
+const FAR_ZOOM_THRESHOLD = 14;
 
 type MarkerMode = 'dot' | 'teardrop';
 
@@ -64,10 +64,10 @@ function buildTeardropIcon(point: Point): L.DivIcon {
   const display =
     point.confirmation_count > 99 ? '99+' : String(point.confirmation_count);
   const fontSize =
-    display.length >= 3 ? 6.5 : display.length === 2 ? 8.5 : 10;
+    display.length >= 3 ? 8 : display.length === 2 ? 10 : 12;
 
   const badge = hasVotes
-    ? `<span style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 2px rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:${fontSize}px;font-weight:800;color:${c.text};line-height:1;">${display}</span>`
+    ? `<span style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:${fontSize}px;font-weight:800;color:${c.text};line-height:1;">${display}</span>`
     : '';
 
   return L.divIcon({
