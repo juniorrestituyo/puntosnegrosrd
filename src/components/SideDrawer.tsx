@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-type CurrentKey = 'mapa' | 'datos' | 'metodologia' | 'acerca';
+type CurrentKey = 'mapa' | 'impacto' | 'datos' | 'metodologia' | 'acerca';
 
 const NAV_LINKS: { href: string; key: CurrentKey; label: string }[] = [
   { href: '/', key: 'mapa', label: 'Mapa' },
+  { href: '/metricas', key: 'impacto', label: 'Impacto' },
   { href: '/datos-abiertos', key: 'datos', label: 'Datos abiertos' },
   { href: '/metodologia', key: 'metodologia', label: 'Metodologia' },
   { href: '/acerca-de', key: 'acerca', label: 'Acerca de' },
