@@ -17,8 +17,22 @@ export const metadata: Metadata = {
   title: 'PuntosNegrosRD - Mapa ciudadano de riesgo vial',
   description:
     'Plataforma ciudadana abierta para reportar puntos negros viales en la Republica Dominicana. Datos abiertos bajo licencia CC-BY 4.0.',
+  // metadataBase determina el origen absoluto para URLs relativas en
+  // openGraph.images, twitter.images, etc. Si Facebook/WhatsApp/Telegram
+  // ven una URL no-absoluta o que apunta a localhost, el preview falla
+  // y caen al favicon.
+  //
+  // Resolucion en cascada:
+  // 1. NEXT_PUBLIC_SITE_URL — env var explicita (la canonica si esta).
+  // 2. VERCEL_URL — auto-inyectado por Vercel en cada deploy con el
+  //    dominio actual (sin protocolo). Funciona en preview y prod sin
+  //    que tengamos que configurar nada en el dashboard.
+  // 3. http://localhost:3000 — fallback solo para `npm run dev`.
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+    process.env.NEXT_PUBLIC_SITE_URL ??
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000')
   ),
   manifest: '/manifest.webmanifest',
   icons: {
