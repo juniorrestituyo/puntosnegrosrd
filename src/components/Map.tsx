@@ -198,7 +198,7 @@ function SpotlightOverlay({ point }: { point: Point | null }) {
       style={
         pos
           ? {
-              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 65px, rgba(15,23,42,0.6) 220px)`,
+              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 32px, rgba(15,23,42,0.6) 110px)`,
             }
           : undefined
       }
