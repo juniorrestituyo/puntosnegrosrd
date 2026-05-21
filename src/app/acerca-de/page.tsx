@@ -52,11 +52,12 @@ export default function AcercaDePage() {
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
             <p>
               Este sitio no es un proyecto oficial del Instituto Nacional de
-              Tránsito y Transporte Terrestre (INTRANT), ni de la Autoridad
-              Metropolitana de Transporte (AMET), ni de ninguna institución
-              pública o privada. Es un esfuerzo ciudadano independiente que
-              adopta la taxonomía técnica del INTRANT para que los datos sean
-              directamente cruzables con análisis institucionales.
+              Tránsito y Transporte Terrestre (INTRANT), ni de la Dirección
+              General de Seguridad de Tránsito y Transporte Terrestre
+              (DIGESETT), ni de ninguna institución pública o privada. Es un
+              esfuerzo ciudadano independiente que adopta la taxonomía
+              técnica del INTRANT para que los datos sean directamente
+              cruzables con análisis institucionales.
             </p>
           </div>
         </section>

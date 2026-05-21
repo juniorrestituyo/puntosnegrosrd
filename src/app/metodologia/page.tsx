@@ -205,7 +205,7 @@ export default function MetodologiaPage() {
                   <strong className="font-semibold text-fg">
                     Sin verificación oficial:
                   </strong>{' '}
-                  ningún reporte se valida con AMET, 9-1-1 ni inspección
+                  ningún reporte se valida con DIGESETT, 9-1-1 ni inspección
                   técnica.
                 </span>
               </li>
