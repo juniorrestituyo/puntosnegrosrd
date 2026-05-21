@@ -78,6 +78,26 @@ body {
 }
 
 /* ============================================================
+   Estilo de <code> inline (pill brand)
+   ============================================================ */
+
+/* Solo afecta a <code> que NO esta dentro de un <pre>. Los <pre><code>
+   conservan su look de bloque. */
+:not(pre) > code {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: #eff6ff; /* brand-subtle */
+  color: #1d4ed8; /* brand-accent */
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ============================================================
    Transicion de entrada entre paginas (fade only)
    ============================================================ */
 
