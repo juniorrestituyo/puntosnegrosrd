@@ -31,9 +31,9 @@ export default function AcercaDePage() {
               puede reportar puntos de riesgo vial.
             </p>
             <p>
-              El proyecto nace de una observación simple: los vecinos saben
-              cuáles esquinas matan en su barrio, pero ese conocimiento vive
-              fragmentado en grupos de WhatsApp y conversaciones cotidianas.
+              El proyecto nace de una observación simple: la ciudadanía conoce
+              cotidianamente cuáles puntos viales son peligrosos, pero ese
+              conocimiento vive disperso, sin un canal público que lo agregue.
               PuntosNegrosRD lo convierte en un mapa público, georreferenciado
               y descargable como dataset abierto.
             </p>
