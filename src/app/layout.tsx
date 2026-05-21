@@ -13,6 +13,32 @@ const logoFont = Space_Grotesk({
   display: 'swap',
 });
 
+/**
+ * Resuelve el origen absoluto para Open Graph / Twitter / favicon en
+ * cascada defensiva:
+ *
+ *  1. NEXT_PUBLIC_SITE_URL — env var explicita. IGNORADA si apunta a
+ *     localhost (caso real: el SETUP.md sugeria 'http://localhost:3000'
+ *     para dev y se quedo asi en Vercel — pero localhost no es accesible
+ *     desde los crawlers de Facebook/WhatsApp/Telegram).
+ *  2. VERCEL_ENV === 'production' → URL canonica hardcoded.
+ *  3. VERCEL_URL — auto-inyectada por Vercel (preview deploys).
+ *  4. http://localhost:3000 — solo `npm run dev`.
+ */
+function resolveMetadataBase(): URL {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit && !explicit.includes('localhost')) {
+    return new URL(explicit);
+  }
+  if (process.env.VERCEL_ENV === 'production') {
+    return new URL('https://puntosnegrosrd.vercel.app');
+  }
+  if (process.env.VERCEL_URL) {
+    return new URL(`https://${process.env.VERCEL_URL}`);
+  }
+  return new URL('http://localhost:3000');
+}
+
 export const metadata: Metadata = {
   title: 'PuntosNegrosRD - Mapa ciudadano de riesgo vial',
   description:
@@ -21,23 +47,7 @@ export const metadata: Metadata = {
   // openGraph.images, twitter.images, etc. Si Facebook/WhatsApp/Telegram
   // ven una URL no-absoluta o que apunta a localhost, el preview falla
   // y caen al favicon.
-  //
-  // Resolucion en cascada:
-  // 1. NEXT_PUBLIC_SITE_URL — env var explicita (la canonica si esta).
-  // 2. VERCEL_ENV === 'production' → URL canonica hardcoded. Mas
-  //    confiable que VERCEL_URL en build time (que no siempre llega
-  //    como esperado).
-  // 3. VERCEL_URL — para preview deploys, asi cada PR tiene su propio
-  //    og:image apuntando a su propio deploy.
-  // 4. http://localhost:3000 — fallback solo para `npm run dev`.
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ??
-      (process.env.VERCEL_ENV === 'production'
-        ? 'https://puntosnegrosrd.vercel.app'
-        : process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : 'http://localhost:3000')
-  ),
+  metadataBase: resolveMetadataBase(),
   manifest: '/manifest.webmanifest',
   icons: {
     // Iconos para favicon / chrome tab / android home screen (PWA).
