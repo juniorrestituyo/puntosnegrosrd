@@ -3,7 +3,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Circle,
   MapContainer,
@@ -20,7 +20,6 @@ import {
   RD_CENTER,
   RD_DEFAULT_ZOOM,
   STATUS_LABELS,
-  emojiForPoint,
 } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, UserLocation } from '@/lib/types';
@@ -128,11 +127,6 @@ function PointPopup({
   );
   const [message, setMessage] = useState<string | null>(null);
 
-  const emoji = useMemo(
-    () => emojiForPoint(point.category, point.subcategory),
-    [point.category, point.subcategory]
-  );
-
   async function handleClick() {
     setState('loading');
     setMessage(null);
@@ -147,23 +141,15 @@ function PointPopup({
 
   return (
     <div className="min-w-[220px] space-y-2 text-xs">
-      <div className="flex items-center gap-2">
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-xl"
-          aria-hidden
-        >
-          {emoji}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-fg">
-            {CATEGORIES[point.category].label}
-          </div>
-          {point.subcategory && (
-            <div className="truncate text-[11px] text-fg-muted">
-              {point.subcategory}
-            </div>
-          )}
+      <div>
+        <div className="text-sm font-semibold text-fg">
+          {CATEGORIES[point.category].label}
         </div>
+        {point.subcategory && (
+          <div className="text-[11px] text-fg-muted">
+            {point.subcategory}
+          </div>
+        )}
       </div>
 
       {point.photo_url && (

@@ -51,9 +51,22 @@ export default function ReportFAB({
             onClick={() => pick(onUseCurrentLocation)}
             className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-raised"
           >
-            <span className="mt-0.5 shrink-0 text-xl" aria-hidden>
-              📍
-            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mt-0.5 shrink-0 text-brand"
+              aria-hidden
+            >
+              <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" />
+              <circle cx="12" cy="9" r="2.5" />
+            </svg>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-fg">
                 Usar mi ubicacion
@@ -70,9 +83,26 @@ export default function ReportFAB({
             onClick={() => pick(onSelectOnMap)}
             className="flex w-full items-start gap-3 border-t border-surface-divider px-4 py-3 text-left hover:bg-surface-raised"
           >
-            <span className="mt-0.5 shrink-0 text-xl" aria-hidden>
-              🎯
-            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mt-0.5 shrink-0 text-brand"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="9" />
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+              <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+            </svg>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-fg">
                 Seleccionar en el mapa

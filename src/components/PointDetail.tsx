@@ -3,11 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-import {
-  CATEGORIES,
-  STATUS_LABELS,
-  emojiForPoint,
-} from '@/lib/constants';
+import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
 import ShareWithAuthority from './ShareWithAuthority';
 import SideDrawer from './SideDrawer';
@@ -38,8 +34,6 @@ export default function PointDetail({
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
   const [shareAuthorityOpen, setShareAuthorityOpen] = useState(false);
-
-  const emoji = emojiForPoint(point.category, point.subcategory);
 
   async function handleConfirm() {
     setConfirmState('loading');
@@ -95,22 +89,12 @@ export default function PointDetail({
         <header className="mb-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-3">
-                <span
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-subtle text-2xl"
-                  aria-hidden
-                >
-                  {emoji}
-                </span>
-                <div>
-                  <h1 className="text-xl font-bold text-fg sm:text-2xl">
-                    {CATEGORIES[point.category].label}
-                  </h1>
-                  {point.subcategory && (
-                    <p className="text-sm text-fg-muted">{point.subcategory}</p>
-                  )}
-                </div>
-              </div>
+              <h1 className="text-xl font-bold text-fg sm:text-2xl">
+                {CATEGORIES[point.category].label}
+              </h1>
+              {point.subcategory && (
+                <p className="mt-1 text-sm text-fg-muted">{point.subcategory}</p>
+              )}
               <p className="mt-2 text-xs text-fg-muted sm:text-sm">
                 Reportado el {formatDate(point.created_at)}
               </p>
@@ -218,7 +202,7 @@ export default function PointDetail({
               onClick={() => setShareAuthorityOpen(true)}
               className="rounded-lg border border-brand bg-brand-subtle px-4 py-2 text-sm font-semibold text-brand hover:bg-brand-soft"
             >
-              📧 Compartir con autoridad
+              Compartir con autoridad
             </button>
           </div>
 

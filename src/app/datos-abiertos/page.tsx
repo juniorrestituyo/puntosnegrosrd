@@ -16,7 +16,7 @@ export default function DatosAbiertosPage() {
 
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-20 sm:px-6 sm:pt-24">
         <h1 className="text-3xl font-bold tracking-tight text-fg">
-          📊 Datos abiertos
+          Datos abiertos
         </h1>
         <p className="mt-2 text-fg-muted">
           Todos los reportes ciudadanos se publican como dataset descargable
@@ -40,7 +40,7 @@ export default function DatosAbiertosPage() {
               download
               className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-card transition-shadow hover:border-brand hover:shadow-float"
             >
-              <div className="font-semibold text-brand">📄 CSV</div>
+              <div className="font-semibold text-brand">CSV</div>
               <p className="mt-1 text-sm text-fg-muted">
                 Apto para Excel, Google Sheets, análisis tabular.
               </p>
@@ -54,7 +54,7 @@ export default function DatosAbiertosPage() {
               download
               className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-card transition-shadow hover:border-brand hover:shadow-float"
             >
-              <div className="font-semibold text-brand">🗺️ GeoJSON</div>
+              <div className="font-semibold text-brand">GeoJSON</div>
               <p className="mt-1 text-sm text-fg-muted">
                 Apto para QGIS, ArcGIS, Mapbox, Leaflet.
               </p>

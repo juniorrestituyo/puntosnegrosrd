@@ -53,18 +53,13 @@ export default function ShareWithAuthority({
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/30 p-2 backdrop-blur-sm sm:p-4">
       <div className="flex max-h-[95vh] w-full max-w-2xl flex-col rounded-2xl bg-surface-card shadow-float ring-1 ring-surface-border sm:max-h-[90vh]">
         <div className="flex items-start justify-between border-b border-surface-border px-4 py-3 sm:px-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-subtle text-xl" aria-hidden>
-              📧
-            </span>
-            <div>
-              <h2 className="text-base font-semibold text-fg">
-                Compartir con autoridad
-              </h2>
-              <p className="text-xs text-fg-muted">
-                Envia este reporte a una institucion.
-              </p>
-            </div>
+          <div>
+            <h2 className="text-base font-semibold text-fg">
+              Compartir con autoridad
+            </h2>
+            <p className="text-xs text-fg-muted">
+              Envia este reporte a una institucion.
+            </p>
           </div>
           <button
             type="button"

@@ -15,7 +15,7 @@ export default function AcercaDePage() {
 
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-20 sm:px-6 sm:pt-24">
         <h1 className="text-3xl font-bold tracking-tight text-fg">
-          ℹ️ Acerca de PuntosNegrosRD
+          Acerca de PuntosNegrosRD
         </h1>
 
         <section className="mt-6 space-y-3 text-fg/90">

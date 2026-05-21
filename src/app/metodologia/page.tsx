@@ -4,9 +4,7 @@ import Link from 'next/link';
 import SideDrawer from '@/components/SideDrawer';
 import {
   CATEGORIES,
-  CATEGORY_EMOJI,
   STATUS_LABELS,
-  SUBCATEGORY_EMOJI,
   type CategoryKey,
 } from '@/lib/constants';
 
@@ -23,7 +21,7 @@ export default function MetodologiaPage() {
 
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-20 sm:px-6 sm:pt-24">
         <h1 className="text-3xl font-bold tracking-tight text-fg">
-          📋 Metodología
+          Metodología
         </h1>
         <p className="mt-2 text-fg-muted">
           Cómo se recolecta la información, qué taxonomía usamos, qué hacemos
@@ -63,22 +61,14 @@ export default function MetodologiaPage() {
                 key={key}
                 className="rounded-2xl border border-surface-border bg-surface-card p-4 text-sm shadow-card"
               >
-                <div className="flex items-center gap-2">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-subtle text-2xl" aria-hidden>
-                    {CATEGORY_EMOJI[key]}
-                  </span>
-                  <div className="font-semibold text-fg">{value.label}</div>
-                </div>
+                <div className="font-semibold text-fg">{value.label}</div>
                 <p className="mt-2 text-fg/90">{value.description}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {value.subcategories.map((sc) => (
                     <span
                       key={sc}
-                      className="inline-flex items-center gap-1 rounded-full bg-surface-raised px-2 py-0.5 text-xs text-fg-muted"
+                      className="inline-flex items-center rounded-full bg-surface-raised px-2 py-0.5 text-xs text-fg-muted"
                     >
-                      {SUBCATEGORY_EMOJI[sc] && (
-                        <span aria-hidden>{SUBCATEGORY_EMOJI[sc]}</span>
-                      )}
                       {sc}
                     </span>
                   ))}

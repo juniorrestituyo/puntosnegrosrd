@@ -3,12 +3,7 @@
 import { useState } from 'react';
 import { z } from 'zod';
 
-import {
-  CATEGORIES,
-  CATEGORY_EMOJI,
-  SUBCATEGORY_EMOJI,
-  type CategoryKey,
-} from '@/lib/constants';
+import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 import { processImage } from '@/lib/image-process';
 import type { PointInput } from '@/lib/types';
 
@@ -56,9 +51,6 @@ export default function ReportForm({
   const subcategoryOptions = CATEGORIES[category].subcategories;
   const displayedError = serverError ?? localError;
   const busy = submitting || photoUploading;
-  const currentEmoji = subcategory
-    ? (SUBCATEGORY_EMOJI[subcategory] ?? CATEGORY_EMOJI[category])
-    : CATEGORY_EMOJI[category];
 
   async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -137,21 +129,13 @@ export default function ReportForm({
         className="max-h-[95vh] w-full max-w-md overflow-y-auto rounded-2xl bg-surface-card p-4 shadow-float ring-1 ring-surface-border sm:p-6"
       >
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <span
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-subtle text-2xl"
-              aria-hidden
-            >
-              {currentEmoji}
-            </span>
-            <div>
-              <h2 className="text-base font-semibold text-fg">
-                Reportar punto de riesgo
-              </h2>
-              <p className="mt-0.5 text-xs text-fg-muted">
-                {lat.toFixed(5)}, {lng.toFixed(5)}
-              </p>
-            </div>
+          <div>
+            <h2 className="text-base font-semibold text-fg">
+              Reportar punto de riesgo
+            </h2>
+            <p className="mt-0.5 text-xs text-fg-muted">
+              {lat.toFixed(5)}, {lng.toFixed(5)}
+            </p>
           </div>
           <button
             type="button"
@@ -194,7 +178,7 @@ export default function ReportForm({
             >
               {Object.entries(CATEGORIES).map(([key, value]) => (
                 <option key={key} value={key}>
-                  {CATEGORY_EMOJI[key as CategoryKey]} {value.label}
+                  {value.label}
                 </option>
               ))}
             </select>
@@ -214,7 +198,7 @@ export default function ReportForm({
               <option value="">(opcional)</option>
               {subcategoryOptions.map((sc) => (
                 <option key={sc} value={sc}>
-                  {SUBCATEGORY_EMOJI[sc] ? `${SUBCATEGORY_EMOJI[sc]} ${sc}` : sc}
+                  {sc}
                 </option>
               ))}
             </select>
@@ -250,7 +234,7 @@ export default function ReportForm({
                 htmlFor="photo-input"
                 className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-surface-border bg-surface-raised px-4 py-6 text-center text-sm text-fg-muted hover:border-brand hover:bg-brand-subtle"
               >
-                Toca para tomar o seleccionar 📷
+                Toca para tomar o seleccionar foto
                 <span className="mt-1 text-xs text-fg-dim">
                   JPEG/PNG hasta 3 MB. EXIF removida antes de subir.
                 </span>

@@ -3,11 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import {
-  CATEGORIES,
-  CATEGORY_EMOJI,
-  type CategoryKey,
-} from '@/lib/constants';
+import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 
 export interface FilterState {
   categories: Set<CategoryKey>;
@@ -26,13 +22,12 @@ export const DEFAULT_FILTERS: FilterState = {
 
 type CurrentKey = 'mapa' | 'datos' | 'metodologia' | 'acerca';
 
-const NAV_LINKS: { href: string; key: CurrentKey; label: string; emoji: string }[] =
-  [
-    { href: '/', key: 'mapa', label: 'Mapa', emoji: '🗺️' },
-    { href: '/datos-abiertos', key: 'datos', label: 'Datos abiertos', emoji: '📊' },
-    { href: '/metodologia', key: 'metodologia', label: 'Metodologia', emoji: '📋' },
-    { href: '/acerca-de', key: 'acerca', label: 'Acerca de', emoji: 'ℹ️' },
-  ];
+const NAV_LINKS: { href: string; key: CurrentKey; label: string }[] = [
+  { href: '/', key: 'mapa', label: 'Mapa' },
+  { href: '/datos-abiertos', key: 'datos', label: 'Datos abiertos' },
+  { href: '/metodologia', key: 'metodologia', label: 'Metodologia' },
+  { href: '/acerca-de', key: 'acerca', label: 'Acerca de' },
+];
 
 interface SideDrawerProps {
   current?: CurrentKey;
@@ -188,21 +183,18 @@ export default function SideDrawer({
                     <button
                       type="button"
                       onClick={() => toggleCategory(key)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                      className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                         isActive
                           ? 'bg-brand-subtle text-brand'
                           : 'text-fg-muted hover:bg-surface-raised hover:text-fg'
                       }`}
                     >
-                      <span className="text-xl leading-none" aria-hidden>
-                        {CATEGORY_EMOJI[key]}
-                      </span>
-                      <span className="flex-1 text-left font-medium">
+                      <span className="text-left font-medium">
                         {value.label}
                       </span>
                       {isActive && (
                         <span
-                          className="h-2 w-2 rounded-full bg-brand"
+                          className="h-2 w-2 shrink-0 rounded-full bg-brand"
                           aria-hidden
                         />
                       )}
@@ -266,16 +258,19 @@ export default function SideDrawer({
                   <Link
                     href={l.href}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                    className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                       isActive
                         ? 'bg-brand-subtle text-brand'
                         : 'text-fg-muted hover:bg-surface-raised hover:text-fg'
                     }`}
                   >
-                    <span className="text-base" aria-hidden>
-                      {l.emoji}
-                    </span>
                     <span className="font-medium">{l.label}</span>
+                    {isActive && (
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full bg-brand"
+                        aria-hidden
+                      />
+                    )}
                   </Link>
                 </li>
               );
