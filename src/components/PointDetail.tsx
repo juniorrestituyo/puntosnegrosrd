@@ -145,7 +145,12 @@ export default function PointDetail({
           )}
 
           <div className="mt-3 overflow-hidden rounded-xl ring-1 ring-surface-border">
-            <LocationPreview lat={point.lat} lng={point.lng} />
+            <LocationPreview
+              lat={point.lat}
+              lng={point.lng}
+              confirmationCount={point.confirmation_count}
+              isResolved={point.status === 'resuelto'}
+            />
           </div>
 
           <a
