@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
+import BackToMapButton from '@/components/BackToMapButton';
 import SideDrawer from '@/components/SideDrawer';
 import {
   CATEGORIES,
@@ -18,6 +18,7 @@ export default function MetodologiaPage() {
   return (
     <main className="relative min-h-screen bg-surface-base">
       <SideDrawer current="metodologia" />
+      <BackToMapButton />
 
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-20 sm:px-6 sm:pt-24">
         <h1 className="text-3xl font-bold tracking-tight text-fg">
@@ -128,11 +129,6 @@ export default function MetodologiaPage() {
           </p>
         </section>
 
-        <footer className="mt-12 border-t border-surface-border pt-4 text-xs text-fg-muted">
-          <Link href="/" className="hover:text-brand hover:underline">
-            ← Volver al mapa
-          </Link>
-        </footer>
       </div>
     </main>
   );
