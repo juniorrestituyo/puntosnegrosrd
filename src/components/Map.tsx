@@ -22,36 +22,34 @@ import {
   STATUS_LABELS,
   emojiForPoint,
 } from '@/lib/constants';
+import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, UserLocation } from '@/lib/types';
 
 type ConfirmResult = { ok: true } | { ok: false; message: string };
 
 /**
- * Marker tipo teardrop blanco con emoji en el bulbo y badge azul de
- * confirmaciones en la esquina cuando hay alguna.
+ * Marker tipo teardrop coloreado segun cantidad de confirmaciones.
+ * Gris -> amarillo -> naranja -> rojo. El numero de confirmaciones
+ * se muestra dentro del bulbo en color de contraste.
  */
 function buildMarkerIcon(point: Point): L.DivIcon {
-  const emoji = emojiForPoint(point.category, point.subcategory);
-  const count = point.confirmation_count;
-  const badge =
-    count > 0
-      ? `<span style="position:absolute;top:-4px;right:-4px;background:#2563eb;color:#ffffff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #ffffff;padding:0 4px;box-shadow:0 1px 2px rgba(15,23,42,0.3);">${count}</span>`
-      : '';
+  const c = colorForConfirmations(point.confirmation_count);
+  const display =
+    point.confirmation_count > 0 ? String(point.confirmation_count) : '·';
 
   return L.divIcon({
     className: 'pn-marker',
     html: `
-      <div style="position:relative;width:36px;height:46px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.2));">
-        <svg viewBox="0 0 36 46" width="36" height="46" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18 0 C8.06 0 0 8.06 0 18 C0 30 18 46 18 46 C18 46 36 30 36 18 C36 8.06 27.94 0 18 0 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2"/>
+      <div style="position:relative;width:32px;height:42px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));">
+        <svg viewBox="0 0 32 42" width="32" height="42" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${c.border}" stroke-width="1.5"/>
         </svg>
-        <span style="position:absolute;top:1px;left:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;">${emoji}</span>
-        ${badge}
+        <span style="position:absolute;top:0;left:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:700;color:${c.text};line-height:1;">${display}</span>
       </div>
     `,
-    iconSize: [36, 46],
-    iconAnchor: [18, 46],
-    popupAnchor: [0, -46],
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -42],
   });
 }
 
