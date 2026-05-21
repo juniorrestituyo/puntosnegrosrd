@@ -322,13 +322,19 @@ export default function MapClient() {
         onConfirm={handleConfirm}
       />
 
-      {/* Hamburger y filtros: en estados focales (sheet abierto, modo
-          seleccion, etc.) NO desaparecen — solo se atenuan visualmente
-          y se desactiva el pointer para que parezcan estar "debajo" del
-          sombreado del spotlight. */}
+      {/* Hamburger y filtros: en estados focales NO desaparecen.
+          - `isolate` crea un stacking context para que el spotlight
+            del mapa (z-800 dentro del leaflet container) paint POR
+            ENCIMA de estos botones y los oscurezca visualmente.
+            Sin isolate, los botones a z-1000/1100 fixed irian arriba
+            del spotlight y no se veria el efecto "debajo del sombreado".
+          - opacity-70 + pointer-events-none los marca como inactivos
+            sin perder visibilidad. */}
       <div
         className={`transition-opacity duration-300 ${
-          chromeHidden ? 'pointer-events-none opacity-40' : 'opacity-100'
+          chromeHidden
+            ? 'pointer-events-none isolate opacity-70'
+            : 'opacity-100'
         }`}
       >
         <SideDrawer current="mapa" />
@@ -336,7 +342,9 @@ export default function MapClient() {
 
       <div
         className={`transition-opacity duration-300 ${
-          chromeHidden ? 'pointer-events-none opacity-40' : 'opacity-100'
+          chromeHidden
+            ? 'pointer-events-none isolate opacity-70'
+            : 'opacity-100'
         }`}
       >
         <FilterPanel
