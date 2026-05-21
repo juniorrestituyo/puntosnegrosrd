@@ -10,6 +10,7 @@ import FilterPanel, {
   DEFAULT_FILTERS,
   type FilterState,
 } from './FilterPanel';
+import OnboardingTour from './OnboardingTour';
 import PointDetailSheet from './PointDetailSheet';
 import ReportFAB from './ReportFAB';
 import ReportForm from './ReportForm';
@@ -34,13 +35,22 @@ interface BannerMessage {
 }
 
 export default function MapClient() {
-  // Lee el cache UNA VEZ al montar para hidratar el estado inicial.
-  // Si no hay cache valido (primer load o expirado), arranca con
-  // defaults vacios y la posicion estandar del mapa.
-  const cached = useMemo(() => loadMapState(), []);
+  // IMPORTANTE: NO leer loadMapState() durante el render (ni con
+  // useMemo). sessionStorage no existe en el servidor, asi que el
+  // valor difiere entre SSR (null) y cliente (cache real) — eso
+  // dispara hydration mismatch en la pill del contador.
+  //
+  // Solucion: inicializar todo con defaults server-safe y hidratar
+  // el cache en un useEffect que solo corre en cliente, despues del
+  // commit de hidratacion. El usuario ve un flash de ~16ms con
+  // "Cargando..." y despues el contenido cacheado; aceptable.
+  //
+  // Map (dynamic ssr:false) ademas se monta DESPUES del useEffect,
+  // asi que cuando lee cameraRef/initialCenter ya tiene los valores
+  // del cache aplicados.
 
-  const [points, setPoints] = useState<Point[]>(cached?.points ?? []);
-  const [isFetching, setIsFetching] = useState(!cached);
+  const [points, setPoints] = useState<Point[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -50,9 +60,7 @@ export default function MapClient() {
   const [reportMode, setReportMode] = useState<ReportMode>('idle');
   const [banner, setBanner] = useState<BannerMessage | null>(null);
 
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(
-    cached?.userLocation ?? null
-  );
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   // Tracking arranca en true: queremos auto-focus en la ubicacion del
   // usuario al entrar al mapa. Si rechaza el permiso, el handler de
   // error lo regresa a false y muestra un banner.
@@ -66,14 +74,33 @@ export default function MapClient() {
   // Punto seleccionado para mostrar el bottom sheet con su detalle.
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
 
-  // Camara del mapa (center + zoom). Inicial desde cache si hay,
-  // sino los defaults. Se actualiza desde Map via onCameraChange.
-  // Usamos ref en vez de state para no re-renderizar al panear (cada
-  // moveend dispararia un setState innecesario en el padre).
+  // Flag que indica si encontramos cache en sessionStorage al montar.
+  // Solo se vuelve true despues del useEffect de hidratacion. Se pasa
+  // a Map como skipInitialAutoCenter para que NO haga el snap inicial
+  // de GPS cuando ya tenemos una posicion cacheada del usuario.
+  const [hadCache, setHadCache] = useState(false);
+
+  // Camara del mapa (center + zoom). Arranca con defaults; el useEffect
+  // de hidratacion la sobreescribe si hay cache. Ref en vez de state
+  // para no re-renderizar al panear (cada moveend dispararia un setState
+  // innecesario en el padre).
   const cameraRef = useRef<{ center: [number, number]; zoom: number }>({
-    center: cached?.center ?? RD_CENTER,
-    zoom: cached?.zoom ?? RD_DEFAULT_ZOOM,
+    center: RD_CENTER,
+    zoom: RD_DEFAULT_ZOOM,
   });
+
+  // Hidratacion del cache. Corre en cliente despues del primer render
+  // (resuelve hydration mismatch). Si encontramos cache valido,
+  // poblamos los estados pertinentes y marcamos hadCache=true.
+  useEffect(() => {
+    const cached = loadMapState();
+    if (!cached) return;
+    setPoints(cached.points);
+    setUserLocation(cached.userLocation);
+    cameraRef.current = { center: cached.center, zoom: cached.zoom };
+    setIsFetching(false);
+    setHadCache(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -428,7 +455,7 @@ export default function MapClient() {
         spotlightPoint={selectedPoint}
         initialCenter={cameraRef.current.center}
         initialZoom={cameraRef.current.zoom}
-        skipInitialAutoCenter={!!cached}
+        skipInitialAutoCenter={hadCache}
         recenterRequest={recenterRequest}
         onMapClick={handleMapClick}
         onPointSelect={setSelectedPoint}
@@ -552,6 +579,10 @@ export default function MapClient() {
             ? 'Toca el boton + para reportar el primer punto'
             : `${filteredPoints.length} de ${points.length} reporte${points.length === 1 ? '' : 's'}`}
       </div>
+
+      {/* Tour de bienvenida (primeros usuarios + reabrible desde drawer).
+          Auto-detecta primer uso via localStorage. */}
+      <OnboardingTour />
     </div>
   );
 }

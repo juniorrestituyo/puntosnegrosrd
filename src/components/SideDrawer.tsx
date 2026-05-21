@@ -149,6 +149,49 @@ export default function SideDrawer({ current }: SideDrawerProps) {
               );
             })}
           </ul>
+
+          {/* Utilidades: relanzar tour de bienvenida.
+              - Setea sessionStorage 'pn:pending-tour' (lo lee OnboardingTour
+                al montarse si llegamos desde otra ruta).
+              - Dispara evento 'pn:open-tour' (lo recoge OnboardingTour si
+                ya esta montado, ej. estamos en /mapa). El handler limpia
+                el sessionStorage para evitar reapertura al regresar luego.
+              - Navega a / via Link para garantizar que el mapa este montado. */}
+          <div className="mt-4 border-t border-surface-border pt-4">
+            <Link
+              href="/"
+              onClick={() => {
+                try {
+                  window.sessionStorage.setItem('pn:pending-tour', '1');
+                } catch {
+                  /* noop */
+                }
+                if (window.location.pathname === '/') {
+                  window.dispatchEvent(new CustomEvent('pn:open-tour'));
+                }
+                setOpen(false);
+              }}
+              className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm text-fg-muted transition-colors hover:bg-surface-raised hover:text-fg"
+            >
+              <span className="font-medium">Ver tour de nuevo</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </Link>
+          </div>
         </section>
 
         <footer className="border-t border-surface-border p-5 text-[11px] text-fg-muted">
