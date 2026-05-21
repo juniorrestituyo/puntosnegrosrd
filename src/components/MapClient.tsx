@@ -250,31 +250,96 @@ export default function MapClient() {
     }, ms);
   }
 
-  // Handler que Map nos pasa cuando el usuario panea/zoomea.
-  // Actualiza la camera en el ref y guarda el snapshot del mapa.
-  const handleCameraChange = useCallback(
-    (center: [number, number], zoom: number) => {
-      cameraRef.current = { center, zoom };
-      saveMapState({
-        points,
-        userLocation,
-        center,
-        zoom,
-      });
-    },
-    [points, userLocation]
-  );
-
-  // Snapshot al cache cada vez que cambian points o userLocation.
-  // La camera se guarda en handleCameraChange (asociada a moveend).
+  // Refs siempre frescos de points/userLocation para usar dentro de
+  // callbacks estables. Asi handleCameraChange NO depende de points
+  // y CameraTracker no resuscribe sus event handlers cada vez que
+  // cambia la lista de puntos.
+  const pointsRef = useRef(points);
+  const userLocationRef = useRef(userLocation);
   useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
+  useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
+
+  // Debounce del save a sessionStorage. Antes guardabamos SINCRONAMENTE
+  // en cada moveend, lo que hacia JSON.stringify(points) + setItem en
+  // el main thread justo despues de cada zoom/pan. Con muchos points
+  // (50-200+) eso es 10-30ms de blocking y se siente como "lag" al
+  // mover/zoomear rapido, sobre todo en touch (pinch-zoom emite varios
+  // moveend seguidos).
+  //
+  // Ahora coalescemos: el ultimo evento dispara el save 600ms despues.
+  // Si el usuario navega antes de que el debounce expire, el listener
+  // de pagehide hace flush inmediato (asi no perdemos el ultimo estado).
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushSave = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
     saveMapState({
-      points,
-      userLocation,
+      points: pointsRef.current,
+      userLocation: userLocationRef.current,
       center: cameraRef.current.center,
       zoom: cameraRef.current.zoom,
     });
-  }, [points, userLocation]);
+  }, []);
+
+  const scheduleSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      saveMapState({
+        points: pointsRef.current,
+        userLocation: userLocationRef.current,
+        center: cameraRef.current.center,
+        zoom: cameraRef.current.zoom,
+      });
+    }, 600);
+  }, []);
+
+  // Handler que Map nos pasa cuando el usuario panea/zoomea.
+  // Solo actualiza el ref y agenda un save debounced — NO toca
+  // sessionStorage sincronicamente.
+  const handleCameraChange = useCallback(
+    (center: [number, number], zoom: number) => {
+      cameraRef.current = { center, zoom };
+      scheduleSave();
+    },
+    [scheduleSave]
+  );
+
+  // Snapshot al cache cuando cambian points o userLocation. Tambien
+  // debounced — un refresh de points no necesita persistir en el acto.
+  useEffect(() => {
+    scheduleSave();
+  }, [points, userLocation, scheduleSave]);
+
+  // Flush inmediato si el usuario navega fuera (pagehide es mas
+  // confiable que beforeunload en mobile/iOS). Asi no perdemos el
+  // ultimo estado si el debounce esta pendiente cuando salen.
+  useEffect(() => {
+    function flushNow() {
+      flushSave();
+    }
+    function onVisibility() {
+      if (document.visibilityState === 'hidden') flushSave();
+    }
+    window.addEventListener('pagehide', flushNow);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flushNow);
+      document.removeEventListener('visibilitychange', onVisibility);
+      // Cleanup del timer pendiente al desmontar.
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [flushSave]);
 
   function handleUseCurrentLocation() {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
