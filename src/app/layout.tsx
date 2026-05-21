@@ -24,15 +24,19 @@ export const metadata: Metadata = {
   //
   // Resolucion en cascada:
   // 1. NEXT_PUBLIC_SITE_URL — env var explicita (la canonica si esta).
-  // 2. VERCEL_URL — auto-inyectado por Vercel en cada deploy con el
-  //    dominio actual (sin protocolo). Funciona en preview y prod sin
-  //    que tengamos que configurar nada en el dashboard.
-  // 3. http://localhost:3000 — fallback solo para `npm run dev`.
+  // 2. VERCEL_ENV === 'production' → URL canonica hardcoded. Mas
+  //    confiable que VERCEL_URL en build time (que no siempre llega
+  //    como esperado).
+  // 3. VERCEL_URL — para preview deploys, asi cada PR tiene su propio
+  //    og:image apuntando a su propio deploy.
+  // 4. http://localhost:3000 — fallback solo para `npm run dev`.
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ??
-      (process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000')
+      (process.env.VERCEL_ENV === 'production'
+        ? 'https://puntosnegrosrd.vercel.app'
+        : process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'http://localhost:3000')
   ),
   manifest: '/manifest.webmanifest',
   icons: {
