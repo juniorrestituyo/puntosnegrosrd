@@ -43,7 +43,7 @@ export default function ReportFAB({
       {open && (
         <div
           role="menu"
-          className="absolute bottom-24 right-3 z-[1100] w-64 overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border sm:bottom-28 sm:right-6"
+          className="absolute bottom-28 right-3 z-[1100] w-64 overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border sm:bottom-32 sm:right-6"
         >
           <button
             type="button"
