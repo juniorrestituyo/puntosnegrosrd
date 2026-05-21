@@ -1,12 +1,20 @@
 'use client';
 
-import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
-import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
+import BackToMapButton from './BackToMapButton';
 import ShareWithAuthority from './ShareWithAuthority';
+import SideDrawer from './SideDrawer';
+
+const LocationPreview = dynamic(() => import('./LocationPreview'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-44 w-full animate-pulse bg-surface-raised" />
+  ),
+});
 
 interface PointDetailProps {
   point: Point;
@@ -34,8 +42,6 @@ export default function PointDetail({
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
   const [shareAuthorityOpen, setShareAuthorityOpen] = useState(false);
-
-  const color = colorForConfirmations(point.confirmation_count);
 
   async function handleConfirm() {
     setConfirmState('loading');
@@ -70,212 +76,346 @@ export default function PointDetail({
       setShareState('copied');
       setTimeout(() => setShareState('idle'), 2000);
     } catch {
-      // Fallback: seleccionar el texto del input
       window.prompt('Copia este enlace:', url);
     }
   }
 
+  const googleMapsUrl = `https://www.google.com/maps?q=${point.lat},${point.lng}`;
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mb-6">
-        <Link
-          href="/"
-          className="text-sm text-slate-600 hover:text-brand hover:underline"
-        >
-          &larr; Volver al mapa
-        </Link>
-      </div>
+    <main className="relative min-h-screen bg-surface-base">
+      <SideDrawer />
+      <BackToMapButton />
 
-      <header className="mb-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-bold text-brand sm:text-2xl">
-              {CATEGORIES[point.category].label}
-              {point.subcategory ? (
-                <span className="text-slate-600"> - {point.subcategory}</span>
-              ) : null}
-            </h1>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-              Reportado el {formatDate(point.created_at)}
-            </p>
+      <div
+        className="mx-auto w-full max-w-2xl px-3 pt-20 sm:px-6 sm:pt-24"
+        style={{
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 48px)',
+        }}
+      >
+        {/* Header card */}
+        <section className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+                {STATUS_LABELS[point.status] ?? point.status}
+              </p>
+              <h1 className="mt-1 text-xl font-bold tracking-tight text-fg sm:text-2xl">
+                {CATEGORIES[point.category].label}
+              </h1>
+              {point.subcategory && (
+                <p className="mt-1 text-sm text-fg-muted">
+                  {point.subcategory}
+                </p>
+              )}
+              <p className="mt-2 text-xs text-fg-dim sm:text-sm">
+                Reportado el {formatDate(point.created_at)}
+              </p>
+            </div>
           </div>
-          <span
-            className="inline-block whitespace-nowrap rounded px-3 py-1 text-xs font-medium"
-            style={{
-              background: color.bg,
-              color: color.text,
-              border: `1px solid ${color.border}`,
-            }}
-            title={color.label}
-          >
-            {point.confirmation_count} confirmacion
-            {point.confirmation_count === 1 ? '' : 'es'}
-          </span>
-        </div>
-      </header>
+        </section>
 
-      <section className="space-y-4">
+        {/* Foto */}
         {point.photo_url && (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+          <section className="mt-3 overflow-hidden rounded-2xl bg-surface-card shadow-card ring-1 ring-surface-border">
             <img
               src={point.photo_url}
               alt="Foto ciudadana del reporte"
               className="block max-h-[480px] w-full object-contain"
               loading="lazy"
             />
-            <p className="px-3 py-2 text-xs text-slate-500">
-              Foto aportada por quien reporto el punto. Metadata EXIF removida
-              antes de subir.
+            <p className="border-t border-surface-divider px-4 py-2 text-[11px] text-fg-muted">
+              Foto aportada por quien reporto el punto. Metadata EXIF removida.
             </p>
-          </div>
+          </section>
         )}
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Descripcion
+        {/* Ubicacion */}
+        <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+            Ubicacion
           </h2>
-          <p className="mt-2 whitespace-pre-wrap text-slate-800">
-            {point.description}
+          <p className="mt-1 font-mono text-sm text-fg">
+            {point.lat.toFixed(5)}, {point.lng.toFixed(5)}
           </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Ubicacion
-            </h2>
-            <p className="mt-2 text-sm text-slate-800">
-              {point.lat.toFixed(5)}, {point.lng.toFixed(5)}
+          {(point.municipality || point.province) && (
+            <p className="mt-1 text-sm text-fg-muted">
+              {[point.municipality, point.province].filter(Boolean).join(', ')}
             </p>
-            {point.municipality && (
-              <p className="text-sm text-slate-600">{point.municipality}</p>
-            )}
-            {point.province && (
-              <p className="text-sm text-slate-600">{point.province}</p>
-            )}
-            <a
-              href={`https://www.openstreetmap.org/?mlat=${point.lat}&mlon=${point.lng}#map=18/${point.lat}/${point.lng}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-block text-xs text-brand-accent hover:underline"
-            >
-              Abrir en OpenStreetMap &rarr;
-            </a>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Estado
-            </h2>
-            <p className="mt-2 text-sm font-medium text-slate-800">
-              {STATUS_LABELS[point.status] ?? point.status}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Categoria INTRANT:{' '}
-              <span className="font-medium text-slate-700">
-                {CATEGORIES[point.category].label}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {confirmState === 'ok' ? (
-            <span className="rounded bg-green-50 px-3 py-2 text-sm font-medium text-green-700 ring-1 ring-green-200">
-              ✓ Tu confirmacion suma
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleConfirm}
-              disabled={confirmState === 'loading'}
-              className="rounded bg-brand-accent px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-            >
-              {confirmState === 'loading'
-                ? 'Confirmando...'
-                : 'Yo tambien lo veo'}
-            </button>
           )}
 
-          <button
-            type="button"
-            onClick={handleShare}
-            className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            {shareState === 'copied' ? '✓ Enlace copiado' : 'Copiar enlace'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShareAuthorityOpen(true)}
-            className="rounded border border-brand-accent bg-white px-4 py-2 text-sm font-medium text-brand-accent hover:bg-red-50"
-          >
-            Compartir con autoridad
-          </button>
-        </div>
-
-        {confirmState === 'err' && confirmMessage && (
-          <div
-            role="alert"
-            className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-          >
-            {confirmMessage}
+          <div className="mt-3 overflow-hidden rounded-xl ring-1 ring-surface-border">
+            <LocationPreview lat={point.lat} lng={point.lng} />
           </div>
-        )}
-      </section>
 
-      <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold text-slate-900">
-          Historial de estado
-        </h2>
-        {history.length === 0 ? (
-          <p className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-            Sin cambios de estado registrados. El historial se actualizara
-            cuando la autoridad notifique acciones sobre este punto.
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-surface-raised px-4 py-3 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+            Abrir en Google Maps
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className="text-fg-muted"
+            >
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </a>
+        </section>
+
+        {/* Descripcion */}
+        <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+            Descripcion
+          </h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-fg/90">
+            {point.description}
           </p>
-        ) : (
-          <ol className="space-y-2">
-            {history.map((entry) => (
-              <li
-                key={entry.id}
-                className="rounded border border-slate-200 bg-white p-3 text-sm"
+        </section>
+
+        {/* Confirmaciones + acciones */}
+        <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
+          <div className="flex items-center gap-4 rounded-2xl bg-brand-subtle px-5 py-4 ring-1 ring-brand-soft">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-card">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-800">
-                    {entry.old_status
-                      ? `${STATUS_LABELS[entry.old_status] ?? entry.old_status} -> `
-                      : ''}
-                    {STATUS_LABELS[entry.new_status] ?? entry.new_status}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {formatDate(entry.created_at)}
-                  </span>
-                </div>
-                {entry.note && (
-                  <p className="mt-1 text-slate-600">{entry.note}</p>
-                )}
-                {entry.changed_by && (
-                  <p className="mt-1 text-xs text-slate-400">
-                    Por: {entry.changed_by}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ol>
+                <path d="M7 11V21a1 1 0 0 1-1 1H3v-11h4z" />
+                <path d="M7 11l4-9a3 3 0 0 1 3 0v6h5a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <div className="text-3xl font-extrabold leading-none tracking-tight text-fg">
+                {point.confirmation_count}
+              </div>
+              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+                {point.confirmation_count === 1
+                  ? 'confirmacion'
+                  : 'confirmaciones'}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {confirmState === 'ok' ? (
+              <span className="flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 sm:col-span-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Tu confirmacion suma
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={confirmState === 'loading'}
+                className="flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-accent disabled:opacity-70 sm:col-span-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M7 11V21a1 1 0 0 1-1 1H3v-11h4z" />
+                  <path d="M7 11l4-9a3 3 0 0 1 3 0v6h5a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7" />
+                </svg>
+                {confirmState === 'loading'
+                  ? 'Confirmando...'
+                  : 'Yo tambien lo veo'}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex items-center justify-center gap-2 rounded-full bg-surface-raised px-4 py-3 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border"
+            >
+              {shareState === 'copied' ? (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Enlace copiado
+                </>
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copiar enlace
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShareAuthorityOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-full bg-brand-subtle px-4 py-3 text-sm font-semibold text-brand ring-1 ring-brand-soft transition-colors hover:bg-brand-soft"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              Compartir con autoridad
+            </button>
+          </div>
+
+          {confirmState === 'err' && confirmMessage && (
+            <p
+              role="alert"
+              className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {confirmMessage}
+            </p>
+          )}
+        </section>
+
+        {/* Historial */}
+        <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+            Historial de estado
+          </h2>
+          {history.length === 0 ? (
+            <p className="mt-3 rounded-xl border border-dashed border-surface-border bg-surface-raised px-4 py-5 text-center text-sm text-fg-muted">
+              Sin cambios de estado registrados. Se actualizara cuando la
+              autoridad notifique acciones sobre este punto.
+            </p>
+          ) : (
+            <ol className="mt-3 space-y-2">
+              {history.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="rounded-xl bg-surface-raised p-3 text-sm ring-1 ring-surface-border"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-fg">
+                      {entry.old_status
+                        ? `${STATUS_LABELS[entry.old_status] ?? entry.old_status} → `
+                        : ''}
+                      {STATUS_LABELS[entry.new_status] ?? entry.new_status}
+                    </span>
+                    <span className="shrink-0 text-xs text-fg-muted">
+                      {formatDate(entry.created_at)}
+                    </span>
+                  </div>
+                  {entry.note && (
+                    <p className="mt-1 text-fg/90">{entry.note}</p>
+                  )}
+                  {entry.changed_by && (
+                    <p className="mt-1 text-xs text-fg-dim">
+                      Por: {entry.changed_by}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        {/* Footer con ID */}
+        <p className="mt-6 text-center text-[11px] text-fg-muted">
+          ID:{' '}
+          <code className="rounded bg-surface-raised px-1.5 py-0.5 font-mono text-brand">
+            {point.id}
+          </code>
+        </p>
+
+        {shareAuthorityOpen && (
+          <ShareWithAuthority
+            point={point}
+            onClose={() => setShareAuthorityOpen(false)}
+          />
         )}
-      </section>
-
-      <footer className="mt-12 border-t border-slate-200 pt-4 text-xs text-slate-500">
-        Identificador del punto:{' '}
-        <code className="rounded bg-slate-100 px-1 py-0.5">{point.id}</code>
-      </footer>
-
-      {shareAuthorityOpen && (
-        <ShareWithAuthority
-          point={point}
-          onClose={() => setShareAuthorityOpen(false)}
-        />
-      )}
-    </div>
+      </div>
+    </main>
   );
 }

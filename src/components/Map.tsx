@@ -2,83 +2,94 @@
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Circle,
   MapContainer,
   Marker,
-  Popup,
   TileLayer,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
 
 import {
-  CATEGORIES,
   RD_BOUNDS,
   RD_CENTER,
   RD_DEFAULT_ZOOM,
-  STATUS_LABELS,
 } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, UserLocation } from '@/lib/types';
 
-type ConfirmResult = { ok: true } | { ok: false; message: string };
+// Por debajo de este zoom mostramos solo un dot pequeno (vista regional).
+// Por encima, teardrop completo con badge de confirmaciones.
+const FAR_ZOOM_THRESHOLD = 14;
 
-function buildMarkerIcon(count: number): L.DivIcon {
-  const c = colorForConfirmations(count);
-  const display = count > 0 ? String(count) : '·';
+type MarkerMode = 'dot' | 'teardrop';
+
+/**
+ * Dot compacto para vista lejana (pais/region). Solo color de votos +
+ * anillo blanco. Sin numero ni cola — la prioridad es que no se aplasten.
+ */
+function buildDotIcon(point: Point): L.DivIcon {
+  const c = colorForConfirmations(point.confirmation_count);
   return L.divIcon({
     className: 'pn-marker',
-    html: `
-      <div style="
-        background:${c.bg};
-        border:2px solid ${c.border};
-        color:${c.text};
-        width:40px;
-        height:40px;
-        border-radius:50%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:700;
-        font-size:14px;
-        font-family:system-ui,sans-serif;
-        box-shadow:0 2px 4px rgba(0,0,0,0.3);
-      ">${display}</div>
-    `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20],
+    html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);"></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+    popupAnchor: [0, -6],
   });
 }
 
-// "Blue dot" del usuario estilo Google Maps. Sin numero, sin popup,
-// con un halo azul para distinguirlo de los markers de reportes.
+/**
+ * Marker teardrop coloreado segun cantidad de confirmaciones.
+ * Solo bulbo + punto blanco central. El contador NO se muestra aqui;
+ * se rendera en otro lugar de la UI.
+ */
+function buildTeardropIcon(point: Point): L.DivIcon {
+  const c = colorForConfirmations(point.confirmation_count);
+
+  // Dimensiones: contenedor 28x36, viewBox SVG 32x42 (escala interna).
+  // Centro del bulbo cae aprox en (14, 14) del container.
+  const center = `<span style="position:absolute;top:8px;left:8px;width:12px;height:12px;border-radius:50%;background:${c.text};"></span>`;
+
+  return L.divIcon({
+    className: 'pn-marker',
+    html: `
+      <div class="pn-marker-inner" style="position:relative;width:28px;height:36px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));">
+        <svg viewBox="0 0 32 42" width="28" height="36" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${c.border}" stroke-width="1.5"/>
+        </svg>
+        ${center}
+      </div>
+    `,
+    iconSize: [28, 36],
+    iconAnchor: [14, 36],
+    popupAnchor: [0, -36],
+  });
+}
+
+function buildMarkerIcon(point: Point, mode: MarkerMode): L.DivIcon {
+  return mode === 'dot' ? buildDotIcon(point) : buildTeardropIcon(point);
+}
+
 const UserLocationIcon = L.divIcon({
   className: 'pn-user-marker',
   html: `
     <div style="
-      width:18px;
-      height:18px;
+      width:20px;
+      height:20px;
       border-radius:50%;
       background:#2563eb;
       border:3px solid #ffffff;
-      box-shadow:0 0 0 1px rgba(15,23,42,0.4), 0 0 14px rgba(37,99,235,0.55);
+      box-shadow:0 0 0 1px rgba(15,23,42,0.3), 0 0 14px rgba(37,99,235,0.55);
     "></div>
   `,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-  popupAnchor: [0, -9],
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
 });
 
-/**
- * Centra el mapa en la ubicacion del usuario la PRIMERA vez que llega.
- * Despues no vuelve a interferir (el usuario puede explorar libre).
- * Si se apaga el tracking, resetea el flag para que la proxima
- * activacion centre de nuevo.
- */
 function CenterOnUserLocation({
   userLocation,
 }: {
@@ -103,124 +114,146 @@ function CenterOnUserLocation({
 
 function ClickCapture({
   onPick,
-  enabled,
+  onBackgroundClick,
+  selectMode,
 }: {
   onPick: (lat: number, lng: number) => void;
-  enabled: boolean;
+  onBackgroundClick: () => void;
+  selectMode: boolean;
 }) {
   useMapEvents({
     click(e) {
-      if (!enabled) return;
-      const { lat, lng } = e.latlng;
-      if (
-        lat >= RD_BOUNDS.minLat &&
-        lat <= RD_BOUNDS.maxLat &&
-        lng >= RD_BOUNDS.minLng &&
-        lng <= RD_BOUNDS.maxLng
-      ) {
-        onPick(lat, lng);
+      if (selectMode) {
+        const { lat, lng } = e.latlng;
+        if (
+          lat >= RD_BOUNDS.minLat &&
+          lat <= RD_BOUNDS.maxLat &&
+          lng >= RD_BOUNDS.minLng &&
+          lng <= RD_BOUNDS.maxLng
+        ) {
+          onPick(lat, lng);
+        }
+      } else {
+        onBackgroundClick();
       }
     },
   });
   return null;
 }
 
-function PointPopup({
-  point,
-  onConfirm,
-}: {
-  point: Point;
-  onConfirm: (id: string) => Promise<ConfirmResult>;
-}) {
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>(
-    'idle'
-  );
-  const [message, setMessage] = useState<string | null>(null);
+/**
+ * Reporta el zoom actual del mapa al padre cada vez que cambia.
+ * Permite cambiar la forma del marker (dot vs teardrop) segun el nivel.
+ */
+function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    onZoom(map.getZoom());
+  }, [map, onZoom]);
+  useMapEvents({
+    zoomend(e) {
+      onZoom(e.target.getZoom());
+    },
+  });
+  return null;
+}
 
-  const color = useMemo(
-    () => colorForConfirmations(point.confirmation_count),
-    [point.confirmation_count]
-  );
+/**
+ * Oscurece el mapa con un radial-gradient dejando un circulo de luz
+ * alrededor del point seleccionado. Sigue la posicion del marker en
+ * pixel-space cuando el usuario pana o zoomea con el sheet abierto.
+ */
+function SpotlightOverlay({ point }: { point: Point | null }) {
+  const map = useMap();
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
-  async function handleClick() {
-    setState('loading');
-    setMessage(null);
-    const res = await onConfirm(point.id);
-    if (res.ok) {
-      setState('ok');
-    } else {
-      setState('err');
-      setMessage(res.message);
+  useEffect(() => {
+    if (!point) {
+      return;
     }
-  }
+    function update() {
+      if (!point) return;
+      const px = map.latLngToContainerPoint([point.lat, point.lng]);
+      setPos({ x: px.x, y: px.y });
+    }
+    update();
+    map.on('move', update);
+    map.on('zoom', update);
+    map.on('resize', update);
+    return () => {
+      map.off('move', update);
+      map.off('zoom', update);
+      map.off('resize', update);
+    };
+  }, [point, map]);
+
+  const visible = !!point && !!pos;
 
   return (
-    <div className="min-w-[220px] space-y-1 text-xs">
-      <div className="font-semibold text-slate-900">
-        {CATEGORIES[point.category].label}
-        {point.subcategory ? ` - ${point.subcategory}` : ''}
-      </div>
-      {point.photo_url && (
-        <a
-          href={`/punto/${point.id}`}
-          className="block overflow-hidden rounded"
-        >
-          <img
-            src={point.photo_url}
-            alt="Foto del reporte"
-            className="h-24 w-full object-cover"
-            loading="lazy"
-          />
-        </a>
-      )}
-      <div className="text-slate-700">{point.description}</div>
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute inset-0 z-[800] transition-opacity duration-300 ${
+        visible ? 'opacity-100' : 'opacity-0'
+      }`}
+      style={
+        pos
+          ? {
+              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 32px, rgba(15,23,42,0.6) 110px)`,
+            }
+          : undefined
+      }
+    />
+  );
+}
 
-      <div className="flex items-center justify-between pt-1">
-        <span
-          className="inline-block rounded px-2 py-0.5 text-[10px] font-medium"
-          style={{
-            background: color.bg,
-            color: color.text,
-            border: `1px solid ${color.border}`,
-          }}
-        >
-          {point.confirmation_count} confirmacion
-          {point.confirmation_count === 1 ? '' : 'es'} - {color.label}
-        </span>
-      </div>
-
-      <div className="text-slate-500">
-        Estado: {STATUS_LABELS[point.status] ?? point.status}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-200 pt-2">
-        {state === 'ok' && (
-          <span className="text-xs font-medium text-green-700">
-            ✓ Confirmacion sumada
-          </span>
-        )}
-        {state === 'err' && (
-          <span className="text-xs text-red-700">{message}</span>
-        )}
-        {(state === 'idle' || state === 'loading') && (
-          <button
-            type="button"
-            onClick={handleClick}
-            disabled={state === 'loading'}
-            className="rounded bg-brand-accent px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            {state === 'loading' ? 'Confirmando...' : 'Yo tambien lo veo'}
-          </button>
-        )}
-
-        <Link
-          href={`/punto/${point.id}`}
-          className="text-xs font-medium text-brand hover:underline"
-        >
-          Ver detalle &rarr;
-        </Link>
-      </div>
-    </div>
+/**
+ * Marker que al clic hace pan al punto y notifica al padre para que
+ * abra el bottom sheet con el detalle. Ya no usa Popup de Leaflet.
+ */
+function FocusableMarker({
+  point,
+  onSelect,
+  zoom,
+}: {
+  point: Point;
+  onSelect: (point: Point) => void;
+  zoom: number;
+}) {
+  const map = useMap();
+  const mode: MarkerMode =
+    zoom < FAR_ZOOM_THRESHOLD ? 'dot' : 'teardrop';
+  // Solo reconstruimos el icono cuando cambia el modo o la cantidad de
+  // votos. Asi los pasos de zoom intermedios no recrean el DOM del
+  // marker (lo que evitaria la animacion fade-in y haria flickeo).
+  const icon = useMemo(
+    () => buildMarkerIcon(point, mode),
+    [point.confirmation_count, mode]
+  );
+  return (
+    <Marker
+      position={[point.lat, point.lng]}
+      icon={icon}
+      eventHandlers={{
+        click: () => {
+          // Pan offsetado: en vez de dejar el marker en el centro
+          // del viewport (donde lo taparia el bottom sheet), lo
+          // dejamos en el ~30% superior. Asi siempre queda iluminado
+          // por el spotlight con espacio claro arriba del sheet.
+          const containerPt = map.latLngToContainerPoint([
+            point.lat,
+            point.lng,
+          ]);
+          const size = map.getSize();
+          const desiredX = size.x / 2;
+          const desiredY = size.y * 0.3;
+          map.panBy(
+            [containerPt.x - desiredX, containerPt.y - desiredY],
+            { animate: true, duration: 0.6 }
+          );
+          onSelect(point);
+        },
+      }}
+    />
   );
 }
 
@@ -228,29 +261,44 @@ interface MapProps {
   points: Point[];
   selectMode: boolean;
   userLocation: UserLocation | null;
+  spotlightPoint: Point | null;
   onMapClick: (lat: number, lng: number) => void;
-  onConfirm: (id: string) => Promise<ConfirmResult>;
+  onPointSelect: (point: Point) => void;
+  onBackgroundClick: () => void;
 }
 
 export default function Map({
   points,
   selectMode,
   userLocation,
+  spotlightPoint,
   onMapClick,
-  onConfirm,
+  onPointSelect,
+  onBackgroundClick,
 }: MapProps) {
+  const [zoom, setZoom] = useState(RD_DEFAULT_ZOOM);
+
   return (
     <MapContainer
       center={RD_CENTER}
       zoom={RD_DEFAULT_ZOOM}
       scrollWheelZoom
       className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
+      zoomControl={false}
     >
+      {/* Tiles light de CartoDB Positron (datos OSM, render claro minimalista) */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        subdomains="abcd"
+        maxZoom={19}
       />
-      <ClickCapture onPick={onMapClick} enabled={selectMode} />
+      <ClickCapture
+        onPick={onMapClick}
+        onBackgroundClick={onBackgroundClick}
+        selectMode={selectMode}
+      />
+      <ZoomTracker onZoom={setZoom} />
       <CenterOnUserLocation userLocation={userLocation} />
 
       {userLocation && (
@@ -276,16 +324,15 @@ export default function Map({
       )}
 
       {points.map((p) => (
-        <Marker
+        <FocusableMarker
           key={p.id}
-          position={[p.lat, p.lng]}
-          icon={buildMarkerIcon(p.confirmation_count)}
-        >
-          <Popup>
-            <PointPopup point={p} onConfirm={onConfirm} />
-          </Popup>
-        </Marker>
+          point={p}
+          onSelect={onPointSelect}
+          zoom={zoom}
+        />
       ))}
+
+      <SpotlightOverlay point={spotlightPoint} />
     </MapContainer>
   );
 }

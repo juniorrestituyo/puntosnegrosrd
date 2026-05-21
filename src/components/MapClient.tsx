@@ -5,16 +5,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RD_BOUNDS } from '@/lib/constants';
 import type { Point, PointInput, UserLocation } from '@/lib/types';
-import Filters, { DEFAULT_FILTERS, type FilterState } from './Filters';
+import FilterPanel, {
+  DEFAULT_FILTERS,
+  type FilterState,
+} from './FilterPanel';
+import PointDetailSheet from './PointDetailSheet';
 import ReportFAB from './ReportFAB';
 import ReportForm from './ReportForm';
+import SideDrawer from './SideDrawer';
 import UserLocationButton from './UserLocationButton';
 
 const Map = dynamic(() => import('./Map'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-slate-100">
-      <p className="text-sm text-slate-500">Cargando mapa...</p>
+    <div className="flex h-full w-full items-center justify-center bg-surface-raised">
+      <p className="text-sm text-fg-muted">Cargando mapa...</p>
     </div>
   ),
 });
@@ -39,12 +44,16 @@ export default function MapClient() {
   const [reportMode, setReportMode] = useState<ReportMode>('idle');
   const [banner, setBanner] = useState<BannerMessage | null>(null);
 
-  // Tracking continuo de la ubicacion del usuario (blue dot)
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  // Tracking arranca en true: queremos auto-focus en la ubicacion del
+  // usuario al entrar al mapa. Si rechaza el permiso, el handler de
+  // error lo regresa a false y muestra un banner.
+  const [isTrackingLocation, setIsTrackingLocation] = useState(true);
   const [isAcquiringLocation, setIsAcquiringLocation] = useState(false);
 
-  // Carga inicial de puntos
+  // Punto seleccionado para mostrar el bottom sheet con su detalle.
+  const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -71,9 +80,6 @@ export default function MapClient() {
     };
   }, []);
 
-  // Tracking de ubicacion del usuario. Cuando isTrackingLocation cambia
-  // a true arrancamos watchPosition. Cleanup llama clearWatch al cambiar
-  // a false o al desmontar el componente.
   useEffect(() => {
     if (!isTrackingLocation) return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -140,8 +146,6 @@ export default function MapClient() {
   }, [points, filters]);
 
   function handleMapClick(lat: number, lng: number) {
-    // Solo procesa clicks cuando estamos explicitamente en modo seleccion.
-    // En idle, los clicks en el mapa libre se ignoran.
     if (reportMode === 'select-on-map') {
       setSubmitError(null);
       setPicked({ lat, lng });
@@ -200,6 +204,13 @@ export default function MapClient() {
             p.id === pointId ? { ...p, confirmation_count: newCount } : p
           )
         );
+        // El bottom sheet tiene su propia copia del point — sincronizamos
+        // si es el que esta abierto.
+        setSelectedPoint((prev) =>
+          prev && prev.id === pointId
+            ? { ...prev, confirmation_count: newCount }
+            : prev
+        );
         return { ok: true };
       } catch (e) {
         console.error('POST confirm fallo:', e);
@@ -211,7 +222,6 @@ export default function MapClient() {
 
   function autoDismissBanner(ms = 5000) {
     setTimeout(() => {
-      setBanner((current) => current);
       setBanner(null);
     }, ms);
   }
@@ -286,24 +296,68 @@ export default function MapClient() {
     setBanner(null);
   }
 
-  const fabHidden =
+  // Estados en los que escondemos todo el "chrome" flotante (FAB, locate,
+  // hamburger, filtros) para enfocar la atencion en lo que esta abierto.
+  const chromeHidden =
     picked !== null ||
     reportMode === 'select-on-map' ||
-    reportMode === 'getting-location';
+    reportMode === 'getting-location' ||
+    selectedPoint !== null;
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-screen w-full bg-surface-base">
       <Map
         points={filteredPoints}
         selectMode={reportMode === 'select-on-map'}
         userLocation={userLocation}
+        spotlightPoint={selectedPoint}
         onMapClick={handleMapClick}
+        onPointSelect={setSelectedPoint}
+        onBackgroundClick={() => setSelectedPoint(null)}
+      />
+
+      <PointDetailSheet
+        point={selectedPoint}
+        onClose={() => setSelectedPoint(null)}
         onConfirm={handleConfirm}
       />
 
+      {/* Hamburger y filtros: en estados focales NO desaparecen.
+          - `isolate` crea un stacking context para que el spotlight
+            del mapa (z-800 dentro del leaflet container) paint POR
+            ENCIMA de estos botones y los oscurezca visualmente.
+            Sin isolate, los botones a z-1000/1100 fixed irian arriba
+            del spotlight y no se veria el efecto "debajo del sombreado".
+          - opacity-70 + pointer-events-none los marca como inactivos
+            sin perder visibilidad. */}
+      <div
+        className={`transition-opacity duration-300 ${
+          chromeHidden
+            ? 'pointer-events-none isolate opacity-70'
+            : 'opacity-100'
+        }`}
+      >
+        <SideDrawer current="mapa" />
+      </div>
+
+      <div
+        className={`transition-opacity duration-300 ${
+          chromeHidden
+            ? 'pointer-events-none isolate opacity-70'
+            : 'opacity-100'
+        }`}
+      >
+        <FilterPanel
+          state={filters}
+          total={points.length}
+          shown={filteredPoints.length}
+          onChange={setFilters}
+        />
+      </div>
+
       {/* Banner de modo seleccion */}
       {reportMode === 'select-on-map' && (
-        <div className="pointer-events-auto absolute left-3 right-3 top-3 z-[1100] flex items-center justify-between gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-medium text-white shadow-lg sm:left-1/2 sm:right-auto sm:-translate-x-1/2">
+        <div className="pointer-events-auto absolute left-3 right-3 top-[4.25rem] z-[1095] flex items-center justify-between gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-float sm:left-1/2 sm:right-auto sm:top-[5rem] sm:-translate-x-1/2 sm:max-w-md">
           <span>Toca el punto exacto donde esta el riesgo</span>
           <button
             type="button"
@@ -315,14 +369,14 @@ export default function MapClient() {
         </div>
       )}
 
-      {/* Banner de status / error de geolocation (no aparece junto al de seleccion) */}
+      {/* Banner de status */}
       {banner && reportMode !== 'select-on-map' && (
         <div
           role={banner.type === 'error' ? 'alert' : 'status'}
-          className={`pointer-events-auto absolute left-3 right-3 top-3 z-[1100] flex items-start justify-between gap-2 rounded-lg px-4 py-3 text-sm font-medium shadow-lg sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-md ${
+          className={`pointer-events-auto absolute left-3 right-3 top-[4.25rem] z-[1095] flex items-start justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-float sm:left-1/2 sm:right-auto sm:top-[5rem] sm:-translate-x-1/2 sm:max-w-md ${
             banner.type === 'error'
               ? 'bg-red-600 text-white'
-              : 'bg-slate-800 text-white'
+              : 'bg-surface-card text-fg ring-1 ring-surface-border'
           }`}
         >
           <span>{banner.text}</span>
@@ -330,25 +384,18 @@ export default function MapClient() {
             type="button"
             onClick={() => setBanner(null)}
             aria-label="Cerrar mensaje"
-            className="shrink-0 rounded bg-white/20 px-2 py-1 text-xs hover:bg-white/30"
+            className={`shrink-0 rounded px-2 py-1 text-xs ${
+              banner.type === 'error'
+                ? 'bg-white/20 hover:bg-white/30'
+                : 'bg-surface-raised hover:bg-surface-border'
+            }`}
           >
             ✕
           </button>
         </div>
       )}
 
-      {/* Filtros: ocultos en modo seleccion para no chocar con el banner */}
-      {reportMode !== 'select-on-map' && (
-        <Filters
-          state={filters}
-          total={points.length}
-          shown={filteredPoints.length}
-          onChange={setFilters}
-        />
-      )}
-
-      {/* Boton "locate me" estilo Google Maps */}
-      {!fabHidden && (
+      {!chromeHidden && (
         <UserLocationButton
           isTracking={isTrackingLocation}
           isLoading={isAcquiringLocation}
@@ -356,15 +403,13 @@ export default function MapClient() {
         />
       )}
 
-      {/* FAB: oculto cuando el modal esta abierto, en modo seleccion o getting-location */}
-      {!fabHidden && (
+      {!chromeHidden && (
         <ReportFAB
           onUseCurrentLocation={handleUseCurrentLocation}
           onSelectOnMap={handleSelectOnMap}
         />
       )}
 
-      {/* Modal de reporte */}
       {picked && (
         <ReportForm
           lat={picked.lat}
@@ -376,8 +421,8 @@ export default function MapClient() {
         />
       )}
 
-      {/* Contador inferior izquierdo */}
-      <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] max-w-[calc(100vw-6rem)] rounded bg-white/95 px-3 py-2 text-xs text-slate-700 shadow ring-1 ring-slate-200 sm:bottom-4 sm:left-4 sm:max-w-none">
+      {/* Pill inferior con contador */}
+      <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] max-w-[calc(100vw-6rem)] rounded-full bg-surface-card/95 px-4 py-2 text-xs font-medium text-fg shadow-float ring-1 ring-surface-border sm:bottom-4 sm:left-4 sm:max-w-none">
         {isFetching
           ? 'Cargando...'
           : points.length === 0

@@ -1,5 +1,17 @@
 import type { Metadata, Viewport } from 'next';
+import { Space_Grotesk } from 'next/font/google';
+
+import PageTransition from '@/components/PageTransition';
 import './globals.css';
+
+// Fuente del logo / wordmark "PuntosNegrosRD".
+// Space Grotesk: geometrica, moderna, con personalidad sin ser trendy.
+const logoFont = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['500', '700'],
+  variable: '--font-logo',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'PuntosNegrosRD - Mapa ciudadano de riesgo vial',
@@ -10,8 +22,9 @@ export const metadata: Metadata = {
   ),
   manifest: '/manifest.webmanifest',
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    icon: [{ url: '/icon.png', type: 'image/png' }],
+    apple: [{ url: '/icon.png', type: 'image/png' }],
+    shortcut: [{ url: '/icon.png', type: 'image/png' }],
   },
   applicationName: 'PuntosNegrosRD',
   appleWebApp: {
@@ -38,7 +51,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#0F172A',
+  themeColor: '#2563eb',
 };
 
 export default function RootLayout({
@@ -47,9 +60,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className="min-h-screen bg-white text-slate-900 antialiased">
-        {children}
+    <html lang="es" className={logoFont.variable}>
+      <body className="min-h-screen bg-surface-base text-fg antialiased">
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   );
