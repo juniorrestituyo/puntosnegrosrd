@@ -51,11 +51,25 @@ export const metadata: Metadata = {
     locale: 'es_DO',
     type: 'website',
     siteName: 'PuntosNegrosRD',
+    // Sin og:image explicito los previewers de WhatsApp/Telegram fallback
+    // al favicon (circulo negro con esquinas transparentes) y rellenan
+    // el frame con blanco. Esta imagen es un banner 1200x630 full-bleed
+    // negro con el logo centrado — sin transparencia, sin frame blanco.
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'PuntosNegrosRD - Mapa ciudadano de riesgo vial',
+        type: 'image/png',
+      },
+    ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'PuntosNegrosRD',
     description: 'Mapa ciudadano abierto de riesgo vial en Republica Dominicana.',
+    images: ['/og-image.png'],
   },
 };
 

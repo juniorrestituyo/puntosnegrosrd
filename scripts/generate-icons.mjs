@@ -78,6 +78,46 @@ async function generateAny(size, outName) {
   return outName;
 }
 
+/**
+ * Open Graph image para link previews (WhatsApp, Telegram, Facebook,
+ * Twitter, LinkedIn). Full-bleed negro de 1200x630 (ratio 1.91:1 que
+ * Facebook recomienda; WhatsApp acepta cualquier ratio). El logo va
+ * centrado, escalado a 500px de alto (~80% del alto del canvas).
+ * Sin esa imagen explicita los previewers fallback a icon-192 o
+ * favicon, que tienen esquinas transparentes y se renderean con
+ * fondo blanco en WhatsApp.
+ */
+async function generateOgImage() {
+  const W = 1200;
+  const H = 630;
+  const LOGO_H = 500;
+
+  const logoBuf = await sharp(SRC)
+    .resize(LOGO_H, LOGO_H, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .toBuffer();
+
+  const left = Math.round((W - LOGO_H) / 2);
+  const top = Math.round((H - LOGO_H) / 2);
+
+  const outName = 'og-image.png';
+  await sharp({
+    create: {
+      width: W,
+      height: H,
+      channels: 3,
+      background: BLACK,
+    },
+  })
+    .composite([{ input: logoBuf, top, left }])
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(OUT_DIR, outName));
+
+  return outName;
+}
+
 async function main() {
   // Validar fuente
   try {
@@ -99,6 +139,9 @@ async function main() {
 
   // Apple touch icon (90% — solo corner radius leve de iOS, mas aire para el logo)
   generated.push(await generateMaskable(180, 0.9, 'apple-touch-icon.png'));
+
+  // Open Graph image para link previews en redes sociales / mensajeria
+  generated.push(await generateOgImage());
 
   console.log('Iconos generados:');
   for (const f of generated) {
