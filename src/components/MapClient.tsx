@@ -296,7 +296,9 @@ export default function MapClient() {
     setBanner(null);
   }
 
-  const fabHidden =
+  // Estados en los que escondemos todo el "chrome" flotante (FAB, locate,
+  // hamburger, filtros) para enfocar la atencion en lo que esta abierto.
+  const chromeHidden =
     picked !== null ||
     reportMode === 'select-on-map' ||
     reportMode === 'getting-location' ||
@@ -321,15 +323,17 @@ export default function MapClient() {
       />
 
       {/* Hamburger flotante con navegacion del sitio */}
-      <SideDrawer current="mapa" />
+      {!chromeHidden && <SideDrawer current="mapa" />}
 
       {/* Boton de filtros (independiente del drawer) en top-right */}
-      <FilterPanel
-        state={filters}
-        total={points.length}
-        shown={filteredPoints.length}
-        onChange={setFilters}
-      />
+      {!chromeHidden && (
+        <FilterPanel
+          state={filters}
+          total={points.length}
+          shown={filteredPoints.length}
+          onChange={setFilters}
+        />
+      )}
 
       {/* Banner de modo seleccion */}
       {reportMode === 'select-on-map' && (
@@ -371,7 +375,7 @@ export default function MapClient() {
         </div>
       )}
 
-      {!fabHidden && (
+      {!chromeHidden && (
         <UserLocationButton
           isTracking={isTrackingLocation}
           isLoading={isAcquiringLocation}
@@ -379,7 +383,7 @@ export default function MapClient() {
         />
       )}
 
-      {!fabHidden && (
+      {!chromeHidden && (
         <ReportFAB
           onUseCurrentLocation={handleUseCurrentLocation}
           onSelectOnMap={handleSelectOnMap}
