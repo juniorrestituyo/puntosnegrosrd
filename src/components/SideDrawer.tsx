@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type CurrentKey = 'mapa' | 'datos' | 'metodologia' | 'acerca';
@@ -25,33 +24,6 @@ interface SideDrawerProps {
  */
 export default function SideDrawer({ current }: SideDrawerProps) {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  /**
-   * Click handler especial para la entrada "Mapa".
-   * - Si ya estamos en /, solo cierra el drawer (no-op de nav).
-   * - Si estamos en una sub-pagina interceptada (modal sobre el mapa),
-   *   router.back() cierra el slot @modal cleanly sin remount de
-   *   MapClient. Link a "/" no lo hace.
-   * - Si no hay historial (deep link directo), push a /.
-   */
-  function handleMapaClick(e: React.MouseEvent<HTMLAnchorElement>) {
-    e.preventDefault();
-    setOpen(false);
-
-    if (pathname === '/') return;
-
-    if (typeof window === 'undefined') return;
-    const mapUrl = window.location.origin + '/';
-    const cameFromMap = document.referrer === mapUrl;
-
-    if (cameFromMap && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/');
-    }
-  }
 
   useEffect(() => {
     if (!open) return;
@@ -153,14 +125,11 @@ export default function SideDrawer({ current }: SideDrawerProps) {
           <ul className="space-y-1">
             {NAV_LINKS.map((l) => {
               const isActive = current === l.key;
-              const isMapaLink = l.key === 'mapa';
               return (
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    onClick={
-                      isMapaLink ? handleMapaClick : () => setOpen(false)
-                    }
+                    onClick={() => setOpen(false)}
                     className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                       isActive
                         ? 'bg-brand-subtle text-brand'
