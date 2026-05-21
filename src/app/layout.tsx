@@ -22,9 +22,21 @@ export const metadata: Metadata = {
   ),
   manifest: '/manifest.webmanifest',
   icons: {
-    icon: [{ url: '/icon.png', type: 'image/png' }],
-    apple: [{ url: '/icon.png', type: 'image/png' }],
-    shortcut: [{ url: '/icon.png', type: 'image/png' }],
+    // Iconos para favicon / chrome tab / android home screen (PWA).
+    // Los maskable estan declarados en manifest.webmanifest con
+    // purpose='maskable' (Android los usa para evitar el cuadro
+    // blanco alrededor del logo al instalar como PWA).
+    icon: [
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
+    ],
+    // iOS no usa maskable — Springboard solo aplica corner radius leve.
+    // apple-touch-icon es full square con fondo negro de borde a borde
+    // y el logo al 90% (sin transparencia en las esquinas).
+    apple: [
+      { url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' },
+    ],
+    shortcut: [{ url: '/icon-192.png', type: 'image/png' }],
   },
   applicationName: 'PuntosNegrosRD',
   appleWebApp: {
@@ -51,7 +63,13 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#2563eb',
+  // theme-color blanco para que las barras del sistema (status bar
+  // en top, nav bar en bottom en Android, home indicator en iOS)
+  // se vean blancas, sin la franja azul brand ni la franja negra del
+  // splash. Android/iOS detectan que el color es claro y conmutan
+  // automaticamente los iconos del sistema (reloj, wifi, bateria) a
+  // tono oscuro para que sigan siendo legibles.
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({
