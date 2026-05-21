@@ -82,7 +82,7 @@ export async function GET() {
     type: 'FeatureCollection',
     metadata: {
       name: 'PuntosNegrosRD',
-      source: 'https://github.com/w0rkm4n/puntosnegrosrd',
+      source: 'https://github.com/juniorrestituyo/puntosnegrosrd',
       license: 'CC-BY-4.0',
       license_url: 'https://creativecommons.org/licenses/by/4.0/',
       generated_at: new Date().toISOString(),
@@ -100,7 +100,7 @@ export async function GET() {
       'Content-Disposition': `attachment; filename="puntosnegrosrd-${today}.geojson"`,
       'Cache-Control': 'public, max-age=60, must-revalidate',
       'X-License': 'CC-BY-4.0',
-      'X-Source': 'https://github.com/w0rkm4n/puntosnegrosrd',
+      'X-Source': 'https://github.com/juniorrestituyo/puntosnegrosrd',
     },
   });
 }

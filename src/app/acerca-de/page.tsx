@@ -86,7 +86,7 @@ export default function AcercaDePage() {
               . El código fuente es público y se distribuye bajo licencia MIT
               en{' '}
               <a
-                href="https://github.com/w0rkm4n/puntosnegrosrd"
+                href="https://github.com/juniorrestituyo/puntosnegrosrd"
                 target="_blank"
                 rel="noreferrer"
                 className="font-medium text-brand underline decoration-brand-soft underline-offset-2 hover:decoration-brand"

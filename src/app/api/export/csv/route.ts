@@ -65,7 +65,7 @@ export async function GET() {
       'Cache-Control': 'public, max-age=60, must-revalidate',
       // Datos publicados bajo Creative Commons Attribution 4.0
       'X-License': 'CC-BY-4.0',
-      'X-Source': 'https://github.com/w0rkm4n/puntosnegrosrd',
+      'X-Source': 'https://github.com/juniorrestituyo/puntosnegrosrd',
     },
   });
 }

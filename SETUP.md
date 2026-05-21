@@ -13,7 +13,7 @@
 PowerShell:
 ```powershell
 cd $HOME\Documents
-git clone https://github.com/w0rkm4n/puntosnegrosrd.git
+git clone https://github.com/juniorrestituyo/puntosnegrosrd.git
 cd puntosnegrosrd
 ```
 
@@ -121,7 +121,7 @@ Abre http://localhost:3000 — deberías ver la página placeholder con "PuntosN
 ## Paso 6 — Deploy en Vercel (3 minutos)
 
 1. Ir a https://vercel.com → Sign Up con GitHub
-2. **New Project** → Import `w0rkm4n/puntosnegrosrd`
+2. **New Project** → Import `juniorrestituyo/puntosnegrosrd`
 3. **Framework Preset:** Next.js (detección automática)
 4. **Environment Variables** → agregar las mismas que tienes en `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`

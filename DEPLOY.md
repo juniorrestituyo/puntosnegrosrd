@@ -1,7 +1,7 @@
 # Deploy a Vercel — paso a paso
 
 **Tiempo estimado:** 10-15 minutos.
-**Pre-requisito:** repo en GitHub (ya hecho: w0rkm4n/puntosnegrosrd).
+**Pre-requisito:** repo en GitHub (ya hecho: juniorrestituyo/puntosnegrosrd).
 
 ---
 
@@ -9,7 +9,7 @@
 
 1. Ir a https://vercel.com
 2. Click **"Sign Up"** (esquina superior derecha)
-3. Elegir **"Continue with GitHub"** — autentica con tu cuenta `w0rkm4n`
+3. Elegir **"Continue with GitHub"** — autentica con tu cuenta `juniorrestituyo`
 4. Autoriza el acceso de Vercel a tus repos
 5. En el plan, elige **Hobby** (gratis, sin tarjeta)
 
