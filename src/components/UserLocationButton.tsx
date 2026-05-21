@@ -11,9 +11,11 @@ export default function UserLocationButton({
   isLoading,
   onToggle,
 }: UserLocationButtonProps) {
-  const label = isTracking
-    ? 'Ocultar mi ubicacion'
-    : 'Mostrar mi ubicacion';
+  // El boton ya no es toggle (mostrar/ocultar). Ahora cada click
+  // es una accion de "llevame a mi ubicacion ahora" con fly smooth.
+  // isTracking solo controla el color del icono (azul cuando hay
+  // GPS activo, neutro cuando no).
+  const label = 'Ir a mi ubicacion';
 
   return (
     <button
@@ -21,7 +23,6 @@ export default function UserLocationButton({
       onClick={onToggle}
       disabled={isLoading}
       aria-label={label}
-      aria-pressed={isTracking}
       title={label}
       className={`absolute bottom-28 right-3 z-[1080] flex h-14 w-14 items-center justify-center rounded-full shadow-float ring-1 transition-colors sm:bottom-32 sm:right-6 sm:h-16 sm:w-16 ${
         isTracking

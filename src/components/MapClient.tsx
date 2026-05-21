@@ -59,6 +59,10 @@ export default function MapClient() {
   const [isTrackingLocation, setIsTrackingLocation] = useState(true);
   const [isAcquiringLocation, setIsAcquiringLocation] = useState(false);
 
+  // Counter que el usuario incrementa cada vez que toca el boton GPS.
+  // Map.tsx (via MapCenterController) lo lee y hace flyTo smooth.
+  const [recenterRequest, setRecenterRequest] = useState(0);
+
   // Punto seleccionado para mostrar el bottom sheet con su detalle.
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
 
@@ -143,15 +147,18 @@ export default function MapClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTrackingLocation]);
 
-  function toggleLocationTracking() {
-    if (isTrackingLocation) {
-      setIsTrackingLocation(false);
-      setUserLocation(null);
-      setIsAcquiringLocation(false);
-      setBanner(null);
-    } else {
+  // Click en el boton GPS = "llevame a mi ubicacion ahora, con flyTo
+  // smooth + zoom-if-far". Ya no es un toggle — siempre intenta
+  // localizar. Si tracking estaba apagado (permission denegada antes),
+  // lo enciende otra vez. El recenter se dispara via increment del
+  // counter; si userLocation aun no llego, MapCenterController espera
+  // y al primer fix dispara el flyTo.
+  function handleLocate() {
+    if (!isTrackingLocation) {
       setIsTrackingLocation(true);
+      setBanner(null);
     }
+    setRecenterRequest((n) => n + 1);
   }
 
   const filteredPoints = useMemo(() => {
@@ -357,6 +364,7 @@ export default function MapClient() {
         initialCenter={cameraRef.current.center}
         initialZoom={cameraRef.current.zoom}
         skipInitialAutoCenter={!!cached}
+        recenterRequest={recenterRequest}
         onMapClick={handleMapClick}
         onPointSelect={setSelectedPoint}
         onBackgroundClick={() => setSelectedPoint(null)}
@@ -446,7 +454,7 @@ export default function MapClient() {
         <UserLocationButton
           isTracking={isTrackingLocation}
           isLoading={isAcquiringLocation}
-          onToggle={toggleLocationTracking}
+          onToggle={handleLocate}
         />
       )}
 

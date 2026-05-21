@@ -90,37 +90,62 @@ const UserLocationIcon = L.divIcon({
   popupAnchor: [0, -10],
 });
 
-function CenterOnUserLocation({
+/**
+ * Maneja todas las situaciones donde el mapa se debe centrar en el
+ * usuario:
+ *
+ *  - INITIAL MOUNT: cuando el primer userLocation llega despues de
+ *    montarse el mapa, hace un snap instantaneo (setView animate:false)
+ *    para que se sienta "el mapa abrio en mi". Si hay cache, este
+ *    snap se salta via skipInitialAutoCenter.
+ *
+ *  - RECENTER REQUEST: cada vez que recenterRequest cambia (incrementa)
+ *    hace un flyTo smooth con duracion 0.7s. Si el zoom actual es
+ *    menor a 15 (vista mas amplia que calle), zoomea suave hasta 15.
+ *    Si ya esta a >=15, preserva el zoom del usuario.
+ *
+ * Ambos modos comparten el mismo userLocation pero los handledRefs
+ * son independientes para que un click del boton locate no compita
+ * con el initial center.
+ */
+function MapCenterController({
   userLocation,
   skipInitialAutoCenter = false,
+  recenterRequest,
 }: {
   userLocation: UserLocation | null;
   skipInitialAutoCenter?: boolean;
+  recenterRequest: number;
 }) {
   const map = useMap();
-  // Si hidratamos desde cache (skipInitialAutoCenter=true) arrancamos
-  // como si ya hubieramos hecho el center: respeta la posicion del
-  // usuario. Si el usuario toggle off/on el boton de locate (userLocation
-  // pasa por null), el ref se resetea y el siguiente fix si centra.
-  const centeredOnceRef = useRef(skipInitialAutoCenter);
+  const handledInitialRef = useRef(skipInitialAutoCenter);
+  const handledRecenterRef = useRef(recenterRequest);
 
   useEffect(() => {
-    if (!userLocation) {
-      centeredOnceRef.current = false;
+    if (!userLocation) return;
+
+    // CASO 1: Recenter explicito (usuario toco el boton de locate).
+    // Tiene prioridad sobre el initial center.
+    if (recenterRequest > handledRecenterRef.current) {
+      const currentZoom = map.getZoom();
+      const targetZoom = Math.max(currentZoom, 15);
+      map.flyTo([userLocation.lat, userLocation.lng], targetZoom, {
+        duration: 0.7,
+      });
+      handledRecenterRef.current = recenterRequest;
+      handledInitialRef.current = true;
       return;
     }
-    if (!centeredOnceRef.current) {
-      // setView con animate:false hace un snap instantaneo a la ubicacion
-      // del usuario. Mantenemos el zoom actual del mapa (que arranca en
-      // RD_DEFAULT_ZOOM = 15) — no forzamos cambio de zoom como hacia
-      // antes flyTo(..., 15, ...). Asi el "reset" cada vez que se vuelve
-      // al mapa se siente menos dramatico: no hay animacion de zoom-in.
+
+    // CASO 2: Initial auto-center (primera llegada de GPS sin cache).
+    // Snap rapido — no es una "animacion", es "el mapa abre aqui".
+    if (!handledInitialRef.current) {
       map.setView([userLocation.lat, userLocation.lng], map.getZoom(), {
         animate: false,
       });
-      centeredOnceRef.current = true;
+      handledInitialRef.current = true;
     }
-  }, [userLocation, map]);
+  }, [userLocation, recenterRequest, map]);
 
   return null;
 }
@@ -300,6 +325,7 @@ interface MapProps {
   initialCenter?: [number, number];
   initialZoom?: number;
   skipInitialAutoCenter?: boolean;
+  recenterRequest?: number;
   onMapClick: (lat: number, lng: number) => void;
   onPointSelect: (point: Point) => void;
   onBackgroundClick: () => void;
@@ -314,6 +340,7 @@ export default function Map({
   initialCenter,
   initialZoom,
   skipInitialAutoCenter,
+  recenterRequest = 0,
   onMapClick,
   onPointSelect,
   onBackgroundClick,
@@ -343,9 +370,10 @@ export default function Map({
       />
       <ZoomTracker onZoom={setZoom} />
       {onCameraChange && <CameraTracker onChange={onCameraChange} />}
-      <CenterOnUserLocation
+      <MapCenterController
         userLocation={userLocation}
         skipInitialAutoCenter={skipInitialAutoCenter}
+        recenterRequest={recenterRequest}
       />
 
       {userLocation && (
