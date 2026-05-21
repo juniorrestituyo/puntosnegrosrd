@@ -72,14 +72,14 @@ export default function DatosAbiertosPage() {
             Los endpoints son públicos y se pueden consumir directamente desde
             un script, un notebook o un servicio:
           </p>
-          <div className="space-y-2 rounded-xl border border-surface-border bg-surface-raised p-4 font-mono text-xs text-fg">
+          <div className="space-y-3 rounded-xl border border-surface-border bg-surface-raised p-4 font-mono text-xs text-fg">
             <div>
-              <span className="text-fg-muted"># Descarga CSV con curl</span>
-              <div>curl -L https://puntosnegrosrd.vercel.app/api/export/csv -o puntos.csv</div>
+              <div className="text-fg-muted"># Descarga CSV con curl</div>
+              <pre className="mt-1 overflow-x-auto whitespace-pre rounded-md bg-surface-card/60 px-2 py-1.5">{`curl -L https://puntosnegrosrd.vercel.app/api/export/csv -o puntos.csv`}</pre>
             </div>
-            <div className="mt-3">
-              <span className="text-fg-muted"># GeoJSON</span>
-              <div>curl -L https://puntosnegrosrd.vercel.app/api/export/geojson -o puntos.geojson</div>
+            <div>
+              <div className="text-fg-muted"># GeoJSON</div>
+              <pre className="mt-1 overflow-x-auto whitespace-pre rounded-md bg-surface-card/60 px-2 py-1.5">{`curl -L https://puntosnegrosrd.vercel.app/api/export/geojson -o puntos.geojson`}</pre>
             </div>
           </div>
         </section>
