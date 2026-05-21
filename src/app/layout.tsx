@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk } from 'next/font/google';
+
+import PageTransition from '@/components/PageTransition';
 import './globals.css';
 
 // Fuente del logo / wordmark "PuntosNegrosRD".
@@ -59,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={logoFont.variable}>
       <body className="min-h-screen bg-surface-base text-fg antialiased">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   );
