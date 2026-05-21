@@ -127,11 +127,12 @@ export async function POST(request: Request) {
     return err('INTERNAL_ERROR', 'No se pudo guardar el reporte', 500);
   }
 
-  // Devolvemos en la forma de points_with_stats (incluye confirmation_count = 0)
+  // Devolvemos en la forma de points_with_stats (incluye contadores en 0)
   return ok(
     {
       ...data,
       confirmation_count: 0,
+      resolution_count: 0,
     },
     { status: 201 }
   );

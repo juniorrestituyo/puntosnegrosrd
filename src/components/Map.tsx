@@ -27,13 +27,23 @@ const FAR_ZOOM_THRESHOLD = 14;
 type MarkerMode = 'dot' | 'teardrop';
 
 /**
+ * ClassName compuesta del marker. Si status === 'resuelto' agrega
+ * `pn-marker-resolved` que en globals.css aplica grayscale + opacity
+ * baja para indicar visualmente que el punto fue cerrado. No cambia
+ * el color base ni el shape — solo lo "apaga".
+ */
+function markerClassName(point: Point): string {
+  return `pn-marker${point.status === 'resuelto' ? ' pn-marker-resolved' : ''}`;
+}
+
+/**
  * Dot compacto para vista lejana (pais/region). Solo color de votos +
  * anillo blanco. Sin numero ni cola — la prioridad es que no se aplasten.
  */
 function buildDotIcon(point: Point): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
   return L.divIcon({
-    className: 'pn-marker',
+    className: markerClassName(point),
     html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6],
@@ -54,7 +64,7 @@ function buildTeardropIcon(point: Point): L.DivIcon {
   const center = `<span style="position:absolute;top:8px;left:8px;width:12px;height:12px;border-radius:50%;background:${c.text};"></span>`;
 
   return L.divIcon({
-    className: 'pn-marker',
+    className: markerClassName(point),
     html: `
       <div class="pn-marker-inner" style="position:relative;width:28px;height:36px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));">
         <svg viewBox="0 0 32 42" width="28" height="36" xmlns="http://www.w3.org/2000/svg">

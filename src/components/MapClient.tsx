@@ -27,6 +27,9 @@ const Map = dynamic(() => import('./Map'), {
 });
 
 type ConfirmResult = { ok: true } | { ok: false; message: string };
+type ResolveResult =
+  | { ok: true; resolution_count: number; status: string | null }
+  | { ok: false; message: string };
 type ReportMode = 'idle' | 'select-on-map' | 'getting-location';
 
 interface BannerMessage {
@@ -80,6 +83,15 @@ export default function MapClient() {
   // de GPS cuando ya tenemos una posicion cacheada del usuario.
   const [hadCache, setHadCache] = useState(false);
 
+  // Gate del mount de <Map>. Arranca false; el useEffect de cache lo
+  // pone en true. Asi garantizamos que Map NO se monte hasta que
+  // cameraRef y hadCache esten ya actualizados con cache (si existe).
+  // Si Map montara antes (race entre el chunk dinamico y este
+  // useEffect), tomaria initialCenter=RD_CENTER y skipInitialAutoCenter
+  // =false, disparando el GPS-snap inicial — eso se sentia como un
+  // "reload" cada vez que el usuario volvia al mapa desde otra pagina.
+  const [cacheChecked, setCacheChecked] = useState(false);
+
   // Camara del mapa (center + zoom). Arranca con defaults; el useEffect
   // de hidratacion la sobreescribe si hay cache. Ref en vez de state
   // para no re-renderizar al panear (cada moveend dispararia un setState
@@ -92,14 +104,18 @@ export default function MapClient() {
   // Hidratacion del cache. Corre en cliente despues del primer render
   // (resuelve hydration mismatch). Si encontramos cache valido,
   // poblamos los estados pertinentes y marcamos hadCache=true.
+  // Marcamos cacheChecked=true SIEMPRE al final para destrabar el
+  // mount de <Map> (hubiera o no cache).
   useEffect(() => {
     const cached = loadMapState();
-    if (!cached) return;
-    setPoints(cached.points);
-    setUserLocation(cached.userLocation);
-    cameraRef.current = { center: cached.center, zoom: cached.zoom };
-    setIsFetching(false);
-    setHadCache(true);
+    if (cached) {
+      setPoints(cached.points);
+      setUserLocation(cached.userLocation);
+      cameraRef.current = { center: cached.center, zoom: cached.zoom };
+      setIsFetching(false);
+      setHadCache(true);
+    }
+    setCacheChecked(true);
   }, []);
 
   useEffect(() => {
@@ -189,11 +205,13 @@ export default function MapClient() {
   }
 
   const filteredPoints = useMemo(() => {
-    return points.filter(
-      (p) =>
-        filters.categories.has(p.category) &&
-        p.confirmation_count >= filters.minConfirmations
-    );
+    return points.filter((p) => {
+      if (!filters.categories.has(p.category)) return false;
+      if (p.confirmation_count < filters.minConfirmations) return false;
+      if (filters.status === 'open' && p.status === 'resuelto') return false;
+      if (filters.status === 'resolved' && p.status !== 'resuelto') return false;
+      return true;
+    });
   }, [points, filters]);
 
   function handleMapClick(lat: number, lng: number) {
@@ -265,6 +283,60 @@ export default function MapClient() {
         return { ok: true };
       } catch (e) {
         console.error('POST confirm fallo:', e);
+        return { ok: false, message: 'Error de red' };
+      }
+    },
+    []
+  );
+
+  /**
+   * Voto comunitario "yo veo que ya esta resuelto". El servidor decide
+   * (via trigger) si el conteo cruzo el umbral y flippea status. Aqui
+   * solo aplicamos lo que el servidor devuelva al estado local.
+   */
+  const handleResolve = useCallback(
+    async (pointId: string): Promise<ResolveResult> => {
+      try {
+        const res = await fetch(`/api/points/${pointId}/resolve`, {
+          method: 'POST',
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          return {
+            ok: false,
+            message: json.error?.message ?? 'No se pudo registrar tu voto',
+          };
+        }
+        const newCount = json.data?.resolution_count as number;
+        const newStatus = (json.data?.status as Point['status'] | null) ?? null;
+
+        setPoints((prev) =>
+          prev.map((p) =>
+            p.id === pointId
+              ? {
+                  ...p,
+                  resolution_count: newCount,
+                  status: newStatus ?? p.status,
+                }
+              : p
+          )
+        );
+        setSelectedPoint((prev) =>
+          prev && prev.id === pointId
+            ? {
+                ...prev,
+                resolution_count: newCount,
+                status: newStatus ?? prev.status,
+              }
+            : prev
+        );
+        return {
+          ok: true,
+          resolution_count: newCount,
+          status: newStatus,
+        };
+      } catch (e) {
+        console.error('POST resolve fallo:', e);
         return { ok: false, message: 'Error de red' };
       }
     },
@@ -448,25 +520,35 @@ export default function MapClient() {
 
   return (
     <div className="relative h-screen w-full bg-surface-base">
-      <Map
-        points={filteredPoints}
-        selectMode={reportMode === 'select-on-map'}
-        userLocation={userLocation}
-        spotlightPoint={selectedPoint}
-        initialCenter={cameraRef.current.center}
-        initialZoom={cameraRef.current.zoom}
-        skipInitialAutoCenter={hadCache}
-        recenterRequest={recenterRequest}
-        onMapClick={handleMapClick}
-        onPointSelect={setSelectedPoint}
-        onBackgroundClick={() => setSelectedPoint(null)}
-        onCameraChange={handleCameraChange}
-      />
+      {cacheChecked ? (
+        <Map
+          points={filteredPoints}
+          selectMode={reportMode === 'select-on-map'}
+          userLocation={userLocation}
+          spotlightPoint={selectedPoint}
+          initialCenter={cameraRef.current.center}
+          initialZoom={cameraRef.current.zoom}
+          skipInitialAutoCenter={hadCache}
+          recenterRequest={recenterRequest}
+          onMapClick={handleMapClick}
+          onPointSelect={setSelectedPoint}
+          onBackgroundClick={() => setSelectedPoint(null)}
+          onCameraChange={handleCameraChange}
+        />
+      ) : (
+        // Placeholder mientras cacheChecked es false (~1 frame). Mismo
+        // markup que el loading del dynamic import para que la transicion
+        // sea visualmente continua.
+        <div className="flex h-full w-full items-center justify-center bg-surface-raised">
+          <p className="text-sm text-fg-muted">Cargando mapa...</p>
+        </div>
+      )}
 
       <PointDetailSheet
         point={selectedPoint}
         onClose={() => setSelectedPoint(null)}
         onConfirm={handleConfirm}
+        onResolve={handleResolve}
       />
 
       {/* Hamburger y filtros: en estados focales NO desaparecen.

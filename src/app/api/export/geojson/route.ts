@@ -30,7 +30,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('points_with_stats')
     .select(
-      'id, lat, lng, category, subcategory, description, status, confirmation_count, province, municipality, created_at, updated_at'
+      'id, lat, lng, category, subcategory, description, status, confirmation_count, resolution_count, province, municipality, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(10000);
@@ -52,6 +52,7 @@ export async function GET() {
     description: string;
     status: string;
     confirmation_count: number;
+    resolution_count: number;
     province: string | null;
     municipality: string | null;
     created_at: string;
@@ -69,6 +70,7 @@ export async function GET() {
       description: p.description,
       status: p.status,
       confirmation_count: p.confirmation_count,
+      resolution_count: p.resolution_count,
       province: p.province,
       municipality: p.municipality,
       created_at: p.created_at,

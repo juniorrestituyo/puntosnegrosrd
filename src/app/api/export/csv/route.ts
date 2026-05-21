@@ -14,6 +14,7 @@ const CSV_COLUMNS = [
   'lat',
   'lng',
   'confirmation_count',
+  'resolution_count',
   'province',
   'municipality',
   'created_at',

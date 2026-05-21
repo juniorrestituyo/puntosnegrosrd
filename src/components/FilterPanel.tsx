@@ -4,9 +4,21 @@ import { useEffect, useState } from 'react';
 
 import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 
+/**
+ * Filtro de estado del lifecycle del reporte.
+ * - 'all': todos los puntos visibles (default — muestra el impacto
+ *   completo de la plataforma, incluyendo lo que ya se resolvio).
+ * - 'open': puntos abiertos (todo lo que NO es 'resuelto'). Util si
+ *   solo quieres ver los pendientes.
+ * - 'resolved': solo puntos 'resuelto'. Util para ver el track record
+ *   de problemas que ya fueron solucionados.
+ */
+export type StatusFilter = 'all' | 'open' | 'resolved';
+
 export interface FilterState {
   categories: Set<CategoryKey>;
   minConfirmations: number;
+  status: StatusFilter;
 }
 
 export const DEFAULT_FILTERS: FilterState = {
@@ -17,7 +29,14 @@ export const DEFAULT_FILTERS: FilterState = {
     'climatico',
   ]),
   minConfirmations: 0,
+  status: 'all',
 };
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'open', label: 'Abiertos' },
+  { value: 'resolved', label: 'Resueltos' },
+];
 
 interface FilterPanelProps {
   state: FilterState;
@@ -59,12 +78,18 @@ export default function FilterPanel({
     onChange({ ...state, minConfirmations: n });
   }
 
+  function setStatus(s: StatusFilter) {
+    onChange({ ...state, status: s });
+  }
+
   function reset() {
     onChange(DEFAULT_FILTERS);
   }
 
   const hasFilters =
-    state.categories.size < 4 || state.minConfirmations > 0;
+    state.categories.size < 4 ||
+    state.minConfirmations > 0 ||
+    state.status !== 'all';
 
   return (
     <>
@@ -174,6 +199,28 @@ export default function FilterPanel({
                   );
                 })}
               </ul>
+            </section>
+
+            <section>
+              <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+                Estado
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {STATUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setStatus(opt.value)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      state.status === opt.value
+                        ? 'bg-brand text-white shadow-card'
+                        : 'bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </section>
 
             <section>
