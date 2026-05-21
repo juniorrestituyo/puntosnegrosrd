@@ -9,6 +9,7 @@ import FilterPanel, {
   DEFAULT_FILTERS,
   type FilterState,
 } from './FilterPanel';
+import PointDetailSheet from './PointDetailSheet';
 import ReportFAB from './ReportFAB';
 import ReportForm from './ReportForm';
 import SideDrawer from './SideDrawer';
@@ -46,6 +47,9 @@ export default function MapClient() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
   const [isAcquiringLocation, setIsAcquiringLocation] = useState(false);
+
+  // Punto seleccionado para mostrar el bottom sheet con su detalle.
+  const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,6 +201,13 @@ export default function MapClient() {
             p.id === pointId ? { ...p, confirmation_count: newCount } : p
           )
         );
+        // El bottom sheet tiene su propia copia del point — sincronizamos
+        // si es el que esta abierto.
+        setSelectedPoint((prev) =>
+          prev && prev.id === pointId
+            ? { ...prev, confirmation_count: newCount }
+            : prev
+        );
         return { ok: true };
       } catch (e) {
         console.error('POST confirm fallo:', e);
@@ -285,7 +296,8 @@ export default function MapClient() {
   const fabHidden =
     picked !== null ||
     reportMode === 'select-on-map' ||
-    reportMode === 'getting-location';
+    reportMode === 'getting-location' ||
+    selectedPoint !== null;
 
   return (
     <div className="relative h-screen w-full bg-surface-base">
@@ -294,6 +306,13 @@ export default function MapClient() {
         selectMode={reportMode === 'select-on-map'}
         userLocation={userLocation}
         onMapClick={handleMapClick}
+        onPointSelect={setSelectedPoint}
+        onBackgroundClick={() => setSelectedPoint(null)}
+      />
+
+      <PointDetailSheet
+        point={selectedPoint}
+        onClose={() => setSelectedPoint(null)}
         onConfirm={handleConfirm}
       />
 

@@ -2,29 +2,23 @@
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Circle,
   MapContainer,
   Marker,
-  Popup,
   TileLayer,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
 
 import {
-  CATEGORIES,
   RD_BOUNDS,
   RD_CENTER,
   RD_DEFAULT_ZOOM,
-  STATUS_LABELS,
 } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, UserLocation } from '@/lib/types';
-
-type ConfirmResult = { ok: true } | { ok: false; message: string };
 
 // Por debajo de este zoom mostramos solo un dot pequeno (vista regional).
 // Por encima, teardrop completo con badge de confirmaciones.
@@ -120,22 +114,27 @@ function CenterOnUserLocation({
 
 function ClickCapture({
   onPick,
-  enabled,
+  onBackgroundClick,
+  selectMode,
 }: {
   onPick: (lat: number, lng: number) => void;
-  enabled: boolean;
+  onBackgroundClick: () => void;
+  selectMode: boolean;
 }) {
   useMapEvents({
     click(e) {
-      if (!enabled) return;
-      const { lat, lng } = e.latlng;
-      if (
-        lat >= RD_BOUNDS.minLat &&
-        lat <= RD_BOUNDS.maxLat &&
-        lng >= RD_BOUNDS.minLng &&
-        lng <= RD_BOUNDS.maxLng
-      ) {
-        onPick(lat, lng);
+      if (selectMode) {
+        const { lat, lng } = e.latlng;
+        if (
+          lat >= RD_BOUNDS.minLat &&
+          lat <= RD_BOUNDS.maxLat &&
+          lng >= RD_BOUNDS.minLng &&
+          lng <= RD_BOUNDS.maxLng
+        ) {
+          onPick(lat, lng);
+        }
+      } else {
+        onBackgroundClick();
       }
     },
   });
@@ -159,109 +158,17 @@ function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
   return null;
 }
 
-function PointPopup({
-  point,
-  onConfirm,
-}: {
-  point: Point;
-  onConfirm: (id: string) => Promise<ConfirmResult>;
-}) {
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>(
-    'idle'
-  );
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function handleClick() {
-    setState('loading');
-    setMessage(null);
-    const res = await onConfirm(point.id);
-    if (res.ok) {
-      setState('ok');
-    } else {
-      setState('err');
-      setMessage(res.message);
-    }
-  }
-
-  return (
-    <div className="min-w-[220px] space-y-2 text-xs">
-      <div>
-        <div className="text-sm font-semibold text-fg">
-          {CATEGORIES[point.category].label}
-        </div>
-        {point.subcategory && (
-          <div className="text-[11px] text-fg-muted">
-            {point.subcategory}
-          </div>
-        )}
-      </div>
-
-      {point.photo_url && (
-        <a
-          href={`/punto/${point.id}`}
-          className="block overflow-hidden rounded-md"
-        >
-          <img
-            src={point.photo_url}
-            alt="Foto del reporte"
-            className="h-24 w-full object-cover"
-            loading="lazy"
-          />
-        </a>
-      )}
-
-      <div className="text-fg/90">{point.description}</div>
-
-      <div className="flex items-center gap-2 text-[10px] text-fg-muted">
-        <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 font-semibold text-brand">
-          {point.confirmation_count}{' '}
-          confirmacion{point.confirmation_count === 1 ? '' : 'es'}
-        </span>
-        <span>{STATUS_LABELS[point.status] ?? point.status}</span>
-      </div>
-
-      <div className="flex items-center justify-between gap-2 border-t border-surface-border pt-2">
-        {state === 'ok' && (
-          <span className="text-[11px] font-medium text-emerald-600">
-            ✓ Sumada
-          </span>
-        )}
-        {state === 'err' && (
-          <span className="text-[11px] text-red-600">{message}</span>
-        )}
-        {(state === 'idle' || state === 'loading') && (
-          <button
-            type="button"
-            onClick={handleClick}
-            disabled={state === 'loading'}
-            className="rounded-md bg-brand px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-brand-accent disabled:opacity-50"
-          >
-            {state === 'loading' ? 'Confirmando...' : 'Yo tambien lo veo'}
-          </button>
-        )}
-
-        <Link
-          href={`/punto/${point.id}`}
-          className="text-[11px] font-medium text-brand hover:underline"
-        >
-          Detalle &rarr;
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 /**
- * Marker que al clic hace pan al punto sin cambiar el zoom del usuario.
- * Solo centra el viewport en el marker para que el popup quede visible.
+ * Marker que al clic hace pan al punto y notifica al padre para que
+ * abra el bottom sheet con el detalle. Ya no usa Popup de Leaflet.
  */
 function FocusableMarker({
   point,
-  onConfirm,
+  onSelect,
   zoom,
 }: {
   point: Point;
-  onConfirm: (id: string) => Promise<ConfirmResult>;
+  onSelect: (point: Point) => void;
   zoom: number;
 }) {
   const map = useMap();
@@ -281,13 +188,10 @@ function FocusableMarker({
       eventHandlers={{
         click: () => {
           map.panTo([point.lat, point.lng], { animate: true, duration: 0.6 });
+          onSelect(point);
         },
       }}
-    >
-      <Popup autoPan={false}>
-        <PointPopup point={point} onConfirm={onConfirm} />
-      </Popup>
-    </Marker>
+    />
   );
 }
 
@@ -296,7 +200,8 @@ interface MapProps {
   selectMode: boolean;
   userLocation: UserLocation | null;
   onMapClick: (lat: number, lng: number) => void;
-  onConfirm: (id: string) => Promise<ConfirmResult>;
+  onPointSelect: (point: Point) => void;
+  onBackgroundClick: () => void;
 }
 
 export default function Map({
@@ -304,7 +209,8 @@ export default function Map({
   selectMode,
   userLocation,
   onMapClick,
-  onConfirm,
+  onPointSelect,
+  onBackgroundClick,
 }: MapProps) {
   const [zoom, setZoom] = useState(RD_DEFAULT_ZOOM);
 
@@ -323,7 +229,11 @@ export default function Map({
         subdomains="abcd"
         maxZoom={19}
       />
-      <ClickCapture onPick={onMapClick} enabled={selectMode} />
+      <ClickCapture
+        onPick={onMapClick}
+        onBackgroundClick={onBackgroundClick}
+        selectMode={selectMode}
+      />
       <ZoomTracker onZoom={setZoom} />
       <CenterOnUserLocation userLocation={userLocation} />
 
@@ -353,7 +263,7 @@ export default function Map({
         <FocusableMarker
           key={p.id}
           point={p}
-          onConfirm={onConfirm}
+          onSelect={onPointSelect}
           zoom={zoom}
         />
       ))}
