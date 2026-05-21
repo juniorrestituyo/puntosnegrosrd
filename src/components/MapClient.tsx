@@ -1,9 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { RD_BOUNDS } from '@/lib/constants';
+import { RD_BOUNDS, RD_CENTER, RD_DEFAULT_ZOOM } from '@/lib/constants';
+import { loadMapState, saveMapState } from '@/lib/map-state-cache';
 import type { Point, PointInput, UserLocation } from '@/lib/types';
 import FilterPanel, {
   DEFAULT_FILTERS,
@@ -33,8 +34,13 @@ interface BannerMessage {
 }
 
 export default function MapClient() {
-  const [points, setPoints] = useState<Point[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
+  // Lee el cache UNA VEZ al montar para hidratar el estado inicial.
+  // Si no hay cache valido (primer load o expirado), arranca con
+  // defaults vacios y la posicion estandar del mapa.
+  const cached = useMemo(() => loadMapState(), []);
+
+  const [points, setPoints] = useState<Point[]>(cached?.points ?? []);
+  const [isFetching, setIsFetching] = useState(!cached);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(
     null
   );
@@ -44,7 +50,9 @@ export default function MapClient() {
   const [reportMode, setReportMode] = useState<ReportMode>('idle');
   const [banner, setBanner] = useState<BannerMessage | null>(null);
 
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(
+    cached?.userLocation ?? null
+  );
   // Tracking arranca en true: queremos auto-focus en la ubicacion del
   // usuario al entrar al mapa. Si rechaza el permiso, el handler de
   // error lo regresa a false y muestra un banner.
@@ -53,6 +61,15 @@ export default function MapClient() {
 
   // Punto seleccionado para mostrar el bottom sheet con su detalle.
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
+
+  // Camara del mapa (center + zoom). Inicial desde cache si hay,
+  // sino los defaults. Se actualiza desde Map via onCameraChange.
+  // Usamos ref en vez de state para no re-renderizar al panear (cada
+  // moveend dispararia un setState innecesario en el padre).
+  const cameraRef = useRef<{ center: [number, number]; zoom: number }>({
+    center: cached?.center ?? RD_CENTER,
+    zoom: cached?.zoom ?? RD_DEFAULT_ZOOM,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -226,6 +243,32 @@ export default function MapClient() {
     }, ms);
   }
 
+  // Handler que Map nos pasa cuando el usuario panea/zoomea.
+  // Actualiza la camera en el ref y guarda el snapshot del mapa.
+  const handleCameraChange = useCallback(
+    (center: [number, number], zoom: number) => {
+      cameraRef.current = { center, zoom };
+      saveMapState({
+        points,
+        userLocation,
+        center,
+        zoom,
+      });
+    },
+    [points, userLocation]
+  );
+
+  // Snapshot al cache cada vez que cambian points o userLocation.
+  // La camera se guarda en handleCameraChange (asociada a moveend).
+  useEffect(() => {
+    saveMapState({
+      points,
+      userLocation,
+      center: cameraRef.current.center,
+      zoom: cameraRef.current.zoom,
+    });
+  }, [points, userLocation]);
+
   function handleUseCurrentLocation() {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setBanner({
@@ -311,9 +354,13 @@ export default function MapClient() {
         selectMode={reportMode === 'select-on-map'}
         userLocation={userLocation}
         spotlightPoint={selectedPoint}
+        initialCenter={cameraRef.current.center}
+        initialZoom={cameraRef.current.zoom}
+        skipInitialAutoCenter={!!cached}
         onMapClick={handleMapClick}
         onPointSelect={setSelectedPoint}
         onBackgroundClick={() => setSelectedPoint(null)}
+        onCameraChange={handleCameraChange}
       />
 
       <PointDetailSheet

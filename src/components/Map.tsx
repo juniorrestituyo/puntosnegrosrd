@@ -92,11 +92,17 @@ const UserLocationIcon = L.divIcon({
 
 function CenterOnUserLocation({
   userLocation,
+  skipInitialAutoCenter = false,
 }: {
   userLocation: UserLocation | null;
+  skipInitialAutoCenter?: boolean;
 }) {
   const map = useMap();
-  const centeredOnceRef = useRef(false);
+  // Si hidratamos desde cache (skipInitialAutoCenter=true) arrancamos
+  // como si ya hubieramos hecho el center: respeta la posicion del
+  // usuario. Si el usuario toggle off/on el boton de locate (userLocation
+  // pasa por null), el ref se resetea y el siguiente fix si centra.
+  const centeredOnceRef = useRef(skipInitialAutoCenter);
 
   useEffect(() => {
     if (!userLocation) {
@@ -160,6 +166,28 @@ function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
   useMapEvents({
     zoomend(e) {
       onZoom(e.target.getZoom());
+    },
+  });
+  return null;
+}
+
+/**
+ * Reporta center y zoom al padre cuando el usuario termina de panear
+ * o zoomear. Permite cachear la posicion de la camara y rehidratarla
+ * al volver a la pagina sin perder la vista del usuario.
+ *
+ * moveend ya cubre zoom (Leaflet emite moveend tambien al zoomear).
+ */
+function CameraTracker({
+  onChange,
+}: {
+  onChange: (center: [number, number], zoom: number) => void;
+}) {
+  const map = useMap();
+  useMapEvents({
+    moveend() {
+      const c = map.getCenter();
+      onChange([c.lat, c.lng], map.getZoom());
     },
   });
   return null;
@@ -269,9 +297,13 @@ interface MapProps {
   selectMode: boolean;
   userLocation: UserLocation | null;
   spotlightPoint: Point | null;
+  initialCenter?: [number, number];
+  initialZoom?: number;
+  skipInitialAutoCenter?: boolean;
   onMapClick: (lat: number, lng: number) => void;
   onPointSelect: (point: Point) => void;
   onBackgroundClick: () => void;
+  onCameraChange?: (center: [number, number], zoom: number) => void;
 }
 
 export default function Map({
@@ -279,16 +311,20 @@ export default function Map({
   selectMode,
   userLocation,
   spotlightPoint,
+  initialCenter,
+  initialZoom,
+  skipInitialAutoCenter,
   onMapClick,
   onPointSelect,
   onBackgroundClick,
+  onCameraChange,
 }: MapProps) {
-  const [zoom, setZoom] = useState(RD_DEFAULT_ZOOM);
+  const [zoom, setZoom] = useState(initialZoom ?? RD_DEFAULT_ZOOM);
 
   return (
     <MapContainer
-      center={RD_CENTER}
-      zoom={RD_DEFAULT_ZOOM}
+      center={initialCenter ?? RD_CENTER}
+      zoom={initialZoom ?? RD_DEFAULT_ZOOM}
       scrollWheelZoom
       className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
       zoomControl={false}
@@ -306,7 +342,11 @@ export default function Map({
         selectMode={selectMode}
       />
       <ZoomTracker onZoom={setZoom} />
-      <CenterOnUserLocation userLocation={userLocation} />
+      {onCameraChange && <CameraTracker onChange={onCameraChange} />}
+      <CenterOnUserLocation
+        userLocation={userLocation}
+        skipInitialAutoCenter={skipInitialAutoCenter}
+      />
 
       {userLocation && (
         <>
