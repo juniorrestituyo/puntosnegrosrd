@@ -22,6 +22,15 @@ body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Boost de saturacion solo sobre el pane de tiles (parques, agua,
+   vegetacion). No afecta markers, controles ni overlays porque viven
+   en panes separados. Asi los verdes de los parques de RD se ven
+   "verdes de verdad" sobre el Positron-light sin cambiar la paleta
+   minimalista general. */
+.leaflet-tile-pane {
+  filter: saturate(1.6);
+}
+
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
   color: #0f172a !important;
