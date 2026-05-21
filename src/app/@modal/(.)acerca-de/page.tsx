@@ -6,7 +6,7 @@ import AcercaDePage from '@/app/acerca-de/page';
  */
 export default function InterceptedAcercaDe() {
   return (
-    <div className="fixed inset-0 z-[3000] overflow-y-auto bg-surface-base">
+    <div className="modal-overlay-enter fixed inset-0 z-[3000] overflow-y-auto bg-surface-base">
       <AcercaDePage />
     </div>
   );

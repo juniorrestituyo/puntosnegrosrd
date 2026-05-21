@@ -138,8 +138,20 @@ body {
   animation: page-enter 260ms ease-out both;
   will-change: opacity;
 }
+
+/* Overlay del slot @modal (sub-paginas interceptadas).
+   Cada vez que se monta (al navegar de / hacia una sub-pagina),
+   se anima con un fade rapido. Al desmontar (volver a /) la
+   desaparicion es instantanea — no jarring porque MapClient ya
+   esta visible debajo. */
+.modal-overlay-enter {
+  animation: page-enter 220ms ease-out both;
+  will-change: opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .page-transition-enter {
+  .page-transition-enter,
+  .modal-overlay-enter {
     animation: none;
   }
 }

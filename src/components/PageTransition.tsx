@@ -1,22 +1,19 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 /**
- * Envuelve cada pagina y le aplica una animacion de entrada (fade +
- * slide-up) cada vez que cambia la ruta. Usa `key={pathname}` para
- * forzar remount del subtree de children, lo que reinicia la animacion.
+ * Wrapper que aplica un fade-in al cargar la app por primera vez.
  *
- * Tradeoff: no hay animacion de salida — la pagina anterior se quita
- * de golpe y la nueva entra. Para exit-animations habria que meter
- * framer-motion o usar View Transitions API (todavia experimental).
+ * IMPORTANTE: NO usa `key={pathname}` aunque seria tentador para
+ * animar entre paginas — eso fuerza unmount/remount del subtree
+ * children en cada navegacion. Con intercepting routes (donde el
+ * children slot se SUPONE que persiste para mantener MapClient
+ * vivo), el remount destruye ese beneficio.
+ *
+ * Las animaciones entre paginas dentro del flujo modal se manejan
+ * en el overlay propio del slot @modal (ver app/@modal/(.)*.tsx).
  */
 export default function PageTransition({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  return (
-    <div key={pathname} className="page-transition-enter">
-      {children}
-    </div>
-  );
+  return <div className="page-transition-enter">{children}</div>;
 }
