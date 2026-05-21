@@ -26,9 +26,12 @@ export default function ShareWithAuthority({
       ? window.location.origin
       : (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
 
+  // El mensaje se adapta al destinatario seleccionado (saludo y linea
+  // de pedido cambian segun jurisdiccion). Si no hay seleccion, version
+  // generica.
   const message = useMemo(
-    () => buildShareMessage(point, siteUrl),
-    [point, siteUrl]
+    () => buildShareMessage(point, siteUrl, selected),
+    [point, siteUrl, selected]
   );
 
   // Cerrar con Escape
