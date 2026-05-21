@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#ffffff" rx="80"/>
-  <circle cx="256" cy="240" r="120" fill="none" stroke="#2563eb" stroke-width="20"/>
-  <circle cx="256" cy="240" r="44" fill="#2563eb"/>
-  <text x="256" y="450" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="64" font-weight="800" text-anchor="middle" fill="#2563eb">PNRD</text>
-</svg>
