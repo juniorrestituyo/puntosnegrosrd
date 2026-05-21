@@ -1,5 +1,7 @@
 # PuntosNegrosRD
 
+**En vivo:** [puntosnegrosrd.vercel.app](https://puntosnegrosrd.vercel.app/)
+
 Plataforma ciudadana abierta para reportar puntos de riesgo vial en la República Dominicana.
 
 **Iniciativa ciudadana independiente.** Complemento del trabajo del Instituto Nacional de Tránsito y Transporte Terrestre (INTRANT). Adopta la taxonomía oficial de los cuatro factores causales (humano, vehicular, infraestructural, climático).
