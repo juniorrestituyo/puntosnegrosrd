@@ -3,7 +3,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Circle,
   MapContainer,
@@ -28,7 +28,9 @@ type ConfirmResult = { ok: true } | { ok: false; message: string };
 
 // Por debajo de este zoom mostramos solo un dot pequeno (vista regional).
 // Por encima, teardrop completo con badge de confirmaciones.
-const FAR_ZOOM_THRESHOLD = 12;
+const FAR_ZOOM_THRESHOLD = 15;
+
+type MarkerMode = 'dot' | 'teardrop';
 
 /**
  * Dot compacto para vista lejana (pais/region). Solo color de votos +
@@ -38,7 +40,7 @@ function buildDotIcon(point: Point): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
   return L.divIcon({
     className: 'pn-marker',
-    html: `<div style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);"></div>`,
+    html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6],
     popupAnchor: [0, -6],
@@ -47,8 +49,8 @@ function buildDotIcon(point: Point): L.DivIcon {
 
 /**
  * Marker teardrop coloreado segun cantidad de confirmaciones.
- * Punto blanco central (identifica reporte) + badge de contador
- * arriba-derecha cuando hay votos.
+ * Punto blanco central (identifica reporte) + badge circular pequeno
+ * en la esquina superior derecha cuando hay votos.
  */
 function buildTeardropIcon(point: Point): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
@@ -58,14 +60,20 @@ function buildTeardropIcon(point: Point): L.DivIcon {
   // Centro del bulbo cae aprox en (14, 14) del container.
   const center = `<span style="position:absolute;top:8px;left:8px;width:12px;height:12px;border-radius:50%;background:${c.text};"></span>`;
 
+  // Cap visual en "99+" para mantener forma circular incluso con 3 digitos.
+  const display =
+    point.confirmation_count > 99 ? '99+' : String(point.confirmation_count);
+  const fontSize =
+    display.length >= 3 ? 6.5 : display.length === 2 ? 8.5 : 10;
+
   const badge = hasVotes
-    ? `<span style="position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 2px rgba(15,23,42,0.3);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:10px;font-weight:700;color:${c.text};line-height:1;box-sizing:content-box;">${point.confirmation_count}</span>`
+    ? `<span style="position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 2px rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:${fontSize}px;font-weight:800;color:${c.text};line-height:1;">${display}</span>`
     : '';
 
   return L.divIcon({
     className: 'pn-marker',
     html: `
-      <div style="position:relative;width:28px;height:36px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));">
+      <div class="pn-marker-inner" style="position:relative;width:28px;height:36px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));">
         <svg viewBox="0 0 32 42" width="28" height="36" xmlns="http://www.w3.org/2000/svg">
           <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${c.border}" stroke-width="1.5"/>
         </svg>
@@ -79,10 +87,8 @@ function buildTeardropIcon(point: Point): L.DivIcon {
   });
 }
 
-function buildMarkerIcon(point: Point, zoom: number): L.DivIcon {
-  return zoom < FAR_ZOOM_THRESHOLD
-    ? buildDotIcon(point)
-    : buildTeardropIcon(point);
+function buildMarkerIcon(point: Point, mode: MarkerMode): L.DivIcon {
+  return mode === 'dot' ? buildDotIcon(point) : buildTeardropIcon(point);
 }
 
 const UserLocationIcon = L.divIcon({
@@ -271,10 +277,19 @@ function FocusableMarker({
   zoom: number;
 }) {
   const map = useMap();
+  const mode: MarkerMode =
+    zoom < FAR_ZOOM_THRESHOLD ? 'dot' : 'teardrop';
+  // Solo reconstruimos el icono cuando cambia el modo o la cantidad de
+  // votos. Asi los pasos de zoom intermedios no recrean el DOM del
+  // marker (lo que evitaria la animacion fade-in y haria flickeo).
+  const icon = useMemo(
+    () => buildMarkerIcon(point, mode),
+    [point.confirmation_count, mode]
+  );
   return (
     <Marker
       position={[point.lat, point.lng]}
-      icon={buildMarkerIcon(point, zoom)}
+      icon={icon}
       eventHandlers={{
         click: () => {
           map.panTo([point.lat, point.lng], { animate: true, duration: 0.6 });
