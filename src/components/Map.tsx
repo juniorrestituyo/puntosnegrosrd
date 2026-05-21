@@ -212,6 +212,37 @@ function PointPopup({
   );
 }
 
+/**
+ * Marker que al clic hace flyTo y asegura un zoom minimo street-level
+ * para que el usuario vea el contexto del punto. Si el usuario ya
+ * esta mas cerca, respeta su zoom.
+ */
+function FocusableMarker({
+  point,
+  onConfirm,
+}: {
+  point: Point;
+  onConfirm: (id: string) => Promise<ConfirmResult>;
+}) {
+  const map = useMap();
+  return (
+    <Marker
+      position={[point.lat, point.lng]}
+      icon={buildMarkerIcon(point)}
+      eventHandlers={{
+        click: () => {
+          const targetZoom = Math.max(map.getZoom(), 17);
+          map.flyTo([point.lat, point.lng], targetZoom, { duration: 0.6 });
+        },
+      }}
+    >
+      <Popup autoPan={false}>
+        <PointPopup point={point} onConfirm={onConfirm} />
+      </Popup>
+    </Marker>
+  );
+}
+
 interface MapProps {
   points: Point[];
   selectMode: boolean;
@@ -268,11 +299,7 @@ export default function Map({
       )}
 
       {points.map((p) => (
-        <Marker key={p.id} position={[p.lat, p.lng]} icon={buildMarkerIcon(p)}>
-          <Popup>
-            <PointPopup point={p} onConfirm={onConfirm} />
-          </Popup>
-        </Marker>
+        <FocusableMarker key={p.id} point={p} onConfirm={onConfirm} />
       ))}
     </MapContainer>
   );
