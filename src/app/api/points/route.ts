@@ -4,6 +4,7 @@ import { getHashedClientIp } from '@/lib/api/ip-hash';
 import { checkReportRateLimit } from '@/lib/api/rate-limit';
 import { err, ok } from '@/lib/api/responses';
 import { RATE_LIMIT_REPORTS_PER_HOUR, RD_BOUNDS } from '@/lib/constants';
+import { reverseGeocode } from '@/lib/geocoding';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 
 const pointInputSchema = z.object({
@@ -90,6 +91,18 @@ export async function POST(request: Request) {
     return err('INTERNAL_ERROR', 'No se pudo validar el rate limit', 500);
   }
 
+  // Si el cliente NO mando province/municipality, intentamos derivarlos
+  // del lat/lng con reverse geocoding (Nominatim). Falla silenciosa:
+  // si Nominatim no responde o se cae, guardamos el reporte igual con
+  // null en esos campos.
+  let province = parsed.data.province;
+  let municipality = parsed.data.municipality;
+  if (!province && !municipality) {
+    const geocoded = await reverseGeocode(parsed.data.lat, parsed.data.lng);
+    province = geocoded.province;
+    municipality = geocoded.municipality;
+  }
+
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from('points')
@@ -99,8 +112,8 @@ export async function POST(request: Request) {
       category: parsed.data.category,
       subcategory: parsed.data.subcategory ?? null,
       description: parsed.data.description,
-      province: parsed.data.province ?? null,
-      municipality: parsed.data.municipality ?? null,
+      province: province ?? null,
+      municipality: municipality ?? null,
       photo_url: parsed.data.photo_url ?? null,
       ip_hash: ipHash,
     })
