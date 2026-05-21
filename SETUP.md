@@ -19,15 +19,10 @@ cd puntosnegrosrd
 
 (Si prefieres otro directorio, cámbialo. Aquí asumo `$HOME\Documents\puntosnegrosrd`.)
 
-## Paso 2 — Copiar los archivos iniciales al repo
+## Paso 2 — Verificar estructura del repo
 
-PowerShell desde la carpeta del repo:
-```powershell
-$src = "$HOME\Downloads\ideas\codigo-inicial"
-Copy-Item -Recurse -Force "$src\*" .
-```
-
-Verifica que tienes esta estructura:
+Después del `git clone` ya tienes todos los archivos del proyecto.
+Verifica que coincide con esta estructura:
 ```
 puntosnegrosrd/
 ├── .env.local.example
@@ -39,8 +34,19 @@ puntosnegrosrd/
 ├── tailwind.config.ts
 ├── postcss.config.mjs
 ├── migrations/
-│   └── 001_initial.sql
+│   ├── 001_initial.sql
+│   └── 002_resolutions.sql
 ├── public/
+│   ├── icon.png
+│   ├── icon-192.png
+│   ├── icon-512.png
+│   ├── icon-maskable-192.png
+│   ├── icon-maskable-512.png
+│   ├── apple-touch-icon.png
+│   ├── og-image.png
+│   └── manifest.webmanifest
+├── scripts/
+│   └── generate-icons.mjs
 └── src/
     ├── app/
     │   ├── layout.tsx
@@ -55,14 +61,23 @@ puntosnegrosrd/
             └── server.ts
 ```
 
-## Paso 3 — Aplicar la migración SQL en Supabase
+## Paso 3 — Aplicar las migraciones SQL en Supabase
 
 1. Entra a https://supabase.com/dashboard/project/rvonfrijjmzigiywjply
 2. **Database → Extensions** → buscar `postgis` → habilitar. Buscar `pgcrypto` → habilitar.
 3. **SQL Editor → New query**
-4. Copiar y pegar TODO el contenido de `migrations/001_initial.sql`
-5. Click **RUN**
-6. Verificar en **Table Editor** que están las tablas: `points`, `confirmations`, `status_history`.
+4. Aplica las migraciones en orden numerico:
+   - Copiar y pegar TODO el contenido de `migrations/001_initial.sql` → **RUN**
+   - Nueva query → contenido de `migrations/002_resolutions.sql` → **RUN**
+5. Verificar en **Table Editor** que están las tablas:
+   - `points`, `confirmations`, `status_history` (de 001)
+   - `resolutions` (de 002)
+6. Verificar en **Database → Functions** que existe `handle_resolution_insert` (trigger de auto-cierre comunitario).
+
+> **Si se agregan migraciones nuevas** (003, 004, etc.) en el futuro,
+> aplicalas en orden numerico igual. Cada archivo es idempotente
+> (usa `if not exists` / `create or replace`), asi que re-aplicar
+> una migracion existente no rompe nada.
 
 ## Paso 3.5 — Crear el bucket de Storage para fotos
 
@@ -103,15 +118,7 @@ npm run dev
 
 Abre http://localhost:3000 — deberías ver la página placeholder con "PuntosNegrosRD".
 
-## Paso 6 — Primer commit
-
-```powershell
-git add .
-git commit -m "feat: bootstrap inicial Next.js + Supabase + esquema datos"
-git push
-```
-
-## Paso 7 — Deploy en Vercel (3 minutos)
+## Paso 6 — Deploy en Vercel (3 minutos)
 
 1. Ir a https://vercel.com → Sign Up con GitHub
 2. **New Project** → Import `w0rkm4n/puntosnegrosrd`
@@ -128,6 +135,53 @@ git push
 
 **Importante:** después del primer deploy, actualiza `NEXT_PUBLIC_SITE_URL` en Vercel con la URL real y haz un redeploy.
 
-## Próximo paso (Día 2 — hoy)
+## Paso 7 — Regenerar iconos (opcional)
 
-Mapa Leaflet con tap-to-report. Lo haremos cuando confirmes que los pasos 1-7 corrieron sin errores.
+Solo si cambias el logo (`public/icon.png`). El proyecto incluye un script
+que regenera todos los iconos derivados:
+
+```powershell
+npm run icons:generate
+```
+
+Esto genera, a partir de `public/icon.png`:
+
+- `icon-192.png` / `icon-512.png` — fallback "any" (esquinas transparentes)
+- `icon-maskable-192.png` / `icon-maskable-512.png` — Android adaptive
+  icon (cuadrado negro full-bleed, logo al 80% en safe zone)
+- `apple-touch-icon.png` — iOS (180x180, logo al 90%)
+- `og-image.png` — link preview en WhatsApp/Telegram/redes (1200x630
+  negro con logo centrado)
+
+Si nunca cambias el logo, no necesitas correrlo — los archivos ya estan
+en el repo.
+
+## Cambios en el codigo
+
+Para hacer cambios al sitio:
+
+```powershell
+# Antes de hacer cambios, asegurate de tener lo ultimo
+git pull origin main
+
+# Tras hacer cambios y verificar en npm run dev:
+git add .
+git commit -m "tu mensaje claro"
+git push origin main
+```
+
+Vercel detecta el push y redeploy automatico en ~1-2 min.
+
+**Para cambios en DB**: agregar archivo `migrations/00X_descripcion.sql`,
+correrlo en Supabase SQL Editor, commitear el archivo. NO hay sistema
+automatico de migraciones — es manual y por orden numerico.
+
+**Para limpiar test data**: SQL Editor en Supabase:
+
+```sql
+-- Borrar TODOS los reportes (cuidado, irreversible)
+delete from public.points;
+
+-- Borrar solo los de tu IP de prueba
+delete from public.points where ip_hash = '<tu-hash>';
+```
