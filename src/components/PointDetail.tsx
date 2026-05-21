@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
+import BackToMapButton from './BackToMapButton';
 import ShareWithAuthority from './ShareWithAuthority';
 import SideDrawer from './SideDrawer';
 
@@ -75,17 +75,9 @@ export default function PointDetail({
   return (
     <main className="relative min-h-screen bg-surface-base">
       <SideDrawer />
+      <BackToMapButton />
 
       <div className="mx-auto max-w-3xl px-4 pb-12 pt-20 sm:px-6 sm:pt-24">
-        <div className="mb-4">
-          <Link
-            href="/"
-            className="text-sm text-fg-muted hover:text-brand hover:underline"
-          >
-            ← Volver al mapa
-          </Link>
-        </div>
-
         <header className="mb-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
