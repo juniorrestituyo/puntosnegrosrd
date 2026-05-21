@@ -101,8 +101,8 @@ export default function AcercaDePage() {
           <h2 className="text-lg font-semibold text-fg">Sobre el contexto</h2>
           <p className="text-sm text-fg/90">
             La República Dominicana presenta una de las tasas de mortalidad
-            vial más altas de América. Detrás de cada cifra hay una historia
-            —un casco no abrochado, un semáforo apagado hace meses, una curva
+            vial más altas de América. Detrás de cada cifra hay una historia:
+            un casco no abrochado, un semáforo apagado hace meses, una curva
             sin iluminación, un paso peatonal borrado frente a una escuela.
             PuntosNegrosRD aporta una pieza concreta: visibilizar lo que la
             ciudadanía ya sabe pero hoy no tiene cómo decir colectivamente.
