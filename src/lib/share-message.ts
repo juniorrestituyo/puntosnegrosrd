@@ -48,16 +48,7 @@ export const KNOWN_RECIPIENTS: AuthorityRecipient[] = [
       'Solicito amablemente que se considere reforzar la presencia y fiscalizacion en este punto, especialmente en horarios de mayor riesgo, y se evalue la coordinacion con autoridades competentes para una intervencion estructural.',
   },
   {
-    name: 'ANSV - Agencia Nacional de Seguridad Vial',
-    website: 'https://www.ansv.gob.do',
-    note: 'Politica nacional de seguridad vial y prevencion.',
-    salutation: 'Estimados de la ANSV:',
-    requestLine:
-      'Aporto este reporte ciudadano como insumo para la formulacion de politicas publicas de seguridad vial y para focalizar campañas de prevencion en zonas con riesgo documentado.',
-  },
-  {
     name: 'Junta municipal de tu municipio',
-    website: 'https://www.fedomu.org.do',
     note: 'Intervenciones de infraestructura local: baches, iluminacion, señalizacion, aceras.',
     salutation: 'Estimada Junta Municipal:',
     requestLine:
