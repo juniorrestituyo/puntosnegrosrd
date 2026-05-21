@@ -5,12 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { RD_BOUNDS } from '@/lib/constants';
 import type { Point, PointInput, UserLocation } from '@/lib/types';
-import ReportFAB from './ReportFAB';
-import ReportForm from './ReportForm';
-import SideDrawer, {
+import FilterPanel, {
   DEFAULT_FILTERS,
   type FilterState,
-} from './SideDrawer';
+} from './FilterPanel';
+import ReportFAB from './ReportFAB';
+import ReportForm from './ReportForm';
+import SideDrawer from './SideDrawer';
 import UserLocationButton from './UserLocationButton';
 
 const Map = dynamic(() => import('./Map'), {
@@ -296,18 +297,20 @@ export default function MapClient() {
         onConfirm={handleConfirm}
       />
 
-      {/* Hamburger flotante + drawer */}
-      <SideDrawer
-        current="mapa"
-        filters={filters}
-        onFiltersChange={setFilters}
-        totalPoints={points.length}
-        shownPoints={filteredPoints.length}
+      {/* Hamburger flotante con navegacion del sitio */}
+      <SideDrawer current="mapa" />
+
+      {/* Boton de filtros (independiente del drawer) en top-right */}
+      <FilterPanel
+        state={filters}
+        total={points.length}
+        shown={filteredPoints.length}
+        onChange={setFilters}
       />
 
       {/* Banner de modo seleccion */}
       {reportMode === 'select-on-map' && (
-        <div className="pointer-events-auto absolute left-20 right-3 top-3 z-[1100] flex items-center justify-between gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-float sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-md">
+        <div className="pointer-events-auto absolute left-3 right-3 top-[4.25rem] z-[1095] flex items-center justify-between gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-float sm:left-1/2 sm:right-auto sm:top-[5rem] sm:-translate-x-1/2 sm:max-w-md">
           <span>Toca el punto exacto donde esta el riesgo</span>
           <button
             type="button"
@@ -323,7 +326,7 @@ export default function MapClient() {
       {banner && reportMode !== 'select-on-map' && (
         <div
           role={banner.type === 'error' ? 'alert' : 'status'}
-          className={`pointer-events-auto absolute left-20 right-3 top-3 z-[1100] flex items-start justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-float sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:max-w-md ${
+          className={`pointer-events-auto absolute left-3 right-3 top-[4.25rem] z-[1095] flex items-start justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-float sm:left-1/2 sm:right-auto sm:top-[5rem] sm:-translate-x-1/2 sm:max-w-md ${
             banner.type === 'error'
               ? 'bg-red-600 text-white'
               : 'bg-surface-card text-fg ring-1 ring-surface-border'

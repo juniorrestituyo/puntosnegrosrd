@@ -3,23 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { CATEGORIES, type CategoryKey } from '@/lib/constants';
-
-export interface FilterState {
-  categories: Set<CategoryKey>;
-  minConfirmations: number;
-}
-
-export const DEFAULT_FILTERS: FilterState = {
-  categories: new Set<CategoryKey>([
-    'humano',
-    'vehicular',
-    'infraestructural',
-    'climatico',
-  ]),
-  minConfirmations: 0,
-};
-
 type CurrentKey = 'mapa' | 'datos' | 'metodologia' | 'acerca';
 
 const NAV_LINKS: { href: string; key: CurrentKey; label: string }[] = [
@@ -31,19 +14,15 @@ const NAV_LINKS: { href: string; key: CurrentKey; label: string }[] = [
 
 interface SideDrawerProps {
   current?: CurrentKey;
-  filters?: FilterState;
-  onFiltersChange?: (next: FilterState) => void;
-  totalPoints?: number;
-  shownPoints?: number;
 }
 
-export default function SideDrawer({
-  current,
-  filters,
-  onFiltersChange,
-  totalPoints,
-  shownPoints,
-}: SideDrawerProps) {
+/**
+ * Drawer lateral con navegacion del sitio.
+ * Trigger es un boton hamburger flotante fixed en la esquina top-left
+ * del viewport. Los filtros del mapa NO viven aqui — son un componente
+ * separado (FilterPanel) anclado al lado derecho.
+ */
+export default function SideDrawer({ current }: SideDrawerProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -64,29 +43,8 @@ export default function SideDrawer({
     };
   }, [open]);
 
-  function toggleCategory(key: CategoryKey) {
-    if (!filters || !onFiltersChange) return;
-    const next = new Set(filters.categories);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    onFiltersChange({ ...filters, categories: next });
-  }
-
-  function setMin(n: number) {
-    if (!filters || !onFiltersChange) return;
-    onFiltersChange({ ...filters, minConfirmations: n });
-  }
-
-  function reset() {
-    if (!onFiltersChange) return;
-    onFiltersChange(DEFAULT_FILTERS);
-  }
-
-  const hasFilters = filters !== undefined && onFiltersChange !== undefined;
-
   return (
     <>
-      {/* Trigger flotante estilo Waze: card blanco en esquina superior izquierda */}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -112,7 +70,6 @@ export default function SideDrawer({
         </svg>
       </button>
 
-      {/* Backdrop */}
       {open && (
         <button
           type="button"
@@ -122,14 +79,12 @@ export default function SideDrawer({
         />
       )}
 
-      {/* Drawer panel */}
       <aside
         className={`fixed left-0 top-0 z-[2010] flex h-full w-[290px] max-w-[85vw] flex-col overflow-y-auto bg-surface-card shadow-2xl transition-transform duration-300 sm:w-[320px] ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-hidden={!open}
       >
-        {/* Brand badge */}
         <div className="flex items-center gap-3 border-b border-surface-border p-5">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-card">
             <span className="text-base font-black tracking-tight">PN</span>
@@ -166,86 +121,6 @@ export default function SideDrawer({
           </button>
         </div>
 
-        {/* Filter section */}
-        {hasFilters && (
-          <section className="border-b border-surface-border p-5">
-            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-              Categorias
-            </h3>
-            <ul className="space-y-1">
-              {(Object.entries(CATEGORIES) as [
-                CategoryKey,
-                (typeof CATEGORIES)[CategoryKey],
-              ][]).map(([key, value]) => {
-                const isActive = filters!.categories.has(key);
-                return (
-                  <li key={key}>
-                    <button
-                      type="button"
-                      onClick={() => toggleCategory(key)}
-                      className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        isActive
-                          ? 'bg-brand-subtle text-brand'
-                          : 'text-fg-muted hover:bg-surface-raised hover:text-fg'
-                      }`}
-                    >
-                      <span className="text-left font-medium">
-                        {value.label}
-                      </span>
-                      {isActive && (
-                        <span
-                          className="h-2 w-2 shrink-0 rounded-full bg-brand"
-                          aria-hidden
-                        />
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <h3 className="mb-2 mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-              Confirmaciones minimas
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {[0, 1, 3, 10].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setMin(n)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    filters!.minConfirmations === n
-                      ? 'bg-brand text-white shadow-card'
-                      : 'bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg'
-                  }`}
-                >
-                  {n === 0 ? 'Todas' : `${n}+`}
-                </button>
-              ))}
-            </div>
-
-            {totalPoints !== undefined && (
-              <p className="mt-4 text-xs text-fg-muted">
-                Mostrando <span className="font-semibold text-fg">{shownPoints}</span> de{' '}
-                <span className="font-semibold text-fg">{totalPoints}</span>{' '}
-                reporte{totalPoints === 1 ? '' : 's'}
-              </p>
-            )}
-
-            {(filters!.categories.size < 4 ||
-              filters!.minConfirmations > 0) && (
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-3 w-full rounded-lg border border-surface-border px-3 py-1.5 text-xs font-medium text-fg-muted hover:bg-surface-raised hover:text-fg"
-              >
-                Restablecer filtros
-              </button>
-            )}
-          </section>
-        )}
-
-        {/* Navegacion */}
         <section className="flex-1 p-5">
           <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
             Navegacion
@@ -278,7 +153,6 @@ export default function SideDrawer({
           </ul>
         </section>
 
-        {/* Footer */}
         <footer className="border-t border-surface-border p-5 text-[11px] text-fg-muted">
           <p>Iniciativa ciudadana independiente.</p>
           <p className="mt-1">Datos abiertos bajo CC-BY 4.0.</p>

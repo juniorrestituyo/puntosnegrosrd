@@ -23,7 +23,7 @@ export default function UserLocationButton({
       aria-label={label}
       aria-pressed={isTracking}
       title={label}
-      className={`absolute bottom-24 right-3 z-[1080] flex h-14 w-14 items-center justify-center rounded-full shadow-float ring-1 transition-colors sm:bottom-28 sm:right-6 sm:h-16 sm:w-16 ${
+      className={`absolute bottom-28 right-3 z-[1080] flex h-14 w-14 items-center justify-center rounded-full shadow-float ring-1 transition-colors sm:bottom-32 sm:right-6 sm:h-16 sm:w-16 ${
         isTracking
           ? 'bg-brand text-white ring-brand-accent hover:bg-brand-accent'
           : 'bg-surface-card text-fg ring-surface-border hover:bg-surface-raised'

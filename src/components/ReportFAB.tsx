@@ -43,7 +43,7 @@ export default function ReportFAB({
       {open && (
         <div
           role="menu"
-          className="absolute bottom-44 right-3 z-[1100] w-64 overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border sm:bottom-48 sm:right-6"
+          className="absolute bottom-24 right-3 z-[1100] w-64 overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border sm:bottom-28 sm:right-6"
         >
           <button
             type="button"
@@ -121,7 +121,7 @@ export default function ReportFAB({
         disabled={disabled}
         aria-label={open ? 'Cerrar menu de reporte' : 'Reportar nuevo punto'}
         aria-expanded={open}
-        className="absolute bottom-6 right-3 z-[1100] flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float ring-2 ring-white transition-transform hover:bg-brand-accent active:scale-95 disabled:opacity-50 sm:bottom-8 sm:right-6 sm:h-16 sm:w-16"
+        className="absolute bottom-10 right-3 z-[1100] flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float ring-2 ring-white transition-transform hover:bg-brand-accent active:scale-95 disabled:opacity-50 sm:bottom-12 sm:right-6 sm:h-16 sm:w-16"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
