@@ -104,7 +104,14 @@ function CenterOnUserLocation({
       return;
     }
     if (!centeredOnceRef.current) {
-      map.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 0.8 });
+      // setView con animate:false hace un snap instantaneo a la ubicacion
+      // del usuario. Mantenemos el zoom actual del mapa (que arranca en
+      // RD_DEFAULT_ZOOM = 15) — no forzamos cambio de zoom como hacia
+      // antes flyTo(..., 15, ...). Asi el "reset" cada vez que se vuelve
+      // al mapa se siente menos dramatico: no hay animacion de zoom-in.
+      map.setView([userLocation.lat, userLocation.lng], map.getZoom(), {
+        animate: false,
+      });
       centeredOnceRef.current = true;
     }
   }, [userLocation, map]);

@@ -63,7 +63,11 @@ export const STATUS_LABELS: Record<string, string> = {
 
 // Centro geográfico aproximado de Republica Dominicana
 export const RD_CENTER: [number, number] = [18.7357, -70.1627];
-export const RD_DEFAULT_ZOOM = 8;
+// Zoom 15 = nivel calle. El mapa abre directamente en este zoom para
+// evitar la animacion de zoom-in cada vez que se monta. Si llega GPS,
+// se centra instantaneamente (sin cambiar zoom). Si no, el usuario
+// ve el mapa al nivel correcto y puede panear/usar el boton locate.
+export const RD_DEFAULT_ZOOM = 15;
 
 // Límites del bounding box de RD (para validación de coordenadas)
 export const RD_BOUNDS = {
