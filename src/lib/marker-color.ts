@@ -1,12 +1,12 @@
 /**
  * Color del marker segun cantidad de confirmaciones comunitarias.
  *
- *   0    -> gris claro (sin consenso aun, solo el reporte inicial)
+ *   0    -> negro (sin consenso aun, solo el reporte inicial)
  *   1-2  -> amarillo/amber (alguien mas lo vio)
  *   3-9  -> naranja (consenso medio)
  *   10+  -> rojo (alta certeza ciudadana)
  *
- * Gradiente warm (gris -> rojo) calibrado para tema light. La logica
+ * Gradiente warm (negro -> rojo) calibrado para tema light. La logica
  * es severidad semantica: mas confirmaciones = mas certeza = mas
  * cerca del rojo.
  */
@@ -41,8 +41,8 @@ export function colorForConfirmations(count: number): {
     };
   }
   return {
-    bg: '#94a3b8', // slate-400
-    border: '#475569', // slate-600
+    bg: '#0f172a', // slate-900 (negro)
+    border: '#000000',
     text: '#ffffff',
     label: 'Sin confirmaciones',
   };
