@@ -6,7 +6,7 @@ import MetodologiaPage from '@/app/metodologia/page';
  */
 export default function InterceptedMetodologia() {
   return (
-    <div className="modal-overlay-enter fixed inset-0 z-[3000] overflow-y-auto bg-surface-base">
+    <div className="fixed inset-0 z-[3000] overflow-y-auto bg-surface-base">
       <MetodologiaPage />
     </div>
   );

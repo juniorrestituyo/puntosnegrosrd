@@ -12,7 +12,7 @@ import DatosAbiertosPage from '@/app/datos-abiertos/page';
  */
 export default function InterceptedDatosAbiertos() {
   return (
-    <div className="modal-overlay-enter fixed inset-0 z-[3000] overflow-y-auto bg-surface-base">
+    <div className="fixed inset-0 z-[3000] overflow-y-auto bg-surface-base">
       <DatosAbiertosPage />
     </div>
   );
