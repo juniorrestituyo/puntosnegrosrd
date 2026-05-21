@@ -60,18 +60,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-  modal,
 }: {
   children: React.ReactNode;
-  modal: React.ReactNode;
 }) {
   return (
     <html lang="es" className={logoFont.variable}>
       <body className="min-h-screen bg-surface-base text-fg antialiased">
         <PageTransition>{children}</PageTransition>
-        {/* Slot para sub-paginas que se abren como overlay encima del
-            mapa sin desmontar MapClient (intercepting routes). */}
-        {modal}
       </body>
     </html>
   );
