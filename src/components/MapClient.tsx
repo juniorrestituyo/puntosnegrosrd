@@ -476,8 +476,11 @@ export default function MapClient() {
         />
       )}
 
-      {/* Pill inferior con contador */}
-      <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] max-w-[calc(100vw-6rem)] rounded-full bg-surface-card/95 px-4 py-2 text-xs font-medium text-fg shadow-float ring-1 ring-surface-border sm:bottom-4 sm:left-4 sm:max-w-none">
+      {/* Pill inferior con contador.
+          bottom-8/sm:bottom-10 deja espacio sobre la franja de
+          atribucion de OSM (bottom:0) para que no se monten
+          visualmente en la esquina inferior. */}
+      <div className="pointer-events-none absolute bottom-8 left-3 z-[1000] max-w-[calc(100vw-6rem)] rounded-full bg-surface-card/95 px-4 py-2 text-xs font-medium text-fg shadow-float ring-1 ring-surface-border sm:bottom-10 sm:left-4 sm:max-w-none">
         {isFetching
           ? 'Cargando...'
           : points.length === 0
