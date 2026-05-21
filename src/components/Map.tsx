@@ -49,26 +49,15 @@ function buildDotIcon(point: Point): L.DivIcon {
 
 /**
  * Marker teardrop coloreado segun cantidad de confirmaciones.
- * Punto blanco central (identifica reporte) + badge circular pequeno
- * en la esquina superior derecha cuando hay votos.
+ * Solo bulbo + punto blanco central. El contador NO se muestra aqui;
+ * se rendera en otro lugar de la UI.
  */
 function buildTeardropIcon(point: Point): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
-  const hasVotes = point.confirmation_count > 0;
 
   // Dimensiones: contenedor 28x36, viewBox SVG 32x42 (escala interna).
   // Centro del bulbo cae aprox en (14, 14) del container.
   const center = `<span style="position:absolute;top:8px;left:8px;width:12px;height:12px;border-radius:50%;background:${c.text};"></span>`;
-
-  // Cap visual en "99+" para mantener forma circular incluso con 3 digitos.
-  const display =
-    point.confirmation_count > 99 ? '99+' : String(point.confirmation_count);
-  const fontSize =
-    display.length >= 3 ? 7 : display.length === 2 ? 9 : 10;
-
-  const badge = hasVotes
-    ? `<span style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;font-size:${fontSize}px;font-weight:800;color:${c.text};line-height:1;">${display}</span>`
-    : '';
 
   return L.divIcon({
     className: 'pn-marker',
@@ -78,7 +67,6 @@ function buildTeardropIcon(point: Point): L.DivIcon {
           <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${c.border}" stroke-width="1.5"/>
         </svg>
         ${center}
-        ${badge}
       </div>
     `,
     iconSize: [28, 36],
