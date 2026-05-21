@@ -113,7 +113,7 @@ export default function DatosAbiertosPage() {
         <section className="mt-10 space-y-3">
           <h2 className="text-lg font-semibold text-fg">Condiciones de uso</h2>
           <ul className="list-inside list-disc space-y-1 text-sm text-fg/90">
-            <li><strong>Atribución:</strong> citar &ldquo;PuntosNegrosRD — iniciativa ciudadana&rdquo; con enlace a este sitio.</li>
+            <li><strong>Atribución:</strong> citar &ldquo;PuntosNegrosRD, iniciativa ciudadana&rdquo; con enlace a este sitio.</li>
             <li><strong>Uso comercial permitido</strong> dentro de los términos CC-BY 4.0.</li>
             <li><strong>No re-identificar a los reportantes.</strong> Los datos no contienen información personal.</li>
             <li><strong>Datos como están.</strong> Sin garantías de exactitud ni verificación oficial.</li>
