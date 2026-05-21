@@ -193,9 +193,31 @@ export default function PointDetailSheet({
               {p.description}
             </p>
 
-            {/* Contador grande de confirmaciones */}
-            <div className="mt-5 flex items-center gap-4 rounded-2xl bg-brand-subtle px-5 py-4 ring-1 ring-brand-soft">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-card">
+            {/* Contador de confirmaciones.
+                - Cuando el punto esta abierto: estilo brand-azul, contador
+                  prominente — comunica "X testigos activos, atencion".
+                - Cuando esta resuelto: estilo muted (gris), label cambia
+                  a "testigos cuando estaba activo" — comunica que la cifra
+                  es historica, no urgencia actual. Mantiene transparencia
+                  (los datos siguen visibles) sin contradecir el estado
+                  resuelto del punto.
+                Icono cambiado de thumbs-up a ojo: matchea el copy del
+                boton ("Yo tambien lo veo") y evita la connotacion de
+                "upvote" que el pulgar implica. */}
+            <div
+              className={`mt-5 flex items-center gap-4 rounded-2xl px-5 py-4 ring-1 ${
+                isResolved
+                  ? 'bg-surface-raised ring-surface-border'
+                  : 'bg-brand-subtle ring-brand-soft'
+              }`}
+            >
+              <div
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-card ${
+                  isResolved
+                    ? 'bg-surface-border text-fg-muted'
+                    : 'bg-brand text-white'
+                }`}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="26"
@@ -203,23 +225,31 @@ export default function PointDetailSheet({
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.2"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden
                 >
-                  <path d="M7 11V21a1 1 0 0 1-1 1H3v-11h4z" />
-                  <path d="M7 11l4-9a3 3 0 0 1 3 0v6h5a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7" />
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
                 </svg>
               </div>
               <div className="min-w-0">
-                <div className="text-3xl font-extrabold leading-none tracking-tight text-fg">
+                <div
+                  className={`text-3xl font-extrabold leading-none tracking-tight ${
+                    isResolved ? 'text-fg-muted' : 'text-fg'
+                  }`}
+                >
                   {p.confirmation_count}
                 </div>
                 <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-                  {p.confirmation_count === 1
-                    ? 'confirmacion'
-                    : 'confirmaciones'}
+                  {isResolved
+                    ? p.confirmation_count === 1
+                      ? 'testigo cuando estaba activo'
+                      : 'testigos cuando estaba activo'
+                    : p.confirmation_count === 1
+                      ? 'confirmacion'
+                      : 'confirmaciones'}
                 </div>
               </div>
             </div>
@@ -320,13 +350,13 @@ export default function PointDetailSheet({
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
-                          strokeWidth="2.2"
+                          strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           aria-hidden
                         >
-                          <path d="M7 11V21a1 1 0 0 1-1 1H3v-11h4z" />
-                          <path d="M7 11l4-9a3 3 0 0 1 3 0v6h5a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 2H7" />
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                          <circle cx="12" cy="12" r="3" />
                         </svg>
                         {confirmState === 'loading'
                           ? 'Confirmando...'

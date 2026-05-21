@@ -268,7 +268,11 @@ function SpotlightOverlay({ point }: { point: Point | null }) {
       style={
         pos
           ? {
-              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 32px, rgba(15,23,42,0.6) 110px)`,
+              // Spotlight con opacidad suavizada (0.35 en lugar de 0.6).
+              // Tambien fade un poco mas largo (32 -> 130px) para
+              // transicion mas gradual. Sigue dirigiendo la atencion al
+              // punto seleccionado sin oscurecer agresivamente el resto.
+              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 36px, rgba(15,23,42,0.35) 130px)`,
             }
           : undefined
       }
