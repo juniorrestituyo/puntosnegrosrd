@@ -151,6 +151,72 @@ body {
 .pn-marker-resolved {
   filter: grayscale(1) opacity(0.55);
 }
+
+/* ============================================================
+   Clusters de markers (leaflet.markercluster)
+   ============================================================
+   Definimos nuestro propio visual porque el default del plugin trae
+   amarillo/azul fluo que no matchea la paleta brand. Reglas:
+
+   - .pn-cluster-wrapper: el contenedor que Leaflet posiciona — lo
+     dejamos transparente porque el visual real va en el hijo .pn-cluster.
+
+   - .pn-cluster: circulo solido con sombra y anillo blanco. Mismo
+     codigo visual que un marker grande (sin teardrop tail) — el usuario
+     lee "esto es un grupo de markers".
+
+   - Sizes (small, medium, large, xlarge): el plugin nos da el conteo
+     y elegimos size + opacidad del bg. Mas grande == mas reportes ==
+     hotspot mas critico, comunica gravedad sin necesidad de leyenda.
+
+   - Texto: numero blanco bold centrado. Tipografia consistente con
+     el sistema (system-ui).
+*/
+.pn-cluster-wrapper {
+  background: transparent;
+  border: none;
+}
+.pn-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #ffffff;
+  /* Negro semi-opaco: lectura inmediata como "grupo de reportes",
+     contrasta fuerte sobre el tile light (Positron) y se diferencia
+     visualmente de los markers de colores individuales. */
+  background: rgba(15, 23, 42, 0.92); /* slate-900 ~ negro */
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.3),
+    0 1px 2px rgba(15, 23, 42, 0.2);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  transition: transform 120ms ease-out;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.pn-cluster:hover {
+  transform: scale(1.06);
+}
+/* Sizes: solo varia el font-size segun la cantidad de puntos. El
+   background queda negro en todos los tiers — la densidad se
+   comunica via el diametro del circulo (iconSize en el JS). */
+.pn-cluster-small {
+  font-size: 13px;
+}
+.pn-cluster-medium {
+  font-size: 15px;
+}
+.pn-cluster-large {
+  font-size: 16px;
+}
+.pn-cluster-xlarge {
+  font-size: 18px;
+}
 @keyframes pn-marker-in {
   from {
     opacity: 0;
