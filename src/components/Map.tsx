@@ -299,11 +299,14 @@ function SpotlightOverlay({ point }: { point: Point | null }) {
       style={
         pos
           ? {
-              // Spotlight con opacidad suavizada (0.35 en lugar de 0.6).
-              // Tambien fade un poco mas largo (32 -> 130px) para
-              // transicion mas gradual. Sigue dirigiendo la atencion al
-              // punto seleccionado sin oscurecer agresivamente el resto.
-              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 36px, rgba(15,23,42,0.35) 130px)`,
+              // Spotlight intencionalmente sutil:
+              // - haz iluminado mas chico (24px) para no robar atencion
+              //   del bottom sheet, que es donde vive la accion.
+              // - oscurecimiento del fondo a 0.22 (antes 0.35) — sugiere
+              //   foco sin ocultar el contexto del mapa alrededor.
+              // - fade hasta 110px: transicion sigue gradual sin sentirse
+              //   "duro" en el borde del haz.
+              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 24px, rgba(15,23,42,0.22) 110px)`,
             }
           : undefined
       }
