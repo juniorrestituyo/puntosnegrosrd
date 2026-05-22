@@ -36,15 +36,29 @@ function markerClassName(point: Point): string {
   return `pn-marker${point.status === 'resuelto' ? ' pn-marker-resolved' : ''}`;
 }
 
+// Color del halo "marker activo" (amarillo senaletico de carretera).
+// Se aplica al marker cuando es el spotlight point — el usuario lo
+// acaba de tocar y el sheet inferior esta abierto. Conecta visualmente
+// el marker con el resto de los CTAs amarillos (FAB, etc.) sin cambiar
+// el color base del marker (que sigue codificando "consenso comunitario"
+// via el rojo/naranja/amarillo/gris del marker-color).
+const ACTIVE_HALO = '#f59e0b'; // amber-500 == bg-signal
+
 /**
  * Dot compacto para vista lejana (pais/region). Solo color de votos +
  * anillo blanco. Sin numero ni cola — la prioridad es que no se aplasten.
+ * Si isActive, agrega un anillo exterior amarillo senaletico.
  */
-function buildDotIcon(point: Point): L.DivIcon {
+function buildDotIcon(point: Point, isActive: boolean): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
+  // El anillo activo se hace via doble box-shadow: el inset 0 0 0 3px es
+  // el halo amarillo solido, el segundo shadow es el drop original.
+  const shadow = isActive
+    ? `0 0 0 3px ${ACTIVE_HALO}, 0 1px 3px rgba(15,23,42,0.35)`
+    : '0 1px 3px rgba(15,23,42,0.35)';
   return L.divIcon({
     className: markerClassName(point),
-    html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:0 1px 3px rgba(15,23,42,0.35);"></div>`,
+    html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:${shadow};"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6],
     popupAnchor: [0, -6],
@@ -54,21 +68,32 @@ function buildDotIcon(point: Point): L.DivIcon {
 /**
  * Marker teardrop coloreado segun cantidad de confirmaciones.
  * Solo bulbo + punto blanco central. El contador NO se muestra aqui;
- * se rendera en otro lugar de la UI.
+ * se rendera en otro lugar de la UI. Si isActive, el stroke del SVG
+ * cambia a amarillo senaletico y se agrega un drop-shadow amarillo
+ * suave alrededor — efecto "este es el marker que estas viendo".
  */
-function buildTeardropIcon(point: Point): L.DivIcon {
+function buildTeardropIcon(point: Point, isActive: boolean): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
 
   // Dimensiones: contenedor 28x36, viewBox SVG 32x42 (escala interna).
   // Centro del bulbo cae aprox en (14, 14) del container.
   const center = `<span style="position:absolute;top:8px;left:8px;width:12px;height:12px;border-radius:50%;background:${c.text};"></span>`;
 
+  const stroke = isActive ? ACTIVE_HALO : c.border;
+  const strokeWidth = isActive ? '3' : '1.5';
+  // Cuando isActive, sumamos un drop-shadow amarillo suave antes del
+  // drop-shadow oscuro original. El orden importa: el amarillo va
+  // primero para que se vea como halo difuso afuera del stroke.
+  const filterStyle = isActive
+    ? 'filter:drop-shadow(0 0 6px rgba(245,158,11,0.65)) drop-shadow(0 2px 4px rgba(15,23,42,0.25));'
+    : 'filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));';
+
   return L.divIcon({
     className: markerClassName(point),
     html: `
-      <div class="pn-marker-inner" style="position:relative;width:28px;height:36px;filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));">
+      <div class="pn-marker-inner" style="position:relative;width:28px;height:36px;${filterStyle}">
         <svg viewBox="0 0 32 42" width="28" height="36" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${c.border}" stroke-width="1.5"/>
+          <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${stroke}" stroke-width="${strokeWidth}"/>
         </svg>
         ${center}
       </div>
@@ -79,8 +104,14 @@ function buildTeardropIcon(point: Point): L.DivIcon {
   });
 }
 
-function buildMarkerIcon(point: Point, mode: MarkerMode): L.DivIcon {
-  return mode === 'dot' ? buildDotIcon(point) : buildTeardropIcon(point);
+function buildMarkerIcon(
+  point: Point,
+  mode: MarkerMode,
+  isActive: boolean
+): L.DivIcon {
+  return mode === 'dot'
+    ? buildDotIcon(point, isActive)
+    : buildTeardropIcon(point, isActive);
 }
 
 const UserLocationIcon = L.divIcon({
@@ -268,11 +299,14 @@ function SpotlightOverlay({ point }: { point: Point | null }) {
       style={
         pos
           ? {
-              // Spotlight con opacidad suavizada (0.35 en lugar de 0.6).
-              // Tambien fade un poco mas largo (32 -> 130px) para
-              // transicion mas gradual. Sigue dirigiendo la atencion al
-              // punto seleccionado sin oscurecer agresivamente el resto.
-              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 36px, rgba(15,23,42,0.35) 130px)`,
+              // Spotlight intencionalmente sutil:
+              // - haz iluminado mas chico (24px) para no robar atencion
+              //   del bottom sheet, que es donde vive la accion.
+              // - oscurecimiento del fondo a 0.22 (antes 0.35) — sugiere
+              //   foco sin ocultar el contexto del mapa alrededor.
+              // - fade hasta 110px: transicion sigue gradual sin sentirse
+              //   "duro" en el borde del haz.
+              background: `radial-gradient(circle at ${pos.x}px ${pos.y}px, transparent 0px, transparent 24px, rgba(15,23,42,0.22) 110px)`,
             }
           : undefined
       }
@@ -288,20 +322,23 @@ function FocusableMarker({
   point,
   onSelect,
   zoom,
+  isActive,
 }: {
   point: Point;
   onSelect: (point: Point) => void;
   zoom: number;
+  isActive: boolean;
 }) {
   const map = useMap();
   const mode: MarkerMode =
     zoom < FAR_ZOOM_THRESHOLD ? 'dot' : 'teardrop';
-  // Solo reconstruimos el icono cuando cambia el modo o la cantidad de
-  // votos. Asi los pasos de zoom intermedios no recrean el DOM del
-  // marker (lo que evitaria la animacion fade-in y haria flickeo).
+  // Solo reconstruimos el icono cuando cambia el modo, la cantidad de
+  // votos o el estado activo (spotlight). Asi los pasos de zoom
+  // intermedios no recrean el DOM del marker (lo que evitaria la
+  // animacion fade-in y haria flickeo).
   const icon = useMemo(
-    () => buildMarkerIcon(point, mode),
-    [point.confirmation_count, mode]
+    () => buildMarkerIcon(point, mode, isActive),
+    [point.confirmation_count, mode, isActive]
   );
   return (
     <Marker
@@ -418,6 +455,7 @@ export default function Map({
           point={p}
           onSelect={onPointSelect}
           zoom={zoom}
+          isActive={spotlightPoint?.id === p.id}
         />
       ))}
 
