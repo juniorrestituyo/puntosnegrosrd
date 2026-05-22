@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RD_BOUNDS, RD_CENTER, RD_DEFAULT_ZOOM } from '@/lib/constants';
 import { loadMapState, saveMapState } from '@/lib/map-state-cache';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Point, PointInput, UserLocation } from '@/lib/types';
 import FilterPanel, {
   DEFAULT_FILTERS,
@@ -118,31 +119,122 @@ export default function MapClient() {
     setCacheChecked(true);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch('/api/points', { cache: 'no-store' });
-        const json = await res.json();
-        if (cancelled) return;
-        if (json.ok) {
-          setPoints(json.data);
-        } else {
-          console.error('GET /api/points error:', json.error);
-        }
-      } catch (e) {
-        if (!cancelled) console.error('Fetch points fallo:', e);
-      } finally {
-        if (!cancelled) setIsFetching(false);
+  // Refresher reutilizable. Lo llama:
+  //   - el mount inicial (una vez, en useEffect mas abajo)
+  //   - el listener de focus/visibilitychange (Parte C — refresh on focus)
+  //   - el Supabase Realtime cuando llega un evento (Parte B — debounced)
+  //
+  // Es estable (useCallback []) para que los useEffects que lo consuman
+  // no resuscriban sus handlers en cada render.
+  const refreshPoints = useCallback(async () => {
+    try {
+      const res = await fetch('/api/points', { cache: 'no-store' });
+      const json = await res.json();
+      if (json.ok) {
+        setPoints(json.data);
+      } else {
+        console.error('GET /api/points error:', json.error);
       }
+    } catch (e) {
+      console.error('Fetch points fallo:', e);
+    } finally {
+      setIsFetching(false);
     }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  // Carga inicial (una sola vez al montar).
+  useEffect(() => {
+    refreshPoints();
+  }, [refreshPoints]);
+
+  // Debounce para Realtime: cuando llega un evento por WebSocket,
+  // agendamos un refresh 2s despues. Si llegan mas eventos en esa
+  // ventana, se coalescen en un solo refresh. Asi una rafaga de 5
+  // confirmaciones simultaneas dispara 1 fetch, no 5.
+  const realtimeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleRealtimeRefresh = useCallback(() => {
+    if (realtimeTimerRef.current) clearTimeout(realtimeTimerRef.current);
+    realtimeTimerRef.current = setTimeout(() => {
+      realtimeTimerRef.current = null;
+      refreshPoints();
+    }, 2000);
+  }, [refreshPoints]);
+
+  // Throttle para focus: evita hammear la API si el usuario hace
+  // alt-tab rapido o el SO emite focus repetido. Maximo 1 refresh
+  // cada 5 segundos por foco.
+  const lastFocusRefreshRef = useRef(0);
+  const focusRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastFocusRefreshRef.current < 5000) return;
+    lastFocusRefreshRef.current = now;
+    refreshPoints();
+  }, [refreshPoints]);
+
+  // Parte C — refresh on focus. Cuando el usuario vuelve a la tab
+  // (visibilitychange a 'visible') o vuelve a la ventana del navegador
+  // (focus), pedimos data fresca. Cubre el caso de un usuario que
+  // dejo el mapa abierto pero el WebSocket se desconecto en background.
+  useEffect(() => {
+    function onVisibility() {
+      if (document.visibilityState === 'visible') focusRefresh();
+    }
+    function onFocus() {
+      focusRefresh();
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [focusRefresh]);
+
+  // Parte B — Supabase Realtime. Subscripcion via WebSocket a INSERTs
+  // y UPDATEs en las 3 tablas que componen un reporte:
+  //   - points: nuevo reporte (INSERT) o cambio de status (UPDATE)
+  //   - confirmations: nuevo testigo "yo tambien lo veo" (INSERT)
+  //   - resolutions: nuevo voto "ya esta resuelto" (INSERT)
+  //
+  // Cualquier evento dispara scheduleRealtimeRefresh — el debounce
+  // adentro coalesce rafagas. Asi cuando otra persona en otro lado
+  // del pais confirma o reporta, este mapa lo refleja en ~2s sin
+  // recargar.
+  //
+  // RLS respeta lo que ya esta abierto en SELECT (todos pueden ver),
+  // y las escrituras siguen yendo solo via API routes con service_role.
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    const channel = supabase
+      .channel('puntos-realtime')
+      .on(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
+        { event: '*', schema: 'public', table: 'points' },
+        () => scheduleRealtimeRefresh()
+      )
+      .on(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
+        { event: 'INSERT', schema: 'public', table: 'confirmations' },
+        () => scheduleRealtimeRefresh()
+      )
+      .on(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
+        { event: 'INSERT', schema: 'public', table: 'resolutions' },
+        () => scheduleRealtimeRefresh()
+      )
+      .subscribe();
+
+    return () => {
+      if (realtimeTimerRef.current) {
+        clearTimeout(realtimeTimerRef.current);
+        realtimeTimerRef.current = null;
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [scheduleRealtimeRefresh]);
 
   useEffect(() => {
     if (!isTrackingLocation) return;
