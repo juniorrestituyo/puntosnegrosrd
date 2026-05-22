@@ -4,7 +4,12 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { RD_BOUNDS, RD_CENTER, RD_DEFAULT_ZOOM } from '@/lib/constants';
-import { loadMapState, saveMapState } from '@/lib/map-state-cache';
+import {
+  loadLastGPS,
+  loadMapState,
+  saveLastGPS,
+  saveMapState,
+} from '@/lib/map-state-cache';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Point, PointInput, UserLocation } from '@/lib/types';
 import FilterPanel, {
@@ -103,10 +108,23 @@ export default function MapClient() {
   });
 
   // Hidratacion del cache. Corre en cliente despues del primer render
-  // (resuelve hydration mismatch). Si encontramos cache valido,
-  // poblamos los estados pertinentes y marcamos hadCache=true.
+  // (resuelve hydration mismatch). Tres niveles de fallback:
+  //
+  //   1. sessionStorage: cache completo de la sesion actual (points +
+  //      camera + userLocation). Recupera el "estoy navegando dentro
+  //      del app y volvi al mapa".
+  //
+  //   2. localStorage last-GPS: si no hay sessionStorage pero el
+  //      usuario uso la app en sesiones anteriores, abrimos el mapa
+  //      centrado en su ultima ubicacion GPS conocida (sin dot
+  //      fantasma — solo hint de camara). Cuando llega el GPS actual,
+  //      MapCenterController hace snap a la posicion real.
+  //
+  //   3. Defaults (RD_CENTER + RD_DEFAULT_ZOOM): primer uso absoluto
+  //      o cache muy viejo. Vista del centro del pais.
+  //
   // Marcamos cacheChecked=true SIEMPRE al final para destrabar el
-  // mount de <Map> (hubiera o no cache).
+  // mount de <Map>.
   useEffect(() => {
     const cached = loadMapState();
     if (cached) {
@@ -115,9 +133,32 @@ export default function MapClient() {
       cameraRef.current = { center: cached.center, zoom: cached.zoom };
       setIsFetching(false);
       setHadCache(true);
+    } else {
+      const lastGPS = loadLastGPS();
+      if (lastGPS) {
+        // Solo movemos la camara — NO seteamos userLocation. Asi no
+        // se pinta un dot azul fantasma que el usuario podria leer
+        // como "este es mi GPS actual". Cuando el watchPosition de
+        // abajo emita un fix real, ahi se pinta el dot. Tambien
+        // dejamos hadCache=false para que el snap inicial de GPS
+        // siga activo (lleva la camara al GPS actual cuando llegue).
+        cameraRef.current = {
+          center: [lastGPS.lat, lastGPS.lng],
+          zoom: RD_DEFAULT_ZOOM,
+        };
+      }
     }
     setCacheChecked(true);
   }, []);
+
+  // Persistir cada nueva fix de GPS a localStorage para que la proxima
+  // sesion abra el mapa cerca de aqui. saveLastGPS es idempotente y
+  // barata; ejecutar en cada update no penaliza.
+  useEffect(() => {
+    if (userLocation) {
+      saveLastGPS({ lat: userLocation.lat, lng: userLocation.lng });
+    }
+  }, [userLocation]);
 
   // Refresher reutilizable. Lo llama:
   //   - el mount inicial (una vez, en useEffect mas abajo)
