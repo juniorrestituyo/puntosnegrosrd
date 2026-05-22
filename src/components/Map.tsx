@@ -2,7 +2,13 @@
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+// Plugin: cluster group para agrupar markers cercanos. Solo importamos
+// el CSS "core" (animaciones + positioning). El visual lo definimos
+// nosotros en globals.css con la clase .pn-cluster — el default del
+// plugin trae amarillo/azul fluo que no matchea la paleta.
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import { useEffect, useRef, useState } from 'react';
 import {
   Circle,
   MapContainer,
@@ -20,9 +26,11 @@ import {
 import { colorForConfirmations } from '@/lib/marker-color';
 import type { Point, UserLocation } from '@/lib/types';
 
-// Por debajo de este zoom mostramos solo un dot pequeno (vista regional).
-// Por encima, teardrop completo con badge de confirmaciones.
-const FAR_ZOOM_THRESHOLD = 14;
+// Por debajo de este zoom mostramos solo un dot pequeno (vista regional
+// + media — provincia, ciudad, sector). A partir de 16 (vista cuadra)
+// pasamos a teardrop completo, cuando ya hay espacio para que los pins
+// se vean comodos sin chocar entre si.
+const FAR_ZOOM_THRESHOLD = 16;
 
 type MarkerMode = 'dot' | 'teardrop';
 
@@ -142,8 +150,8 @@ const UserLocationIcon = L.divIcon({
  *
  *  - RECENTER REQUEST: cada vez que recenterRequest cambia (incrementa)
  *    hace un flyTo smooth con duracion 0.7s. Si el zoom actual es
- *    menor a 15 (vista mas amplia que calle), zoomea suave hasta 15.
- *    Si ya esta a >=15, preserva el zoom del usuario.
+ *    menor a 16 (vista mas amplia que cuadra), zoomea suave hasta 16.
+ *    Si ya esta a >=16, preserva el zoom del usuario (no aleja nunca).
  *
  * Ambos modos comparten el mismo userLocation pero los handledRefs
  * son independientes para que un click del boton locate no compita
@@ -169,7 +177,7 @@ function MapCenterController({
     // Tiene prioridad sobre el initial center.
     if (recenterRequest > handledRecenterRef.current) {
       const currentZoom = map.getZoom();
-      const targetZoom = Math.max(currentZoom, 15);
+      const targetZoom = Math.max(currentZoom, 16);
       map.flyTo([userLocation.lat, userLocation.lng], targetZoom, {
         duration: 0.7,
       });
@@ -315,57 +323,139 @@ function SpotlightOverlay({ point }: { point: Point | null }) {
 }
 
 /**
- * Marker que al clic hace pan al punto y notifica al padre para que
- * abra el bottom sheet con el detalle. Ya no usa Popup de Leaflet.
+ * Construye el icono del cluster: circulo negro con el conteo en blanco.
+ * El tamano escala con la cantidad de puntos (small/medium/large/xlarge)
+ * — mas grande == mas reportes en la zona, comunica densidad sin
+ * necesidad de leyenda.
+ *
+ * Estilo definido en globals.css (.pn-cluster, .pn-cluster-small, etc.).
+ * Asi mantenemos coherencia con la paleta brand sin depender del CSS
+ * default del plugin (que trae amarillo/azul fluo).
  */
-function FocusableMarker({
-  point,
+function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+  const count = cluster.getChildCount();
+  const size =
+    count < 5 ? 'small' : count < 15 ? 'medium' : count < 40 ? 'large' : 'xlarge';
+
+  const dim =
+    size === 'small' ? 38 : size === 'medium' ? 48 : size === 'large' ? 58 : 68;
+
+  return L.divIcon({
+    html: `<div class="pn-cluster pn-cluster-${size}">${count}</div>`,
+    className: 'pn-cluster-wrapper',
+    iconSize: [dim, dim],
+    iconAnchor: [dim / 2, dim / 2],
+  });
+}
+
+/**
+ * Layer imperativo de markers agrupados. Reemplaza el rendering JSX de
+ * cada marker individual por un L.markerClusterGroup que:
+ *
+ *  - Agrupa puntos cercanos en un solo circulo con el conteo (icono
+ *    via clusterIcon arriba).
+ *  - Al click en un cluster: zoom-in hasta separarlos (comportamiento
+ *    default del plugin).
+ *  - Al cruzar `disableClusteringAtZoom` deja de agrupar y muestra
+ *    los markers individuales en su lugar exacto.
+ *
+ * El sync con props (points, activeId, mode) se hace con clearLayers +
+ * addLayers en cada cambio. Es brute-force pero a la escala del proyecto
+ * (50-200 puntos) es instantaneo.
+ */
+function ClusteredMarkers({
+  points,
   onSelect,
   zoom,
-  isActive,
+  activeId,
 }: {
-  point: Point;
+  points: Point[];
   onSelect: (point: Point) => void;
   zoom: number;
-  isActive: boolean;
+  activeId: string | null;
 }) {
   const map = useMap();
-  const mode: MarkerMode =
-    zoom < FAR_ZOOM_THRESHOLD ? 'dot' : 'teardrop';
-  // Solo reconstruimos el icono cuando cambia el modo, la cantidad de
-  // votos o el estado activo (spotlight). Asi los pasos de zoom
-  // intermedios no recrean el DOM del marker (lo que evitaria la
-  // animacion fade-in y haria flickeo).
-  const icon = useMemo(
-    () => buildMarkerIcon(point, mode, isActive),
-    [point.confirmation_count, mode, isActive]
-  );
-  return (
-    <Marker
-      position={[point.lat, point.lng]}
-      icon={icon}
-      eventHandlers={{
-        click: () => {
-          // Pan offsetado: en vez de dejar el marker en el centro
-          // del viewport (donde lo taparia el bottom sheet), lo
-          // dejamos en el ~30% superior. Asi siempre queda iluminado
-          // por el spotlight con espacio claro arriba del sheet.
-          const containerPt = map.latLngToContainerPoint([
-            point.lat,
-            point.lng,
-          ]);
-          const size = map.getSize();
-          const desiredX = size.x / 2;
-          const desiredY = size.y * 0.3;
-          map.panBy(
-            [containerPt.x - desiredX, containerPt.y - desiredY],
-            { animate: true, duration: 0.6 }
-          );
-          onSelect(point);
-        },
-      }}
-    />
-  );
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
+
+  // Derivamos `mode` del zoom — solo cambia cuando se cruza el
+  // threshold (no en cada paso de zoom intermedio). Usar `mode` como
+  // dep del effect en vez de `zoom` evita que el rebuild de markers
+  // dispare en cada nivel de zoom, que era lo que causaba el flash
+  // visual al hacer zoom continuo.
+  const mode: MarkerMode = zoom < FAR_ZOOM_THRESHOLD ? 'dot' : 'teardrop';
+
+  // Setup del cluster group una sola vez. El cleanup al desmontar
+  // remueve la layer del mapa.
+  useEffect(() => {
+    const cluster = L.markerClusterGroup({
+      iconCreateFunction: clusterIcon,
+      // Sin overlay del hull al hover — distrae y no agrega info util.
+      showCoverageOnHover: false,
+      // Radio (en pixeles) en el que 2 markers se consideran "cercanos"
+      // y por lo tanto se agrupan. 50px = al hacer zoom-in los clusters
+      // se separan rapido. Default 80 los mantiene agrupados mucho mas.
+      maxClusterRadius: 50,
+      // Cuando estas tan zoomed que un cluster sigue siendo cluster,
+      // el spiderfy abre los puntos en patron radial al clickearlo.
+      spiderfyOnMaxZoom: true,
+      // Zoom 17 = vista de calle. A ese nivel ya no tiene sentido
+      // agrupar — el usuario quiere ver cada marker exacto.
+      disableClusteringAtZoom: 17,
+      // Anima la transicion de cluster -> markers individuales al
+      // hacer zoom-in (los puntos "salen" del centro del cluster hacia
+      // sus posiciones reales). Mas natural que un pop instantaneo.
+      animate: true,
+    });
+    map.addLayer(cluster);
+    clusterRef.current = cluster;
+
+    return () => {
+      map.removeLayer(cluster);
+      clusterRef.current = null;
+    };
+  }, [map]);
+
+  // Sync de markers: solo se rebuildea cuando cambian:
+  //   - points: nuevo reporte/cambio de estado
+  //   - mode: cruce del threshold dot<->teardrop (un solo evento)
+  //   - activeId: usuario selecciono otro marker
+  //
+  // NO depende de `zoom` directamente — asi panear/zoomear continuo
+  // no reconstruye nada y los markers no parpadean.
+  useEffect(() => {
+    const cluster = clusterRef.current;
+    if (!cluster) return;
+
+    cluster.clearLayers();
+
+    const markers = points.map((point) => {
+      const isActive = activeId === point.id;
+      const icon = buildMarkerIcon(point, mode, isActive);
+      const marker = L.marker([point.lat, point.lng], { icon });
+      marker.on('click', () => {
+        // Pan offsetado: marker queda en el ~30% superior del viewport
+        // asi no lo tapa el bottom sheet. Mismo comportamiento que el
+        // FocusableMarker anterior.
+        const containerPt = map.latLngToContainerPoint([
+          point.lat,
+          point.lng,
+        ]);
+        const size = map.getSize();
+        const desiredX = size.x / 2;
+        const desiredY = size.y * 0.3;
+        map.panBy(
+          [containerPt.x - desiredX, containerPt.y - desiredY],
+          { animate: true, duration: 0.6 }
+        );
+        onSelect(point);
+      });
+      return marker;
+    });
+
+    cluster.addLayers(markers);
+  }, [points, mode, activeId, map, onSelect]);
+
+  return null;
 }
 
 interface MapProps {
@@ -442,22 +532,23 @@ export default function Map({
           <Marker
             position={[userLocation.lat, userLocation.lng]}
             icon={UserLocationIcon}
-            zIndexOffset={1000}
+            // Mandamos el marker de GPS al fondo del pane (-1000) para
+            // que los markers de reportes y las nubes del cluster siempre
+            // queden visualmente por encima. Si el usuario esta parado
+            // sobre/junto a un cluster, ya no lo tapa a la mitad.
+            zIndexOffset={-1000}
             interactive={false}
             keyboard={false}
           />
         </>
       )}
 
-      {points.map((p) => (
-        <FocusableMarker
-          key={p.id}
-          point={p}
-          onSelect={onPointSelect}
-          zoom={zoom}
-          isActive={spotlightPoint?.id === p.id}
-        />
-      ))}
+      <ClusteredMarkers
+        points={points}
+        onSelect={onPointSelect}
+        zoom={zoom}
+        activeId={spotlightPoint?.id ?? null}
+      />
 
       <SpotlightOverlay point={spotlightPoint} />
     </MapContainer>
