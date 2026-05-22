@@ -12,6 +12,18 @@ const config: Config = {
           soft: '#dbeafe', // blue-100 - background suave
           subtle: '#eff6ff', // blue-50 - background muy suave
         },
+        // Senaletico vial - amarillo de signalizacion de carretera.
+        // Se usa para acciones primarias de reporte/alerta (FAB) y
+        // para el halo del marker activo. Diferente del amarillo del
+        // marker con 1-2 confirmaciones (#facc15, mas brillante);
+        // este es ambar-500 con texto oscuro para alto contraste,
+        // emulando senales de "precaucion" en carretera.
+        signal: {
+          DEFAULT: '#f59e0b', // amber-500 - amarillo senaletico
+          accent: '#d97706', // amber-600 - hover/pressed
+          soft: '#fef3c7', // amber-100 - background suave
+          ink: '#1f2937', // slate-800 - texto sobre amarillo (alto contraste)
+        },
         surface: {
           base: '#f8fafc', // slate-50 - fondo de pagina
           card: '#ffffff', // white - cards y panels

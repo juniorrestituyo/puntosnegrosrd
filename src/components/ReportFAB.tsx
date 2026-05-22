@@ -121,7 +121,12 @@ export default function ReportFAB({
         disabled={disabled}
         aria-label={open ? 'Cerrar menu de reporte' : 'Reportar nuevo punto'}
         aria-expanded={open}
-        className="absolute bottom-10 right-3 z-[1100] flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-float ring-2 ring-white transition-transform hover:bg-brand-accent active:scale-95 disabled:opacity-50 sm:bottom-12 sm:right-6 sm:h-16 sm:w-16"
+        // FAB en amarillo senaletico + icono oscuro. Lectura inmediata
+        // como "boton de alerta vial" (mismo codigo cromatico que las
+        // senales de precaucion). El resto de la UI sigue siendo azul
+        // institucional; este es el unico CTA que adopta el color de
+        // dominio (carretera/peligro).
+        className="absolute bottom-10 right-3 z-[1100] flex h-14 w-14 items-center justify-center rounded-full bg-signal text-signal-ink shadow-float ring-2 ring-white transition-transform hover:bg-signal-accent active:scale-95 disabled:opacity-50 sm:bottom-12 sm:right-6 sm:h-16 sm:w-16"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
