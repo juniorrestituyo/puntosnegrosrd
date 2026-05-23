@@ -11,7 +11,7 @@ import {
 export const metadata: Metadata = {
   title: 'Metodología - PuntosNegrosRD',
   description:
-    'Cómo se recolectan los datos, taxonomía INTRANT, ciclo de vida del reporte y limitaciones declaradas.',
+    'Cómo se recolectan los datos, marco de clasificación de factores de riesgo, ciclo de vida del reporte y limitaciones declaradas.',
 };
 
 export default function MetodologiaPage() {
@@ -31,8 +31,9 @@ export default function MetodologiaPage() {
             Metodología
           </h1>
           <p className="mt-4 text-base leading-relaxed text-fg-muted sm:text-lg">
-            Cómo se recolecta la información, qué taxonomía usamos, qué hacemos
-            con los datos y qué limitaciones tiene este enfoque ciudadano.
+            Cómo se recolecta la información, qué marco de clasificación
+            usamos, qué hacemos con los datos y qué limitaciones tiene este
+            enfoque ciudadano.
           </p>
         </header>
 
@@ -49,9 +50,10 @@ export default function MetodologiaPage() {
             <p>
               Cualquier persona puede reportar un punto de riesgo desde el mapa,
               sin necesidad de crear una cuenta. El reporte requiere coordenadas
-              (vía GPS o selección directa en el mapa), una categoría según la
-              taxonomía oficial del INTRANT y una descripción textual de 10 a
-              1000 caracteres. La identidad del reportante nunca se almacena.
+              (vía GPS o selección directa en el mapa), una categoría según el
+              marco de factores de riesgo descrito más abajo, y una descripción
+              textual de 10 a 1000 caracteres. La identidad del reportante
+              nunca se almacena.
             </p>
             <p>
               Para prevenir abuso se aplica un <em>rate limit</em> de cinco
@@ -62,17 +64,17 @@ export default function MetodologiaPage() {
           </div>
         </section>
 
-        {/* Taxonomía INTRANT */}
+        {/* Taxonomía INTRANT (verificable) */}
         <section className="mt-6">
           <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
             <span
               aria-hidden
               className="block h-6 w-1 rounded-full bg-brand"
             />
-            Taxonomía INTRANT
+            Taxonomía oficial INTRANT
           </h2>
           <div className="space-y-3">
-            <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
+            <div className="space-y-3 rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
               <p>
                 Cada reporte se clasifica en una de las cuatro categorías que
                 el{' '}
@@ -80,6 +82,43 @@ export default function MetodologiaPage() {
                   Instituto Nacional de Tránsito y Transporte Terrestre
                 </strong>{' '}
                 (INTRANT) utiliza para analizar la siniestralidad vial.
+              </p>
+              <p>
+                La taxonomía está anclada en la declaración pública del
+                director de tránsito y vialidad del INTRANT,{' '}
+                <strong className="font-semibold text-fg">
+                  Joel Gneco Gross
+                </strong>
+                , quien describió textualmente los cuatro factores el 5 de
+                marzo de 2026 en Telenord:
+              </p>
+              <blockquote className="border-l-2 border-brand pl-4 italic text-fg-muted">
+                &quot;...lo cual puede responder a cuatro factores diferentes:
+                factor humano, vehicular, infraestructural y climática.&quot;
+              </blockquote>
+              <p className="text-xs text-fg-muted">
+                Fuente verificable:{' '}
+                <a
+                  href="https://www.telenord.com/noticias/nacionales/88358-intrant-identifica-puntos-negros-de-accidentes-de-transito-fatales-en-zonas-de-rd.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all text-brand hover:underline"
+                >
+                  Telenord — INTRANT identifica puntos negros de accidentes de
+                  tránsito fatales en zonas de RD
+                </a>
+              </p>
+              <p>
+                PuntosNegrosRD adopta esta taxonomía como lenguaje compartido
+                con la institución, lo que hace que el dataset ciudadano sea
+                directamente cruzable con análisis institucionales futuros sin
+                necesidad de mapeo de equivalencias.
+              </p>
+              <p className="text-xs text-fg-muted">
+                <strong className="font-semibold text-fg">Nota:</strong>{' '}
+                PuntosNegrosRD no es una iniciativa oficial del INTRANT. La
+                adopción de su taxonomía es por alineamiento metodológico, no
+                por endoso ni patrocinio.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -250,14 +289,102 @@ export default function MetodologiaPage() {
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
             <p>
-              PuntosNegrosRD no es una iniciativa oficial del INTRANT. Es un
-              esfuerzo ciudadano independiente que adopta la taxonomía técnica
-              de la institución para que los datos sean compatibles y
-              cruzables. El INTRANT anunció en febrero de 2025 la creación de
-              su propio mapa de puntos negros con datos oficiales. Cuando esa
-              iniciativa esté disponible públicamente, PuntosNegrosRD se
+              PuntosNegrosRD es un esfuerzo ciudadano independiente. Adoptamos
+              la taxonomía técnica del INTRANT para que los datos sean
+              compatibles con análisis institucionales y cruzables con otros
+              estudios. El INTRANT anunció el 5 de marzo de 2026 la creación
+              de su propio mapa de puntos negros con datos oficiales. Cuando
+              esa iniciativa esté disponible públicamente, PuntosNegrosRD se
               ofrece a sincronizar y cruzar datasets de forma abierta.
             </p>
+          </div>
+        </section>
+
+        {/* Referencias */}
+        <section className="mt-6">
+          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
+            <span
+              aria-hidden
+              className="block h-6 w-1 rounded-full bg-brand"
+            />
+            Referencias
+          </h2>
+          <div className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border sm:p-6">
+            <p className="text-sm leading-relaxed text-fg/90">
+              Documentos públicos consultados para el diseño del marco de
+              clasificación:
+            </p>
+            <ul className="mt-3 space-y-3 text-sm leading-relaxed text-fg/90">
+              <li>
+                <div className="font-semibold text-fg">
+                  Fuente primaria de la taxonomía: Telenord — Joel Gneco
+                  Gross (INTRANT), 5 de marzo de 2026
+                </div>
+                <a
+                  href="https://www.telenord.com/noticias/nacionales/88358-intrant-identifica-puntos-negros-de-accidentes-de-transito-fatales-en-zonas-de-rd.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block break-all text-xs text-brand hover:underline"
+                >
+                  telenord.com/.../88358-intrant-identifica-puntos-negros-de-accidentes-de-transito-fatales-en-zonas-de-rd.html
+                </a>
+              </li>
+              <li>
+                <div className="font-semibold text-fg">
+                  Plan Estratégico Nacional para la Seguridad Vial de la
+                  República Dominicana 2021-2030 (INTRANT)
+                </div>
+                <a
+                  href="https://wp.intrant.gob.do/wp-content/uploads/2023/06/Plan-Estrategico-Nacional-Seguridad-Vial-Republica-Dominicana-2021-2030.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block break-all text-xs text-brand hover:underline"
+                >
+                  wp.intrant.gob.do/.../Plan-Estrategico-Nacional-Seguridad-Vial-Republica-Dominicana-2021-2030.pdf
+                </a>
+              </li>
+              <li>
+                <div className="font-semibold text-fg">
+                  Informe Nacional de Seguridad Vial 2023 (OPSEVI / INTRANT)
+                </div>
+                <a
+                  href="https://opsevi.intrant.gob.do/wp-content/uploads/2024/12/Informe-Nacional-de-Seguridad-Vial-2023.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block break-all text-xs text-brand hover:underline"
+                >
+                  opsevi.intrant.gob.do/.../Informe-Nacional-de-Seguridad-Vial-2023.pdf
+                </a>
+              </li>
+              <li>
+                <div className="font-semibold text-fg">
+                  Decade of Action for Road Safety 2021-2030 (Organización
+                  Mundial de la Salud)
+                </div>
+                <a
+                  href="https://www.who.int/teams/social-determinants-of-health/safety-and-mobility/decade-of-action-for-road-safety-2021-2030"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block break-all text-xs text-brand hover:underline"
+                >
+                  who.int/.../decade-of-action-for-road-safety-2021-2030
+                </a>
+              </li>
+              <li>
+                <div className="font-semibold text-fg">
+                  Global Plan for the Decade of Action for Road Safety
+                  2021-2030 (OMS)
+                </div>
+                <a
+                  href="https://www.who.int/publications/m/item/global-plan-for-the-decade-of-action-for-road-safety-2021-2030"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block break-all text-xs text-brand hover:underline"
+                >
+                  who.int/publications/m/item/global-plan-for-the-decade-of-action-for-road-safety-2021-2030
+                </a>
+              </li>
+            </ul>
           </div>
         </section>
       </div>

@@ -20,6 +20,7 @@ export const CATEGORIES = {
       'Motocicletas sin luces o frenos',
       'Vehículos sobrecargados de pasajeros',
       'Vehículos pesados en zona residencial',
+      'Vehículos mal estacionados',
       'Otros (estado vehicular)',
     ],
   },

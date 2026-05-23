@@ -1,4 +1,4 @@
-import { CATEGORIES, STATUS_LABELS } from './constants';
+import { CATEGORIES } from './constants';
 import type { Point } from './types';
 
 interface ShareMessage {
@@ -35,7 +35,7 @@ export const KNOWN_RECIPIENTS: AuthorityRecipient[] = [
     email: 'info@intrant.gob.do',
     salutation: 'Estimados de INTRANT:',
     requestLine:
-      'Solicito amablemente que se considere este reporte para evaluacion tecnica conforme a la taxonomia oficial del INTRANT y, de ser procedente, su inclusion en planes de regulacion, señalizacion o intervencion vial.',
+      'Solicito amablemente que se considere este reporte para evaluacion tecnica conforme al marco del Plan Estrategico Nacional para la Seguridad Vial 2021-2030 y, de ser procedente, su inclusion en planes de regulacion, señalizacion o intervencion vial.',
   },
   {
     name: 'DIGESETT',
@@ -63,7 +63,7 @@ export const KNOWN_RECIPIENTS: AuthorityRecipient[] = [
   },
   {
     name: 'Ayuntamiento',
-    description: 'Calles internas de barrios en Santo Domingo D.N.',
+    description: 'Calles internas, aceras e iluminacion local.',
     salutation: 'Estimado Ayuntamiento:',
     requestLine:
       'Solicito amablemente la intervencion del ayuntamiento para evaluar el estado del punto y, de ser procedente, ejecutar mejoras en infraestructura local (señalizacion, iluminacion, mantenimiento de calles internas, aceras).',
@@ -92,26 +92,29 @@ export function buildShareMessage(
   const sub = point.subcategory ? ` - ${point.subcategory}` : '';
   const url = `${siteUrl.replace(/\/$/, '')}/punto/${point.id}`;
   const gmaps = `https://www.google.com/maps?q=${point.lat},${point.lng}`;
-  const status = STATUS_LABELS[point.status] ?? point.status;
 
   const salutation = recipient?.salutation ?? DEFAULT_SALUTATION;
   const requestLine = recipient?.requestLine ?? DEFAULT_REQUEST_LINE;
 
   const subject = `Reporte ciudadano de riesgo vial - ${cat}${sub}`;
 
+  // URL base del sitio para apuntar a /metodologia desde el email.
+  // El receptor que quiera validar el marco de clasificacion va alli
+  // (una sola pagina, mas legible que un bloque pegado en cada email).
+  const siteBase = siteUrl.replace(/\/$/, '');
+
   const body = [
     salutation,
     '',
-    'Como ciudadano de la Republica Dominicana, quisiera notificar formalmente un punto de riesgo vial documentado en la plataforma ciudadana PuntosNegrosRD, iniciativa independiente que adopta la taxonomia tecnica del Instituto Nacional de Transito y Transporte Terrestre (INTRANT).',
+    'Como ciudadano de la Republica Dominicana, quisiera notificar formalmente un punto de riesgo vial documentado en la plataforma ciudadana PuntosNegrosRD.',
     '',
-    `Categoria (taxonomia INTRANT): ${cat}`,
+    `Categoria: ${cat}`,
     point.subcategory ? `Subcategoria: ${point.subcategory}` : null,
     `Ubicacion: ${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`,
     point.municipality ? `Municipio: ${point.municipality}` : null,
     point.province ? `Provincia: ${point.province}` : null,
     `Ver en mapa: ${gmaps}`,
     `Confirmaciones comunitarias: ${point.confirmation_count}`,
-    `Estado actual: ${status}`,
     '',
     'Descripcion ciudadana:',
     point.description,
@@ -120,6 +123,8 @@ export function buildShareMessage(
     url,
     '',
     requestLine,
+    '',
+    `Metodologia y marco de clasificacion: ${siteBase}/metodologia`,
     '',
     'Atentamente,',
     'Un ciudadano dominicano',
