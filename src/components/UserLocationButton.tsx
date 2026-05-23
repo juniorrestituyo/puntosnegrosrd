@@ -24,17 +24,17 @@ export default function UserLocationButton({
       disabled={isLoading}
       aria-label={label}
       title={label}
-      className={`absolute bottom-28 right-3 z-[1080] flex h-14 w-14 items-center justify-center rounded-full shadow-float ring-1 transition-colors sm:bottom-32 sm:right-6 sm:h-16 sm:w-16 ${
+      className={`absolute bottom-28 right-3 z-[1080] flex h-16 w-16 items-center justify-center rounded-full shadow-float transition-colors sm:bottom-36 sm:right-6 sm:h-20 sm:w-20 ${
         isTracking
-          ? 'bg-brand text-white ring-brand-accent hover:bg-brand-accent'
-          : 'bg-surface-card text-fg ring-surface-border hover:bg-surface-raised'
+          ? 'bg-brand text-white hover:bg-brand-accent'
+          : 'bg-surface-card text-fg hover:bg-surface-raised'
       } ${isLoading ? 'cursor-wait opacity-70' : ''}`}
     >
       {isLoading ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="22"
-          height="22"
+          width="30"
+          height="30"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -49,8 +49,8 @@ export default function UserLocationButton({
       ) : (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="22"
-          height="22"
+          width="30"
+          height="30"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

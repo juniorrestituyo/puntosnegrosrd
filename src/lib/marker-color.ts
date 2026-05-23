@@ -50,9 +50,9 @@ export function colorForConfirmations(count: number): {
     };
   }
   return {
-    bg: '#0891b2', // cyan-600 — cyan medio, electrico/llamativo
-    border: '#155e75', // cyan-800 — borde mas oscuro para definicion
-    text: '#ffffff', // blanco — contrasta bien sobre el cyan medio
+    bg: '#40D9F1', // cyan-sky brillante, tira mas hacia azul que verde
+    border: '#1E96AB', // version mas oscura para definicion
+    text: '#ffffff', // blanco — pop fuerte sobre el cyan claro
     label: 'Reporte reciente',
   };
 }

@@ -49,19 +49,19 @@ export default function ReportFAB({
             type="button"
             role="menuitem"
             onClick={() => pick(onUseCurrentLocation)}
-            className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-raised"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-raised"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              width="32"
+              height="32"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="mt-0.5 shrink-0 text-brand"
+              className="shrink-0 text-brand"
               aria-hidden
             >
               <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z" />
@@ -81,19 +81,19 @@ export default function ReportFAB({
             type="button"
             role="menuitem"
             onClick={() => pick(onSelectOnMap)}
-            className="flex w-full items-start gap-3 border-t border-surface-divider px-4 py-3 text-left hover:bg-surface-raised"
+            className="flex w-full items-center gap-3 border-t border-surface-divider px-4 py-3 text-left hover:bg-surface-raised"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              width="32"
+              height="32"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="mt-0.5 shrink-0 text-brand"
+              className="shrink-0 text-brand"
               aria-hidden
             >
               <circle cx="12" cy="12" r="9" />
@@ -126,7 +126,7 @@ export default function ReportFAB({
         // senales de precaucion). El resto de la UI sigue siendo azul
         // institucional; este es el unico CTA que adopta el color de
         // dominio (carretera/peligro).
-        className="absolute bottom-10 right-3 z-[1100] flex h-14 w-14 items-center justify-center rounded-full bg-signal text-signal-ink shadow-float ring-2 ring-white transition-transform hover:bg-signal-accent active:scale-95 disabled:opacity-50 sm:bottom-12 sm:right-6 sm:h-16 sm:w-16"
+        className="absolute bottom-10 right-3 z-[1100] flex h-16 w-16 items-center justify-center rounded-full bg-signal text-white shadow-float transition-transform hover:bg-signal-accent active:scale-95 disabled:opacity-50 sm:bottom-12 sm:right-6 sm:h-20 sm:w-20"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

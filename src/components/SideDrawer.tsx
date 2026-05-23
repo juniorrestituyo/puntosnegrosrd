@@ -89,7 +89,7 @@ export default function SideDrawer({ current }: SideDrawerProps) {
         <div className="flex items-start justify-between gap-3 border-b border-surface-border p-5">
           <div className="min-w-0 flex-1">
             <h2 className="truncate font-logo text-xl font-bold tracking-tight text-fg">
-              Puntos<span className="text-brand">Negros</span>RD
+              PuntosNegrosRD
             </h2>
             <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-fg-muted">
               Mapa ciudadano
@@ -197,6 +197,7 @@ export default function SideDrawer({ current }: SideDrawerProps) {
         <footer className="border-t border-surface-border p-5 text-[11px] text-fg-muted">
           <p>Iniciativa ciudadana independiente.</p>
           <p className="mt-1">Datos abiertos bajo CC-BY 4.0.</p>
+          <p className="mt-1">v1.0</p>
         </footer>
       </aside>
     </>
