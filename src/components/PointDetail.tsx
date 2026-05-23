@@ -7,6 +7,7 @@ import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { formatRelativeTime } from '@/lib/time';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
 import BackToMapButton from './BackToMapButton';
+import ReportContentButton from './ReportContentButton';
 import ShareWithAuthority from './ShareWithAuthority';
 import SideDrawer from './SideDrawer';
 
@@ -36,39 +37,14 @@ export default function PointDetail({
   point: initialPoint,
   history,
 }: PointDetailProps) {
-  const [point, setPoint] = useState(initialPoint);
-  const [confirmState, setConfirmState] = useState<
-    'idle' | 'loading' | 'ok' | 'err'
-  >('idle');
-  const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
+  // No usamos setPoint — antes lo actualizaba handleConfirm con el
+  // nuevo conteo. El voto de confirmar vive ahora solo en el modal
+  // del mapa (PointDetailSheet), donde el usuario esta naturalmente
+  // mirando ubicaciones cerca. La pagina de detalle queda como vista
+  // de review/historial/compartir; si quieres votar, vuelves al mapa.
+  const point = initialPoint;
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
   const [shareAuthorityOpen, setShareAuthorityOpen] = useState(false);
-
-  async function handleConfirm() {
-    setConfirmState('loading');
-    setConfirmMessage(null);
-    try {
-      const res = await fetch(`/api/points/${point.id}/confirm`, {
-        method: 'POST',
-      });
-      const json = await res.json();
-      if (json.ok) {
-        setPoint((prev) => ({
-          ...prev,
-          confirmation_count: json.data.confirmation_count as number,
-        }));
-        setConfirmState('ok');
-      } else {
-        setConfirmState('err');
-        setConfirmMessage(
-          json.error?.message ?? 'No se pudo registrar la confirmacion'
-        );
-      }
-    } catch {
-      setConfirmState('err');
-      setConfirmMessage('Error de red');
-    }
-  }
 
   async function handleShare() {
     const url = window.location.href;
@@ -318,12 +294,13 @@ export default function PointDetail({
         </section>
 
         {/* Confirmaciones + acciones.
-            Mismo tratamiento que PointDetailSheet:
-            - Icono cambiado de thumbs-up a ojo (matchea "Yo tambien lo veo").
-            - Counter en estilo muted cuando status='resuelto'; label cambia
-              a "testigos cuando estaba activo" para comunicar que es
-              historico, no urgencia actual.
-            - Boton confirm se oculta si esta resuelto. */}
+            - Icono ojo (matchea el copy "testigos" del label).
+            - Counter en estilo muted cuando status='resuelto'; label
+              cambia a "testigos cuando estaba activo" para comunicar
+              que es historico, no urgencia actual.
+            - NO incluye boton de votar (el voto vive en el modal del
+              mapa, donde el usuario esta mirando ubicaciones cerca y
+              puede juzgar). Aqui solo informa + permite compartir. */}
         <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
           <div
             className={`flex items-center gap-4 rounded-2xl px-5 py-4 ring-1 ${
@@ -375,71 +352,27 @@ export default function PointDetail({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {point.status === 'resuelto' ? (
-              <span className="flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 sm:col-span-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Punto marcado como resuelto
-              </span>
-            ) : confirmState === 'ok' ? (
-              <span className="flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 sm:col-span-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Tu confirmacion suma
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={confirmState === 'loading'}
-                className="flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-accent disabled:opacity-70 sm:col-span-2"
+          {point.status === 'resuelto' && (
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-full bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                {confirmState === 'loading'
-                  ? 'Confirmando...'
-                  : 'Lo confirmo'}
-              </button>
-            )}
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Punto marcado como resuelto
+            </div>
+          )}
 
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={handleShare}
@@ -508,15 +441,6 @@ export default function PointDetail({
               Compartir con autoridad
             </button>
           </div>
-
-          {confirmState === 'err' && confirmMessage && (
-            <p
-              role="alert"
-              className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-            >
-              {confirmMessage}
-            </p>
-          )}
         </section>
 
         {/* Historial */}
@@ -568,6 +492,12 @@ export default function PointDetail({
             {point.id}
           </code>
         </p>
+
+        {/* Reporte de contenido. Link discreto — no queremos incentivar
+            reportes casuales. Cuando 5 IPs unicas reportan el mismo
+            punto, el trigger SQL lo oculta automaticamente. Reemplaza
+            la moderacion via panel admin. */}
+        <ReportContentButton pointId={point.id} />
 
         {shareAuthorityOpen && (
           <ShareWithAuthority
