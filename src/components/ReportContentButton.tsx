@@ -128,8 +128,8 @@ export default function ReportContentButton({ pointId }: Props) {
                   Reportar contenido
                 </h3>
                 <p className="mt-0.5 text-xs text-fg-muted">
-                  Si 5 personas reportan el mismo punto, se oculta
-                  automaticamente.
+                  Si suficientes personas reportan el mismo punto, se
+                  oculta automaticamente.
                 </p>
               </div>
               <button
@@ -168,8 +168,8 @@ export default function ReportContentButton({ pointId }: Props) {
                     Reporte registrado
                   </p>
                   <p className="mt-1 text-xs text-emerald-800">
-                    Gracias. Si el punto acumula 5 reportes se ocultara
-                    automaticamente.
+                    Gracias. Si suficientes personas reportan el mismo
+                    punto, se ocultara automaticamente.
                   </p>
                   <button
                     type="button"
