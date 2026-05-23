@@ -42,6 +42,7 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
   'Motocicletas sin luces o frenos': 'motorcycle',
   'Vehículos sobrecargados de pasajeros': 'minibus',
   'Vehículos pesados en zona residencial': 'truck',
+  'Vehículos mal estacionados': 'no-parking',
   'Otros (estado vehicular)': 'wrench',
 
   // Infraestructural
