@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
+import { getIconForPoint } from '@/lib/marker-icons';
 import type { Point } from '@/lib/types';
 
 type ConfirmResult = { ok: true } | { ok: false; message: string };
@@ -99,6 +100,7 @@ export default function PointDetailSheet({
   const isOpen = !!point;
   const p = displayed;
   const accent = p ? colorForConfirmations(p.confirmation_count) : null;
+  const iconData = p ? getIconForPoint(p) : null;
   const isResolved = p?.status === 'resuelto';
 
   return (
@@ -116,23 +118,30 @@ export default function PointDetailSheet({
           paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)',
         }}
       >
-        {/* Drag handle visual */}
-        <div className="flex justify-center pt-2.5">
-          <div className="h-1 w-10 rounded-full bg-surface-border" />
-        </div>
-
         {p && (
           <div className="px-4 pt-3 pb-5">
             <div className="flex items-start gap-3">
-              {/* Pin grande con color del marker */}
-              {accent && (
+              {/* Pin grande con color del marker + icono de la
+                  subcategoria — abarca verticalmente titulo + subtitulo
+                  + estado. Pin: 56px (h-14 w-14). Icono escalado a
+                  ~127% del map size (56/44) para mantener misma
+                  proporcion icono/circulo que en el mapa. */}
+              {accent && iconData && (
                 <div
-                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-2 ring-white"
+                  className="mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center rounded-full ring-2 ring-white"
                   style={{ background: accent.bg }}
                 >
-                  <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ background: accent.text }}
+                  <img
+                    src={iconData.url}
+                    alt=""
+                    draggable={false}
+                    style={{
+                      width: `${Math.round((iconData.size * 56) / 44)}px`,
+                      height: `${Math.round((iconData.size * 56) / 44)}px`,
+                      objectFit: 'contain',
+                      pointerEvents: 'none',
+                      userSelect: 'none',
+                    }}
                   />
                 </div>
               )}

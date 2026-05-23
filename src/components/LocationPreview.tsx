@@ -80,7 +80,7 @@ export default function LocationPreview({
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         subdomains="abcd"
-        maxZoom={19}
+        maxZoom={18}
       />
       <Marker position={[lat, lng]} icon={icon} />
     </MapContainer>

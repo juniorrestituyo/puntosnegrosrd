@@ -50,7 +50,18 @@ const config: Config = {
       },
       boxShadow: {
         card: '0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04)',
-        float: '0 4px 16px rgba(15, 23, 42, 0.12), 0 2px 4px rgba(15, 23, 42, 0.06)',
+        // Sombra de elementos flotantes (hamburger menu, FAB, GPS button,
+        // dropdowns). Opacity claramente visible sobre el basemap claro
+        // de Positron. Sin ring de border, esta sombra es el unico
+        // elemento que da definicion al borde del boton — por eso bien
+        // pronunciada.
+        float:
+          '0 8px 22px rgba(15, 23, 42, 0.35), 0 4px 8px rgba(15, 23, 42, 0.20)',
+        // Mas presente que `float` — para botones flotantes (FAB + GPS)
+        // que deben sentirse "elevados" sobre el mapa, con sombra
+        // visible para reforzar profundidad.
+        lifted:
+          '0 10px 28px rgba(15, 23, 42, 0.42), 0 4px 10px rgba(15, 23, 42, 0.24)',
       },
     },
   },

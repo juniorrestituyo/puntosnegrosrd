@@ -1,20 +1,23 @@
 /**
  * Color del marker segun cantidad de confirmaciones comunitarias.
  *
- *   0    -> gris frio (reporte nuevo, sin consenso aun)
+ *   0    -> teal (reporte reciente, sin consenso aun)
  *   1-2  -> amarillo (señal inicial, "atencion")
  *   3-9  -> naranja (consenso medio, "advertencia")
  *   10+  -> rojo (alta certeza, hotspot critico)
  *
  * Paleta tipo heatmap: progresion cool-to-hot que el usuario lee de
- * inmediato sin necesidad de leyenda. El gris frio para 0 votos evita
- * dramatizar reportes recien creados (el black anterior sentia que el
- * punto estaba "muerto" o "ignorado"). El rojo se reserva solo para
- * puntos con consenso comunitario fuerte.
+ * inmediato sin necesidad de leyenda. Teal para 0 votos:
+ *   - Comunica "reciente, nuevo" (mejor que el gris original que
+ *     sentia "ignorado").
+ *   - No se confunde con el GPS dot del usuario (que es azul brand).
+ *   - Contraste excelente para los iconos PNG con outlines oscuros.
+ *   - Distinto del verde "resuelto" (teal es azul-verdoso, emerald
+ *     es verde puro).
  *
  * Contraste verificado contra el tile basemap light (CartoDB Positron):
  * todos los colores son visibles. Texto interior elegido por contraste
- * sobre el bg (blanco en gris/naranja/rojo, oscuro en amarillo).
+ * sobre el bg (blanco en teal/naranja/rojo, oscuro en amarillo).
  */
 export function colorForConfirmations(count: number): {
   bg: string;
@@ -47,9 +50,9 @@ export function colorForConfirmations(count: number): {
     };
   }
   return {
-    bg: '#64748b', // slate-500 — gris frio, neutro
-    border: '#334155', // slate-700
-    text: '#ffffff',
-    label: 'Sin confirmaciones',
+    bg: '#40D9F1', // cyan-sky brillante, tira mas hacia azul que verde
+    border: '#1E96AB', // version mas oscura para definicion
+    text: '#ffffff', // blanco — pop fuerte sobre el cyan claro
+    label: 'Reporte reciente',
   };
 }

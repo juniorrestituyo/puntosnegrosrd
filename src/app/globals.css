@@ -206,16 +206,16 @@ body {
    background queda negro en todos los tiers — la densidad se
    comunica via el diametro del circulo (iconSize en el JS). */
 .pn-cluster-small {
-  font-size: 13px;
+  font-size: 14px;
 }
 .pn-cluster-medium {
-  font-size: 15px;
+  font-size: 17px;
 }
 .pn-cluster-large {
-  font-size: 16px;
+  font-size: 19px;
 }
 .pn-cluster-xlarge {
-  font-size: 18px;
+  font-size: 21px;
 }
 @keyframes pn-marker-in {
   from {

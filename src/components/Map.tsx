@@ -24,6 +24,7 @@ import {
   RD_DEFAULT_ZOOM,
 } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
+import { getIconForPoint } from '@/lib/marker-icons';
 import type { Point, UserLocation } from '@/lib/types';
 
 // Por debajo de este zoom mostramos solo un dot pequeno (vista regional
@@ -31,6 +32,15 @@ import type { Point, UserLocation } from '@/lib/types';
 // pasamos a teardrop completo, cuando ya hay espacio para que los pins
 // se vean comodos sin chocar entre si.
 const FAR_ZOOM_THRESHOLD = 16;
+
+// Offset vertical (en pixeles de screen) desde el iconAnchor del marker
+// teardrop hasta el centro visual del circulo. El iconAnchor esta en la
+// sombra del suelo (y=61 del container 52x68), pero el centro del circulo
+// (lo que el usuario ve y quiere "iluminar" con el spotlight) esta en
+// y=24. Diferencia: 61 - 24 = 37 px hacia arriba.
+// En modo dot (zoom < 16) el offset es 0 porque el dot ya esta centrado
+// en su GPS point.
+const MARKER_VISUAL_CENTER_OFFSET_Y = 37;
 
 type MarkerMode = 'dot' | 'teardrop';
 
@@ -59,56 +69,79 @@ const ACTIVE_HALO = '#f59e0b'; // amber-500 == bg-signal
  */
 function buildDotIcon(point: Point, isActive: boolean): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
-  // El anillo activo se hace via doble box-shadow: el inset 0 0 0 3px es
-  // el halo amarillo solido, el segundo shadow es el drop original.
+  // Halo oscuro alrededor + borde blanco mas grueso para que el dot
+  // se lea claramente en vista lejana sobre el basemap claro.
+  //   - Inactive: halo dark blur de 4px (mas visible que la version
+  //     proporcional, compensa el tamano chico del dot).
+  //   - Active: anillo amarillo solido (3px spread) + halo dark debajo.
+  //   - Borde blanco: 3px (antes 2px) para mas dominancia visual.
   const shadow = isActive
-    ? `0 0 0 3px ${ACTIVE_HALO}, 0 1px 3px rgba(15,23,42,0.35)`
-    : '0 1px 3px rgba(15,23,42,0.35)';
+    ? `0 0 0 3px ${ACTIVE_HALO}, 0 0 4px rgba(15,23,42,0.8)`
+    : '0 0 4px rgba(15,23,42,0.8)';
   return L.divIcon({
     className: markerClassName(point),
-    html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:${shadow};"></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
-    popupAnchor: [0, -6],
+    html: `<div class="pn-marker-inner" style="width:16px;height:16px;border-radius:50%;background:${c.bg};border:3px solid #ffffff;box-shadow:${shadow};"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+    popupAnchor: [0, -8],
   });
 }
 
 /**
- * Marker teardrop coloreado segun cantidad de confirmaciones.
- * Solo bulbo + punto blanco central. El contador NO se muestra aqui;
- * se rendera en otro lugar de la UI. Si isActive, el stroke del SVG
- * cambia a amarillo senaletico y se agrega un drop-shadow amarillo
- * suave alrededor — efecto "este es el marker que estas viendo".
+ * Marker circular "floating" con icono y sombra de tierra.
+ *
+ * Estilo visual (matchea el screenshot de referencia):
+ *   - Circulo completo (sin tail tipo teardrop)
+ *   - Color brand de fondo segun votos (rojo/naranja/amarillo/gris)
+ *   - Borde blanco bold (white outer ring)
+ *   - Icono PNG centrado dentro
+ *   - Ellipse oscura debajo, separada por un gap — efecto "marker
+ *     flotando sobre la calle con sombra en el suelo"
+ *
+ * Si isActive, agrega un drop-shadow amarillo senaletico difuso afuera
+ * del borde.
+ *
+ * Container 40x52: circulo arriba (cy=18, r=17), gap, sombra abajo
+ * (cy=47). iconAnchor apunta al centro de la sombra — esa es la
+ * posicion "en el suelo" del GPS.
  */
 function buildTeardropIcon(point: Point, isActive: boolean): L.DivIcon {
   const c = colorForConfirmations(point.confirmation_count);
+  const { url: iconUrl, size: iconSize } = getIconForPoint(point);
 
-  // Dimensiones: contenedor 28x36, viewBox SVG 32x42 (escala interna).
-  // Centro del bulbo cae aprox en (14, 14) del container.
-  const center = `<span style="position:absolute;top:8px;left:8px;width:12px;height:12px;border-radius:50%;background:${c.text};"></span>`;
-
-  const stroke = isActive ? ACTIVE_HALO : c.border;
-  const strokeWidth = isActive ? '3' : '1.5';
-  // Cuando isActive, sumamos un drop-shadow amarillo suave antes del
-  // drop-shadow oscuro original. El orden importa: el amarillo va
-  // primero para que se vea como halo difuso afuera del stroke.
+  // Halo oscuro suave alrededor de todo el marker (circulo + tail) para
+  // que la forma resalte sobre el basemap claro. Es un drop-shadow con
+  // offset 0 — sombra equidistante en todos los lados. La elipse del
+  // suelo no se "ve" afectada porque ya es semi-transparente.
+  // Cuando isActive, se suma el halo amarillo (drop-shadow se apilan).
+  const baseHalo = 'drop-shadow(0 0 1.5px rgba(15,23,42,0.6))';
   const filterStyle = isActive
-    ? 'filter:drop-shadow(0 0 6px rgba(245,158,11,0.65)) drop-shadow(0 2px 4px rgba(15,23,42,0.25));'
-    : 'filter:drop-shadow(0 2px 4px rgba(15,23,42,0.25));';
+    ? `filter:drop-shadow(0 0 7px rgba(245,158,11,0.85)) ${baseHalo};`
+    : `filter:${baseHalo};`;
+
+  // Icono centrado en el circulo (cuyo centro esta en 26, 24). El
+  // tamano viene del mapping en marker-icons (default 24; algunos
+  // iconos como pothole tienen override para compensar aspect ratio).
+  // object-fit:contain preserva aspect ratio para iconos no cuadrados.
+  const iconTop = 24 - iconSize / 2;
+  const iconLeft = 26 - iconSize / 2;
+  const iconHtml = `<img src="${iconUrl}" alt="" draggable="false" style="position:absolute;top:${iconTop}px;left:${iconLeft}px;width:${iconSize}px;height:${iconSize}px;object-fit:contain;pointer-events:none;user-select:none;" />`;
 
   return L.divIcon({
     className: markerClassName(point),
     html: `
-      <div class="pn-marker-inner" style="position:relative;width:28px;height:36px;${filterStyle}">
-        <svg viewBox="0 0 32 42" width="28" height="36" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 0 C7.16 0 0 7.16 0 16 C0 25 16 42 16 42 C16 42 32 25 32 16 C32 7.16 24.84 0 16 0 Z" fill="${c.bg}" stroke="${stroke}" stroke-width="${strokeWidth}"/>
+      <div class="pn-marker-inner" style="position:relative;width:52px;height:68px;${filterStyle}">
+        <svg viewBox="0 0 52 68" width="52" height="68" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="26" cy="61" rx="11" ry="3.5" fill="rgba(15,23,42,0.35)"/>
+          <path d="M21 43 L26 53 L31 43 Z" fill="#ffffff" stroke="#ffffff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="26" cy="24" r="22" fill="${c.bg}" stroke="#ffffff" stroke-width="3"/>
         </svg>
-        ${center}
+        ${iconHtml}
       </div>
     `,
-    iconSize: [28, 36],
-    iconAnchor: [14, 36],
-    popupAnchor: [0, -36],
+    iconSize: [52, 68],
+    iconAnchor: [26, 61],
+    popupAnchor: [0, -61],
   });
 }
 
@@ -283,7 +316,14 @@ function SpotlightOverlay({ point }: { point: Point | null }) {
     function update() {
       if (!point) return;
       const px = map.latLngToContainerPoint([point.lat, point.lng]);
-      setPos({ x: px.x, y: px.y });
+      // El GPS point esta donde renderea la sombra del marker (en
+      // modo teardrop). El usuario espera que el haz ilumine el
+      // CIRCULO, no la sombra. Subimos pos.y por MARKER_VISUAL_CENTER_OFFSET_Y
+      // cuando estamos en modo teardrop. En modo dot el dot ya esta
+      // centrado en el GPS, asi que no aplicamos offset.
+      const inTeardropMode = map.getZoom() >= FAR_ZOOM_THRESHOLD;
+      const offsetY = inTeardropMode ? MARKER_VISUAL_CENTER_OFFSET_Y : 0;
+      setPos({ x: px.x, y: px.y - offsetY });
     }
     update();
     map.on('move', update);
@@ -338,7 +378,7 @@ function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
     count < 5 ? 'small' : count < 15 ? 'medium' : count < 40 ? 'large' : 'xlarge';
 
   const dim =
-    size === 'small' ? 38 : size === 'medium' ? 48 : size === 'large' ? 58 : 68;
+    size === 'small' ? 44 : size === 'medium' ? 56 : size === 'large' ? 68 : 80;
 
   return L.divIcon({
     html: `<div class="pn-cluster pn-cluster-${size}">${count}</div>`,
@@ -502,7 +542,7 @@ export default function Map({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         subdomains="abcd"
-        maxZoom={19}
+        maxZoom={18}
       />
       <ClickCapture
         onPick={onMapClick}
