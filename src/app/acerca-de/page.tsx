@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 export default function AcercaDePage() {
   return (
     <main className="relative min-h-screen bg-surface-base">
-      <SideDrawer current="acerca" />
-      <BackToMapButton />
+      <SideDrawer current="acerca" variant="static" />
+      <BackToMapButton variant="static" />
 
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-20 sm:px-6 sm:pt-24">
         {/* Hero */}

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
 import { getIconForPoint } from '@/lib/marker-icons';
+import { formatRelativeTime } from '@/lib/time';
 import type { Point } from '@/lib/types';
 
 type ConfirmResult = { ok: true } | { ok: false; message: string };
@@ -50,6 +51,45 @@ export default function PointDetailSheet({
     'idle' | 'loading' | 'ok' | 'err'
   >('idle');
   const [resolveMsg, setResolveMsg] = useState<string | null>(null);
+
+  // Feedback transitorio del boton de compartir cuando caemos al
+  // fallback de "copiar al portapapeles" (navegadores sin Web Share API).
+  // En mobile (iOS/Android) y en Chrome desktop esto NO se activa
+  // porque el OS abre su propio sheet nativo.
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  /**
+   * Comparte el URL del reporte. Web Share API si esta disponible
+   * (mobile + Chrome/Edge desktop), fallback a clipboard si no.
+   * Si el usuario cancela el sheet nativo (AbortError), no hacemos
+   * nada — no es un error real.
+   */
+  async function handleShareLink() {
+    if (!displayed) return;
+    const url = `${window.location.origin}/punto/${displayed.id}`;
+    const title = `${CATEGORIES[displayed.category].label}${
+      displayed.subcategory ? ` - ${displayed.subcategory}` : ''
+    }`;
+    const text = `Reporte ciudadano en PuntosNegrosRD: ${title}`;
+
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        // Otros errores caen al fallback abajo.
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      window.prompt('Copia este enlace:', url);
+    }
+  }
 
   // Reseteamos el estado de los botones al cambiar de point.
   useEffect(() => {
@@ -123,9 +163,9 @@ export default function PointDetailSheet({
             <div className="flex items-start gap-3">
               {/* Pin grande con color del marker + icono de la
                   subcategoria — abarca verticalmente titulo + subtitulo
-                  + estado. Pin: 56px (h-14 w-14). Icono escalado a
-                  ~127% del map size (56/44) para mantener misma
-                  proporcion icono/circulo que en el mapa. */}
+                  + estado. Pin: 56px (h-14 w-14). Icono escalado por
+                  56/34 (diametro del circulo del marker en el mapa)
+                  para mantener misma proporcion icono/circulo. */}
               {accent && iconData && (
                 <div
                   className="mt-0.5 flex h-14 w-14 shrink-0 items-center justify-center rounded-full ring-2 ring-white"
@@ -136,8 +176,8 @@ export default function PointDetailSheet({
                     alt=""
                     draggable={false}
                     style={{
-                      width: `${Math.round((iconData.size * 56) / 44)}px`,
-                      height: `${Math.round((iconData.size * 56) / 44)}px`,
+                      width: `${Math.round((iconData.size * 56) / 34)}px`,
+                      height: `${Math.round((iconData.size * 56) / 34)}px`,
                       objectFit: 'contain',
                       pointerEvents: 'none',
                       userSelect: 'none',
@@ -155,33 +195,100 @@ export default function PointDetailSheet({
                     {p.subcategory}
                   </p>
                 )}
-                <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-fg-dim">
-                  {STATUS_LABELS[p.status] ?? p.status}
+                {/* Cuando status==='nuevo' mostramos tiempo relativo
+                    en vez del label estatico "Nuevo" — comunica
+                    frescura del reporte (recien vs hace semanas) sin
+                    consumir espacio adicional. Para otros estados
+                    (en_proceso, resuelto) sigue mostrando el label
+                    porque ahi importa el estado, no la antiguedad. */}
+                <p
+                  suppressHydrationWarning
+                  className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-fg-dim"
+                >
+                  {p.status === 'nuevo'
+                    ? formatRelativeTime(p.created_at)
+                    : (STATUS_LABELS[p.status] ?? p.status)}
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Cerrar"
-                className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
+              {/* Cluster de botones de header: compartir + cerrar.
+                  Juntos en un sub-flex con gap-1.5 (6px) — se leen como
+                  un solo grupo de controles, separados ~12px del titulo
+                  via el gap-3 del flex padre. */}
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleShareLink}
+                  aria-label={
+                    linkCopied ? 'Enlace copiado' : 'Compartir enlace'
+                  }
+                  title={linkCopied ? 'Enlace copiado' : 'Compartir enlace'}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+                    linkCopied
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg'
+                  }`}
                 >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+                  {linkCopied ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Cerrar"
+                  className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {p.photo_url && (
@@ -263,9 +370,13 @@ export default function PointDetailSheet({
               </div>
             </div>
 
-            {/* Si esta resuelto: badge en vez de botones de accion.
-                Si no: confirm + ver detalle, mas resolve como accion
-                secundaria abajo. */}
+            {/* Layout cuando el punto NO esta resuelto:
+                  Row 1 (binario sin iconos): [Sigue ahi] [No esta ahi]
+                  Row 2 (full width con flecha): [Ver detalle →]
+                Asi se separa "votar" de "navegar a detalle", y se
+                evita la ambiguedad del icono verde checkmark que se
+                leia como badge de estado.
+                Cuando esta resuelto: badge informativo + Ver detalle. */}
             {isResolved ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-200">
@@ -323,6 +434,7 @@ export default function PointDetailSheet({
               </div>
             ) : (
               <>
+                {/* Row 1: par binario de voto, sin iconos. */}
                 <div className="mt-4 flex gap-3">
                   <button
                     type="button"
@@ -330,145 +442,78 @@ export default function PointDetailSheet({
                     disabled={
                       confirmState === 'loading' || confirmState === 'ok'
                     }
-                    className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand px-4 py-3.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-accent disabled:opacity-70"
+                    className="flex flex-1 items-center justify-center rounded-full bg-brand px-4 py-3.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-accent disabled:opacity-70"
                   >
-                    {confirmState === 'ok' ? (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Sumada
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                        >
-                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        {confirmState === 'loading'
-                          ? 'Confirmando...'
-                          : 'Yo tambien lo veo'}
-                      </>
-                    )}
+                    {confirmState === 'ok'
+                      ? 'Voto sumado'
+                      : confirmState === 'loading'
+                        ? 'Confirmando...'
+                        : 'Sigue ahi'}
                   </button>
 
-                  <Link
-                    href={`/punto/${p.id}`}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-raised px-4 py-3.5 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border"
-                  >
-                    Ver detalle
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                    >
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </Link>
-                </div>
-
-                {confirmState === 'err' && confirmMsg && (
-                  <p className="mt-2 text-center text-[11px] text-red-600">
-                    {confirmMsg}
-                  </p>
-                )}
-
-                {/* Accion secundaria: marcar como resuelto. Smaller,
-                    menos prominente que el confirm — la idea es que
-                    confirm sea el path principal y resolve un escape
-                    cuando alguien sabe que la situacion ya cambio. */}
-                <div className="mt-3 flex flex-col items-center gap-1.5 border-t border-surface-border pt-3">
                   <button
                     type="button"
                     onClick={handleResolve}
                     disabled={
                       resolveState === 'loading' || resolveState === 'ok'
                     }
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-70"
+                    className="flex flex-1 items-center justify-center rounded-full bg-surface-raised px-4 py-3.5 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border disabled:opacity-70"
                   >
-                    {resolveState === 'ok' ? (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Voto registrado
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden
-                        >
-                          <path d="M9 11l3 3L22 4" />
-                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                        </svg>
-                        {resolveState === 'loading'
-                          ? 'Registrando...'
-                          : 'Yo veo que ya esta resuelto'}
-                      </>
-                    )}
+                    {resolveState === 'ok'
+                      ? 'Voto sumado'
+                      : resolveState === 'loading'
+                        ? 'Registrando...'
+                        : 'No esta ahi'}
                   </button>
-                  {p.resolution_count > 0 && resolveState !== 'ok' && (
-                    <p className="text-[10px] text-fg-muted">
-                      {p.resolution_count} persona
-                      {p.resolution_count === 1 ? '' : 's'} reporta
-                      {p.resolution_count === 1 ? '' : 'n'} que ya esta
-                      resuelto
-                    </p>
-                  )}
-                  {resolveState === 'err' && resolveMsg && (
-                    <p className="text-[10px] text-red-600">{resolveMsg}</p>
-                  )}
                 </div>
+
+                {/* Errores de cualquiera de las dos acciones (se
+                    apilan si por algun motivo ambas fallan). */}
+                {confirmState === 'err' && confirmMsg && (
+                  <p className="mt-2 text-center text-[11px] text-red-600">
+                    {confirmMsg}
+                  </p>
+                )}
+                {resolveState === 'err' && resolveMsg && (
+                  <p className="mt-2 text-center text-[11px] text-red-600">
+                    {resolveMsg}
+                  </p>
+                )}
+
+                {/* Contador de votos "ya no esta" si los hay. Solo
+                    se muestra antes de que el usuario actual vote. */}
+                {p.resolution_count > 0 && resolveState !== 'ok' && (
+                  <p className="mt-2 text-center text-[10px] text-fg-muted">
+                    {p.resolution_count} persona
+                    {p.resolution_count === 1 ? '' : 's'} dice
+                    {p.resolution_count === 1 ? '' : 'n'} que ya no esta
+                  </p>
+                )}
+
+                {/* Row 2: navegacion a detalle, full width debajo de
+                    la fila de voto. mt-3 = mismo gap que el gap-3
+                    entre los dos botones de arriba. */}
+                <Link
+                  href={`/punto/${p.id}`}
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-surface-raised px-4 py-3.5 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border"
+                >
+                  Ver detalle
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </Link>
               </>
             )}
           </div>

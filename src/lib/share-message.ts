@@ -13,46 +13,60 @@ interface ShareMessage {
  *
  * Cada destinatario puede definir un `salutation` y `requestLine`
  * propios para que el mensaje se adapte al tono y la jurisdiccion
- * de la institucion (regulacion, fiscalizacion, politica publica,
- * infraestructura local).
+ * de la institucion (regulacion, fiscalizacion, infraestructura,
+ * servicios urbanos, gobierno local).
+ *
+ * `description` comunica que tipo de problemas le corresponden a
+ * cada institucion — asi el ciudadano elige a la autoridad correcta
+ * sin investigar competencias.
  */
 export interface AuthorityRecipient {
   name: string;
+  description: string;
   email?: string;
-  phone?: string;
-  website?: string;
-  note?: string;
   salutation?: string;
   requestLine?: string;
 }
 
 export const KNOWN_RECIPIENTS: AuthorityRecipient[] = [
   {
-    name: 'INTRANT - Instituto Nacional de Transito y Transporte Terrestre',
+    name: 'INTRANT',
+    description: 'Señalizacion, semaforos, permisos de via.',
     email: 'info@intrant.gob.do',
-    phone: '+1 809-732-4000',
-    website: 'https://www.intrant.gob.do',
-    note: 'Autoridad rectora de transito y seguridad vial. Regulacion tecnica y planificacion.',
     salutation: 'Estimados de INTRANT:',
     requestLine:
       'Solicito amablemente que se considere este reporte para evaluacion tecnica conforme a la taxonomia oficial del INTRANT y, de ser procedente, su inclusion en planes de regulacion, señalizacion o intervencion vial.',
   },
   {
-    name: 'DIGESETT - Direccion General de Seguridad de Transito y Transporte Terrestre',
-    email: 'info@digesett.gob.do',
-    phone: '+1 809-686-6520',
-    website: 'https://digesett.gob.do',
-    note: 'Aplicacion y fiscalizacion vial (sucesora de AMET, adscrita a la Policia Nacional).',
+    name: 'DIGESETT',
+    description: 'Agentes, accidentes, fiscalizacion del transito.',
+    email: 'atencionciudadana@digesett.gob.do',
     salutation: 'Estimados de DIGESETT:',
     requestLine:
       'Solicito amablemente que se considere reforzar la presencia y fiscalizacion en este punto, especialmente en horarios de mayor riesgo, y se evalue la coordinacion con autoridades competentes para una intervencion estructural.',
   },
   {
-    name: 'Junta municipal de tu municipio',
-    note: 'Intervenciones de infraestructura local: baches, iluminacion, señalizacion, aceras.',
-    salutation: 'Estimada Junta Municipal:',
+    name: 'CAASD',
+    description: 'Huecos causados por tuberias rotas o drenaje sanitario.',
+    email: 'servicios@caasd.gob.do',
+    salutation: 'Estimados de CAASD:',
     requestLine:
-      'Solicito amablemente la intervencion del ayuntamiento para evaluar el estado del punto y, de ser procedente, ejecutar mejoras en infraestructura local (señalizacion, iluminacion, mantenimiento de la via, aceras).',
+      'Solicito amablemente que se evalue si este punto esta relacionado con tuberias rotas, fugas o drenaje sanitario bajo jurisdiccion de la CAASD y, de ser procedente, se programe la reparacion correspondiente.',
+  },
+  {
+    name: 'MOPC',
+    description: 'Carreteras, autopistas y avenidas principales.',
+    email: 'contacto@mopc.gob.do',
+    salutation: 'Estimados del MOPC:',
+    requestLine:
+      'Solicito amablemente que se considere la inclusion de este punto en planes de mantenimiento, repavimentacion o intervencion estructural de la red vial nacional bajo jurisdiccion del MOPC.',
+  },
+  {
+    name: 'Ayuntamiento',
+    description: 'Calles internas de barrios en Santo Domingo D.N.',
+    salutation: 'Estimado Ayuntamiento:',
+    requestLine:
+      'Solicito amablemente la intervencion del ayuntamiento para evaluar el estado del punto y, de ser procedente, ejecutar mejoras en infraestructura local (señalizacion, iluminacion, mantenimiento de calles internas, aceras).',
   },
 ];
 

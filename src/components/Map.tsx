@@ -28,19 +28,19 @@ import { getIconForPoint } from '@/lib/marker-icons';
 import type { Point, UserLocation } from '@/lib/types';
 
 // Por debajo de este zoom mostramos solo un dot pequeno (vista regional
-// + media — provincia, ciudad, sector). A partir de 16 (vista cuadra)
-// pasamos a teardrop completo, cuando ya hay espacio para que los pins
-// se vean comodos sin chocar entre si.
-const FAR_ZOOM_THRESHOLD = 16;
+// — pais/provincia). A partir de 14 (vista ciudad/sector) pasamos a
+// teardrop completo. Con markers mas chicos (40x52) ya hay espacio
+// suficiente para que se vean comodos sin chocar entre si a este zoom.
+const FAR_ZOOM_THRESHOLD = 14;
 
 // Offset vertical (en pixeles de screen) desde el iconAnchor del marker
 // teardrop hasta el centro visual del circulo. El iconAnchor esta en la
-// sombra del suelo (y=61 del container 52x68), pero el centro del circulo
+// sombra del suelo (y=47 del container 40x52), pero el centro del circulo
 // (lo que el usuario ve y quiere "iluminar" con el spotlight) esta en
-// y=24. Diferencia: 61 - 24 = 37 px hacia arriba.
+// y=19. Diferencia: 47 - 19 = 28 px hacia arriba.
 // En modo dot (zoom < 16) el offset es 0 porque el dot ya esta centrado
 // en su GPS point.
-const MARKER_VISUAL_CENTER_OFFSET_Y = 37;
+const MARKER_VISUAL_CENTER_OFFSET_Y = 28;
 
 type MarkerMode = 'dot' | 'teardrop';
 
@@ -80,10 +80,10 @@ function buildDotIcon(point: Point, isActive: boolean): L.DivIcon {
     : '0 0 4px rgba(15,23,42,0.8)';
   return L.divIcon({
     className: markerClassName(point),
-    html: `<div class="pn-marker-inner" style="width:16px;height:16px;border-radius:50%;background:${c.bg};border:3px solid #ffffff;box-shadow:${shadow};"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-    popupAnchor: [0, -8],
+    html: `<div class="pn-marker-inner" style="width:12px;height:12px;border-radius:50%;background:${c.bg};border:2px solid #ffffff;box-shadow:${shadow};"></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+    popupAnchor: [0, -6],
   });
 }
 
@@ -101,7 +101,7 @@ function buildDotIcon(point: Point, isActive: boolean): L.DivIcon {
  * Si isActive, agrega un drop-shadow amarillo senaletico difuso afuera
  * del borde.
  *
- * Container 40x52: circulo arriba (cy=18, r=17), gap, sombra abajo
+ * Container 40x52: circulo arriba (cy=19, r=17), gap, sombra abajo
  * (cy=47). iconAnchor apunta al centro de la sombra — esa es la
  * posicion "en el suelo" del GPS.
  */
@@ -114,34 +114,34 @@ function buildTeardropIcon(point: Point, isActive: boolean): L.DivIcon {
   // offset 0 — sombra equidistante en todos los lados. La elipse del
   // suelo no se "ve" afectada porque ya es semi-transparente.
   // Cuando isActive, se suma el halo amarillo (drop-shadow se apilan).
-  const baseHalo = 'drop-shadow(0 0 1.5px rgba(15,23,42,0.6))';
+  const baseHalo = 'drop-shadow(0 0 1.2px rgba(15,23,42,0.6))';
   const filterStyle = isActive
-    ? `filter:drop-shadow(0 0 7px rgba(245,158,11,0.85)) ${baseHalo};`
+    ? `filter:drop-shadow(0 0 6px rgba(245,158,11,0.85)) ${baseHalo};`
     : `filter:${baseHalo};`;
 
-  // Icono centrado en el circulo (cuyo centro esta en 26, 24). El
-  // tamano viene del mapping en marker-icons (default 24; algunos
+  // Icono centrado en el circulo (cuyo centro esta en 20, 19). El
+  // tamano viene del mapping en marker-icons (default 18; algunos
   // iconos como pothole tienen override para compensar aspect ratio).
   // object-fit:contain preserva aspect ratio para iconos no cuadrados.
-  const iconTop = 24 - iconSize / 2;
-  const iconLeft = 26 - iconSize / 2;
+  const iconTop = 19 - iconSize / 2;
+  const iconLeft = 20 - iconSize / 2;
   const iconHtml = `<img src="${iconUrl}" alt="" draggable="false" style="position:absolute;top:${iconTop}px;left:${iconLeft}px;width:${iconSize}px;height:${iconSize}px;object-fit:contain;pointer-events:none;user-select:none;" />`;
 
   return L.divIcon({
     className: markerClassName(point),
     html: `
-      <div class="pn-marker-inner" style="position:relative;width:52px;height:68px;${filterStyle}">
-        <svg viewBox="0 0 52 68" width="52" height="68" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="26" cy="61" rx="11" ry="3.5" fill="rgba(15,23,42,0.35)"/>
-          <path d="M21 43 L26 53 L31 43 Z" fill="#ffffff" stroke="#ffffff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="26" cy="24" r="22" fill="${c.bg}" stroke="#ffffff" stroke-width="3"/>
+      <div class="pn-marker-inner" style="position:relative;width:40px;height:52px;${filterStyle}">
+        <svg viewBox="0 0 40 52" width="40" height="52" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="20" cy="47" rx="9" ry="3" fill="rgba(15,23,42,0.35)"/>
+          <path d="M16 33 L20 41 L24 33 Z" fill="#ffffff" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="20" cy="19" r="17" fill="${c.bg}" stroke="#ffffff" stroke-width="2.5"/>
         </svg>
         ${iconHtml}
       </div>
     `,
-    iconSize: [52, 68],
-    iconAnchor: [26, 61],
-    popupAnchor: [0, -61],
+    iconSize: [40, 52],
+    iconAnchor: [20, 47],
+    popupAnchor: [0, -47],
   });
 }
 
@@ -378,7 +378,7 @@ function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
     count < 5 ? 'small' : count < 15 ? 'medium' : count < 40 ? 'large' : 'xlarge';
 
   const dim =
-    size === 'small' ? 44 : size === 'medium' ? 56 : size === 'large' ? 68 : 80;
+    size === 'small' ? 34 : size === 'medium' ? 44 : size === 'large' ? 54 : 64;
 
   return L.divIcon({
     html: `<div class="pn-cluster pn-cluster-${size}">${count}</div>`,
@@ -534,15 +534,33 @@ export default function Map({
       center={initialCenter ?? RD_CENTER}
       zoom={initialZoom ?? RD_DEFAULT_ZOOM}
       scrollWheelZoom
+      // zoomSnap / wheelPxPerZoomLevel / zoomDelta: TODOS en sus defaults
+      // (1, 60, 1). Las tiles raster de CartoDB Positron estan diseñadas
+      // a niveles enteros — snap-ear a 0.5 hace que zoom 14.5 muestre
+      // una version escalada (ligeramente borrosa) de zoom 14 o 15.
+      // El "bounce" sutil del zoom regular viene del ease-out del CSS
+      // transform de Leaflet con raster tiles — es inherente al rendering
+      // raster y no se elimina con tuning. La unica forma real de
+      // eliminarlo es migrar a vector tiles (MapLibre GL).
+      // bounceAtZoomLimits queda en default (true) — el bounce al
+      // chocar con maxZoom (el que te gusta) sigue activo.
       className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
       zoomControl={false}
     >
-      {/* Tiles light de CartoDB Positron (datos OSM, render claro minimalista) */}
+      {/* Tiles light de CartoDB Positron (datos OSM, render claro minimalista).
+          keepBuffer 4: pre-carga 4 tile-widths alrededor del viewport
+          (default 2) para reducir el flash gris al panear. Trade-off:
+          ~2-4x mas requests de tiles, ok a la escala de este proyecto.
+          updateWhenZooming false: no carga tiles nuevas durante la
+          animacion de zoom — evita churn de requests cuando el usuario
+          esta haciendo zoom rapido continuo. */}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         subdomains="abcd"
         maxZoom={18}
+        keepBuffer={4}
+        updateWhenZooming={false}
       />
       <ClickCapture
         onPick={onMapClick}

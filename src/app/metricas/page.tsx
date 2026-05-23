@@ -188,8 +188,8 @@ export default async function MetricasPage() {
 
   return (
     <main className="relative min-h-screen bg-surface-base">
-      <SideDrawer current="impacto" />
-      <BackToMapButton />
+      <SideDrawer current="impacto" variant="static" />
+      <BackToMapButton variant="static" />
 
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-20 sm:px-6 sm:pt-24">
         {/* Hero */}

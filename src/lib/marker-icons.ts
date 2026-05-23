@@ -63,7 +63,7 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
 
 // Tamano default del icono dentro del marker. La mayoria de iconos
 // son cuadrados o muy cercanos a cuadrados; este tamano les funciona.
-const DEFAULT_ICON_SIZE = 24;
+const DEFAULT_ICON_SIZE = 18;
 
 // Override por nombre de icono cuando el ratio (aspect) hace que el
 // icono se vea "mas chico" via object-fit: contain. Subir el size
@@ -72,8 +72,8 @@ const DEFAULT_ICON_SIZE = 24;
 // render real solo ocupa ~76% del ancho del cuadro — visualmente se
 // percibe pequeno comparado con iconos cuadrados.
 const ICON_SIZE_OVERRIDES: Record<string, number> = {
-  pothole: 30,
-  flooding: 30,
+  pothole: 23,
+  flooding: 23,
 };
 
 function resolveIconFilename(point: Point): string {

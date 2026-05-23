@@ -19,7 +19,8 @@ body {
 
 .leaflet-container {
   background: #f1f5f9;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
 }
 
 /* Boost de saturacion + contraste leve solo sobre el pane de tiles
@@ -191,7 +192,8 @@ body {
   box-shadow:
     0 2px 8px rgba(15, 23, 42, 0.3),
     0 1px 2px rgba(15, 23, 42, 0.2);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   transition: transform 120ms ease-out;
@@ -206,16 +208,16 @@ body {
    background queda negro en todos los tiers — la densidad se
    comunica via el diametro del circulo (iconSize en el JS). */
 .pn-cluster-small {
-  font-size: 14px;
+  font-size: 12px;
 }
 .pn-cluster-medium {
-  font-size: 17px;
+  font-size: 14px;
 }
 .pn-cluster-large {
-  font-size: 19px;
+  font-size: 16px;
 }
 .pn-cluster-xlarge {
-  font-size: 21px;
+  font-size: 18px;
 }
 @keyframes pn-marker-in {
   from {

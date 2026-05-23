@@ -130,12 +130,15 @@ export default function ShareWithAuthority({
                     key={r.name}
                     onClick={() => setSelected(isSelected ? null : r)}
                     aria-pressed={isSelected}
-                    className={`flex w-full items-start gap-3 rounded-xl p-3 text-left transition-colors ${
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
                       isSelected
                         ? 'bg-brand-subtle ring-2 ring-brand'
                         : 'bg-surface-raised ring-1 ring-surface-border hover:bg-surface-border'
                     }`}
                   >
+                    {/* Avatar: icono de edificio generico para todas
+                        las instituciones. Color brand cuando esta
+                        seleccionada para reforzar el estado. */}
                     <div
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                         isSelected
@@ -163,87 +166,37 @@ export default function ShareWithAuthority({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div
-                        className={`text-sm font-semibold ${
-                          isSelected ? 'text-brand' : 'text-fg'
-                        }`}
-                      >
-                        {r.name}
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-sm font-bold ${
+                            isSelected ? 'text-brand' : 'text-fg'
+                          }`}
+                        >
+                          {r.name}
+                        </span>
                       </div>
-                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-fg-muted">
-                        {r.email && (
-                          <span className="inline-flex items-center gap-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="11"
-                              height="11"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden
-                              className="text-fg-dim"
-                            >
-                              <rect x="3" y="5" width="18" height="14" rx="2" />
-                              <polyline points="3 7 12 13 21 7" />
-                            </svg>
-                            {r.email}
-                          </span>
-                        )}
-                        {r.phone && (
-                          <span className="inline-flex items-center gap-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="11"
-                              height="11"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden
-                              className="text-fg-dim"
-                            >
-                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z" />
-                            </svg>
-                            {r.phone}
-                          </span>
-                        )}
-                        {r.website && (
-                          <a
-                            href={r.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 font-medium text-brand hover:underline"
-                            onClick={(e) => e.stopPropagation()}
+                      <p className="mt-0.5 text-[11px] leading-snug text-fg-muted">
+                        {r.description}
+                      </p>
+                      {r.email && (
+                        <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-fg-dim">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="11"
+                            height="11"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="11"
-                              height="11"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden
-                            >
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                              <polyline points="15 3 21 3 21 9" />
-                              <line x1="10" y1="14" x2="21" y2="3" />
-                            </svg>
-                            Sitio web
-                          </a>
-                        )}
-                      </div>
-                      {r.note && (
-                        <p className="mt-1.5 text-xs leading-snug text-fg-muted">
-                          {r.note}
-                        </p>
+                            <rect x="3" y="5" width="18" height="14" rx="2" />
+                            <polyline points="3 7 12 13 21 7" />
+                          </svg>
+                          {r.email}
+                        </div>
                       )}
                     </div>
 

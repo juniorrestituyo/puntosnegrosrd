@@ -185,6 +185,71 @@ export default function ReportForm({
             </div>
           </section>
 
+          {/* Foto (opcional). Movida arriba — antes vivia al final del
+              form, despues de Detalles. Tener la opcion de foto justo
+              despues de la Ubicacion comunica antes que es parte del
+              "que pasa aqui visualmente", no un afterthought. */}
+          <section className="mt-2 bg-surface-card px-4 pt-4 pb-5 sm:px-5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+              Foto (opcional)
+            </h3>
+            {!photoUrl && !photoUploading && (
+              <label
+                htmlFor="photo-input"
+                className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-surface-border bg-surface-raised px-4 py-6 text-center text-sm text-fg-muted hover:border-brand hover:bg-brand-subtle"
+              >
+                Toca para tomar o seleccionar foto
+                <span className="mt-1 text-xs text-fg-dim">
+                  JPEG/PNG hasta 3 MB. EXIF removida antes de subir.
+                </span>
+              </label>
+            )}
+            <input
+              id="photo-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoSelect}
+              disabled={busy}
+              className="hidden"
+            />
+
+            {photoUploading && (
+              <div className="mt-1.5 rounded-lg border border-surface-border bg-surface-raised px-3 py-3 text-center text-sm text-fg-muted">
+                Procesando y subiendo imagen...
+              </div>
+            )}
+
+            {photoPreview && photoUrl && (
+              <div className="mt-1.5 flex items-center gap-3 rounded-lg border border-surface-border bg-surface-raised p-2">
+                <img
+                  src={photoPreview}
+                  alt="Vista previa"
+                  className="h-20 w-20 rounded-md object-cover"
+                />
+                <div className="flex-1 text-xs">
+                  <p className="font-medium text-emerald-600">
+                    Foto lista para enviar
+                  </p>
+                  <p className="mt-1 text-fg-muted">EXIF removida.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearPhoto}
+                  disabled={busy}
+                  className="text-xs text-fg-muted hover:text-red-600"
+                >
+                  Quitar
+                </button>
+              </div>
+            )}
+
+            {photoError && (
+              <p className="mt-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {photoError}
+              </p>
+            )}
+          </section>
+
           <div className="mt-2 space-y-4 bg-surface-card px-4 py-5 sm:px-5">
             <label className="block">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
@@ -249,67 +314,6 @@ export default function ReportForm({
                 {description.length}/1000
               </p>
             </label>
-
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-                Foto (opcional)
-              </span>
-              {!photoUrl && !photoUploading && (
-                <label
-                  htmlFor="photo-input"
-                  className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-surface-border bg-surface-raised px-4 py-6 text-center text-sm text-fg-muted hover:border-brand hover:bg-brand-subtle"
-                >
-                  Toca para tomar o seleccionar foto
-                  <span className="mt-1 text-xs text-fg-dim">
-                    JPEG/PNG hasta 3 MB. EXIF removida antes de subir.
-                  </span>
-                </label>
-              )}
-              <input
-                id="photo-input"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handlePhotoSelect}
-                disabled={busy}
-                className="hidden"
-              />
-
-              {photoUploading && (
-                <div className="mt-1.5 rounded-lg border border-surface-border bg-surface-raised px-3 py-3 text-center text-sm text-fg-muted">
-                  Procesando y subiendo imagen...
-                </div>
-              )}
-
-              {photoPreview && photoUrl && (
-                <div className="mt-1.5 flex items-center gap-3 rounded-lg border border-surface-border bg-surface-raised p-2">
-                  <img
-                    src={photoPreview}
-                    alt="Vista previa"
-                    className="h-20 w-20 rounded-md object-cover"
-                  />
-                  <div className="flex-1 text-xs">
-                    <p className="font-medium text-emerald-600">
-                      Foto lista para enviar
-                    </p>
-                    <p className="mt-1 text-fg-muted">EXIF removida.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearPhoto}
-                    disabled={busy}
-                    className="text-xs text-fg-muted hover:text-red-600"
-                  >
-                    Quitar
-                  </button>
-                </div>
-              )}
-
-              {photoError && (
-                <p className="mt-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {photoError}
-                </p>
-              )}
-            </div>
 
             {displayedError && (
               <div

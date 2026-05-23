@@ -2,20 +2,43 @@
 
 import Link from 'next/link';
 
+interface BackToMapButtonProps {
+  /**
+   * Estilo visual.
+   *  - 'floating' (default): card brand azul rounded-xl con shadow-float
+   *    + ring, para destacar como CTA primario flotante.
+   *  - 'static': card blanca plana (bg-surface-card text-fg), sin shadow
+   *    ni ring. Pareado visualmente con el hamburger static — ambos
+   *    quedan como squares blancos identicos diferenciados solo por
+   *    el icono.
+   */
+  variant?: 'floating' | 'static';
+}
+
 /**
- * Boton flotante "Ir al Mapa" anclado al top-right de las sub-paginas
- * (datos, metodologia, acerca-de). Simetrico en tamaño y forma al
- * hamburger del SideDrawer (h-12 w-12 rounded-xl), pero con bg brand
- * azul + icono de mapa blanco para destacar como accion primaria de
- * regresar al mapa.
+ * Boton "Ir al Mapa" anclado al top-right de las sub-paginas (datos,
+ * metodologia, acerca-de, etc.). Simetrico en tamaño y forma al
+ * hamburger del SideDrawer (h-12 w-12 rounded-xl).
  */
-export default function BackToMapButton() {
+export default function BackToMapButton({
+  variant = 'floating',
+}: BackToMapButtonProps) {
+  const styleClasses =
+    variant === 'floating'
+      ? 'bg-brand text-white shadow-float ring-1 ring-brand-accent hover:bg-brand-accent'
+      : 'bg-surface-card text-fg hover:bg-surface-raised';
+
   return (
     <Link
       href="/"
+      // Replace en vez de push: este boton solo se renderiza en sub-paginas,
+      // y reemplazar el entry actual con el mapa evita acumular history.
+      // Si el usuario entro directo a una sub-pagina (URL pegada, share),
+      // el back desde el mapa sale al sitio externo — coherente.
+      replace
       aria-label="Ir al mapa"
       title="Ir al mapa"
-      className="fixed right-3 top-3 z-[1000] flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-white shadow-float ring-1 ring-brand-accent transition-colors hover:bg-brand-accent sm:right-4 sm:top-4"
+      className={`fixed right-3 top-3 z-[1000] flex h-12 w-12 items-center justify-center rounded-xl transition-colors sm:right-4 sm:top-4 ${styleClasses}`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

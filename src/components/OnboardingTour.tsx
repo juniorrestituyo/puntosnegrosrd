@@ -137,7 +137,7 @@ const STEPS: Step[] = [
   },
   {
     title: 'Reportar un punto',
-    body: 'Toca el boton + en la esquina inferior derecha. Puedes usar tu ubicacion actual o seleccionar un punto del mapa.',
+    body: 'Toca el boton + en la esquina inferior derecha. Elige la ubicacion (GPS o en el mapa) y sube una foto del problema. Los reportes con foto tienen mas peso y se atienden mas rapido.',
     icon: <IconPlus />,
   },
   {
@@ -288,7 +288,7 @@ export default function OnboardingTour() {
             type="button"
             onClick={finish}
             aria-label="Cerrar tour"
-            className="rounded-md p-1 text-fg-muted transition-colors hover:bg-surface-raised hover:text-fg"
+            className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-raised text-fg-muted transition-colors hover:bg-surface-border hover:text-fg"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -297,7 +297,7 @@ export default function OnboardingTour() {
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden

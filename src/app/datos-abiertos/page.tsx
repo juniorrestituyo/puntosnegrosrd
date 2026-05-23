@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 export default function DatosAbiertosPage() {
   return (
     <main className="relative min-h-screen bg-surface-base">
-      <SideDrawer current="datos" />
-      <BackToMapButton />
+      <SideDrawer current="datos" variant="static" />
+      <BackToMapButton variant="static" />
 
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-20 sm:px-6 sm:pt-24">
         {/* Hero */}

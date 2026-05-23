@@ -143,7 +143,7 @@ export default function FilterPanel({
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Cerrar"
-              className="rounded-md p-1 text-fg-muted hover:bg-surface-raised hover:text-fg"
+              className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +152,7 @@ export default function FilterPanel({
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden
