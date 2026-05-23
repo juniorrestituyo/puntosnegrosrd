@@ -1,8 +1,20 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk } from 'next/font/google';
+import { Inter, Space_Grotesk } from 'next/font/google';
 
 import PageTransition from '@/components/PageTransition';
 import './globals.css';
+
+// Fuente del cuerpo de la UI. Inter: variable font diseñada
+// especificamente para pantallas (x-height alta, espaciado generoso),
+// con numeros tabulares nativos (los contadores de confirmaciones
+// quedan alineados), excelente soporte de acentos ñ/á/é, y look
+// consistente cross-OS (iOS, Android, Windows ven lo mismo). Es la
+// fuente mas usada en UIs modernas (Vercel, Figma, Linear, Mozilla).
+const bodyFont = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 // Fuente del logo / wordmark "PuntosNegrosRD".
 // Space Grotesk: geometrica, moderna, con personalidad sin ser trendy.
@@ -126,8 +138,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={logoFont.variable}>
-      <body className="min-h-dvh bg-surface-base text-fg antialiased">
+    <html
+      lang="es"
+      className={`${bodyFont.variable} ${logoFont.variable}`}
+    >
+      <body className="min-h-dvh bg-surface-base font-sans text-fg antialiased">
         <PageTransition>{children}</PageTransition>
       </body>
     </html>

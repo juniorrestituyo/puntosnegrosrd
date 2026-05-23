@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState } from 'react';
 
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
+import { formatRelativeTime } from '@/lib/time';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
 import BackToMapButton from './BackToMapButton';
 import ShareWithAuthority from './ShareWithAuthority';
@@ -80,12 +81,48 @@ export default function PointDetail({
     }
   }
 
+  // Feedback transitorio del icono de share del header cuando caemos
+  // al fallback de portapapeles (navegadores sin Web Share API).
+  const [headerShareCopied, setHeaderShareCopied] = useState(false);
+
+  /**
+   * Comparte el URL via Web Share API (sheet nativo del OS).
+   * Fallback a clipboard si el navegador no soporta navigator.share
+   * (ej. Firefox desktop). Diferente de handleShare() que SIEMPRE
+   * copia al portapapeles — este intenta primero el sheet nativo
+   * para que el usuario elija WhatsApp/Telegram/etc. directamente.
+   */
+  async function handleNativeShare() {
+    const url = window.location.href;
+    const title = `${CATEGORIES[point.category].label}${
+      point.subcategory ? ` - ${point.subcategory}` : ''
+    }`;
+    const text = `Reporte ciudadano en PuntosNegrosRD: ${title}`;
+
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setHeaderShareCopied(true);
+      setTimeout(() => setHeaderShareCopied(false), 2000);
+    } catch {
+      window.prompt('Copia este enlace:', url);
+    }
+  }
+
   const googleMapsUrl = `https://www.google.com/maps?q=${point.lat},${point.lng}`;
 
   return (
     <main className="relative min-h-screen bg-surface-base">
-      <SideDrawer />
-      <BackToMapButton />
+      <SideDrawer variant="static" />
+      <BackToMapButton variant="static" />
 
       <div
         className="mx-auto w-full max-w-2xl px-3 pt-20 sm:px-6 sm:pt-24"
@@ -97,8 +134,17 @@ export default function PointDetail({
         <section className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-                {STATUS_LABELS[point.status] ?? point.status}
+              {/* Status badge: tiempo relativo cuando esta 'nuevo'
+                  (e.g. "Hace 2 horas"), label estatico en otros estados.
+                  Mas abajo en la card sigue apareciendo "Reportado el
+                  [fecha exacta]" para precision. */}
+              <p
+                suppressHydrationWarning
+                className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-muted"
+              >
+                {point.status === 'nuevo'
+                  ? formatRelativeTime(point.created_at)
+                  : (STATUS_LABELS[point.status] ?? point.status)}
               </p>
               <h1 className="mt-1 text-xl font-bold tracking-tight text-fg sm:text-2xl">
                 {CATEGORIES[point.category].label}
@@ -108,11 +154,76 @@ export default function PointDetail({
                   {point.subcategory}
                 </p>
               )}
-              <p className="mt-2 text-xs text-fg-dim sm:text-sm">
-                Reportado el {formatDate(point.created_at)}
-              </p>
             </div>
+
+            {/* Share rapido del enlace del reporte via Web Share API
+                (sheet nativo de iOS/Android/Chrome). El usuario elige
+                WhatsApp/Telegram/email/etc. Fallback a clipboard si
+                el navegador no lo soporta.
+                NO se confunde con "Compartir con autoridad" — ese
+                sigue siendo el boton grande de abajo, especifico
+                para mandar a INTRANT/DIGESETT/etc. con mensaje
+                pregenerado. */}
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              aria-label={
+                headerShareCopied ? 'Enlace copiado' : 'Compartir enlace'
+              }
+              title={
+                headerShareCopied ? 'Enlace copiado' : 'Compartir enlace'
+              }
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1 transition-colors ${
+                headerShareCopied
+                  ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
+                  : 'bg-surface-raised text-fg-muted ring-surface-border hover:bg-surface-border hover:text-fg'
+              }`}
+            >
+              {headerShareCopied ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                </svg>
+              )}
+            </button>
           </div>
+
+          {/* "Reportado el ..." se sale del flex row para spanear el
+              ancho completo del card. Si se queda adentro de min-w-0
+              flex-1 termina cortandose o haciendo wrap raro porque
+              compite con el ancho del boton share. */}
+          <p className="mt-3 text-xs text-fg-dim sm:text-sm">
+            Reportado el {formatDate(point.created_at)}
+          </p>
         </section>
 
         {/* Foto */}
@@ -124,7 +235,7 @@ export default function PointDetail({
               className="block max-h-[480px] w-full object-contain"
               loading="lazy"
             />
-            <p className="border-t border-surface-divider px-4 py-2 text-[11px] text-fg-muted">
+            <p className="border-t border-surface-divider px-4 py-1.5 text-[10px] leading-snug text-fg-muted">
               Foto aportada por quien reporto el punto. Metadata EXIF removida.
             </p>
           </section>
@@ -325,7 +436,7 @@ export default function PointDetail({
                 </svg>
                 {confirmState === 'loading'
                   ? 'Confirmando...'
-                  : 'Yo tambien lo veo'}
+                  : 'Lo confirmo'}
               </button>
             )}
 

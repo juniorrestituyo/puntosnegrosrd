@@ -24,7 +24,7 @@ export default function UserLocationButton({
       disabled={isLoading}
       aria-label={label}
       title={label}
-      className={`absolute bottom-28 right-3 z-[1080] flex h-16 w-16 items-center justify-center rounded-full shadow-float transition-colors sm:bottom-36 sm:right-6 sm:h-20 sm:w-20 ${
+      className={`absolute bottom-[7.25rem] right-3 z-[1080] flex h-16 w-16 items-center justify-center rounded-full shadow-float transition-colors sm:bottom-[9.25rem] sm:right-6 sm:h-20 sm:w-20 ${
         isTracking
           ? 'bg-brand text-white hover:bg-brand-accent'
           : 'bg-surface-card text-fg hover:bg-surface-raised'

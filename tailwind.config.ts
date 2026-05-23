@@ -39,7 +39,17 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        // Inter primero (cargada via next/font, expone --font-body en
+        // el html). Si por algun motivo no carga (red lenta, bloqueo
+        // de fonts) caemos al system stack — la pagina sigue legible.
+        sans: [
+          'var(--font-body)',
+          'system-ui',
+          '-apple-system',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
         logo: [
           'var(--font-logo)',
           'system-ui',
