@@ -7,6 +7,7 @@ import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { formatRelativeTime } from '@/lib/time';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
 import BackToMapButton from './BackToMapButton';
+import ReportContentButton from './ReportContentButton';
 import ShareWithAuthority from './ShareWithAuthority';
 import SideDrawer from './SideDrawer';
 
@@ -568,6 +569,12 @@ export default function PointDetail({
             {point.id}
           </code>
         </p>
+
+        {/* Reporte de contenido. Link discreto — no queremos incentivar
+            reportes casuales. Cuando 5 IPs unicas reportan el mismo
+            punto, el trigger SQL lo oculta automaticamente. Reemplaza
+            la moderacion via panel admin. */}
+        <ReportContentButton pointId={point.id} />
 
         {shareAuthorityOpen && (
           <ShareWithAuthority
