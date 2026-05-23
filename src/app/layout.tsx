@@ -112,6 +112,12 @@ export const viewport: Viewport = {
   // automaticamente los iconos del sistema (reloj, wifi, bateria) a
   // tono oscuro para que sigan siendo legibles.
   themeColor: '#ffffff',
+  // viewport-fit=cover activa las safe-area-inset env() variables en
+  // iOS para que el contenido respete la "isla dinamica" del top y el
+  // home indicator del bottom. Sin esto, env(safe-area-inset-*) retorna
+  // 0 y los elementos absolute con bottom-X quedan tapados por el
+  // chrome del navegador o por la barra del sistema.
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -121,7 +127,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={logoFont.variable}>
-      <body className="min-h-screen bg-surface-base text-fg antialiased">
+      <body className="min-h-dvh bg-surface-base text-fg antialiased">
         <PageTransition>{children}</PageTransition>
       </body>
     </html>

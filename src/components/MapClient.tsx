@@ -652,7 +652,7 @@ export default function MapClient() {
     selectedPoint !== null;
 
   return (
-    <div className="relative h-screen w-full bg-surface-base">
+    <div className="relative h-dvh w-full bg-surface-base">
       {cacheChecked ? (
         <Map
           points={filteredPoints}
