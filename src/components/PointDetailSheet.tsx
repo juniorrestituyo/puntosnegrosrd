@@ -288,9 +288,11 @@ export default function PointDetailSheet({
               </Link>
             )}
 
-            <p className="mt-3 line-clamp-3 text-sm leading-snug text-fg/90">
-              {p.description}
-            </p>
+            {p.description && (
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-snug text-fg/90">
+                {p.description}
+              </p>
+            )}
 
             {/* Contador de confirmaciones.
                 - Cuando el punto esta abierto: estilo brand-azul, contador

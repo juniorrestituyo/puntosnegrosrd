@@ -297,15 +297,19 @@ export default function PointDetail({
           </a>
         </section>
 
-        {/* Descripcion */}
-        <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            Descripcion
-          </h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-fg/90">
-            {point.description}
-          </p>
-        </section>
+        {/* Descripcion. Desde la migracion 005 la descripcion puede ser
+            null (reportes con foto sin texto). En ese caso ocultamos
+            toda la seccion para no dejar un recuadro hueco. */}
+        {point.description && (
+          <section className="mt-3 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
+              Descripcion
+            </h2>
+            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-fg/90">
+              {point.description}
+            </p>
+          </section>
+        )}
 
         {/* Confirmaciones + acciones.
             - Icono ojo (matchea el copy "testigos" del label).

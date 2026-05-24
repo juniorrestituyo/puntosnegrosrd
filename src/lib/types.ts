@@ -13,7 +13,12 @@ export interface Point {
   lng: number;
   category: CategoryKey;
   subcategory: string | null;
-  description: string;
+  /**
+   * Texto opcional del ciudadano. A partir de la migracion 005 el
+   * reporte requiere "al menos uno" de (description, photo_url) — pero
+   * NO ambos. Manejar null en cualquier render.
+   */
+  description: string | null;
   status: PointStatus;
   photo_url: string | null;
   province: string | null;
@@ -34,7 +39,11 @@ export interface PointInput {
   lng: number;
   category: CategoryKey;
   subcategory?: string;
-  description: string;
+  /**
+   * Opcional, max 280 chars. Si NO se manda photo_url, la validacion
+   * exige description con al menos 20 chars (post-trim).
+   */
+  description?: string;
   province?: string;
   municipality?: string;
   photo_url?: string;

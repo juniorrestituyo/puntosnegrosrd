@@ -1,25 +1,10 @@
-import { z } from 'zod';
-
 import { getHashedClientIp } from '@/lib/api/ip-hash';
 import { checkReportRateLimit } from '@/lib/api/rate-limit';
 import { err, ok } from '@/lib/api/responses';
-import { RATE_LIMIT_REPORTS_PER_HOUR, RD_BOUNDS } from '@/lib/constants';
+import { RATE_LIMIT_REPORTS_PER_HOUR } from '@/lib/constants';
 import { reverseGeocode } from '@/lib/geocoding';
+import { pointInputSchema } from '@/lib/point-schema';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
-
-const pointInputSchema = z.object({
-  lat: z.number().min(RD_BOUNDS.minLat).max(RD_BOUNDS.maxLat),
-  lng: z.number().min(RD_BOUNDS.minLng).max(RD_BOUNDS.maxLng),
-  category: z.enum(['humano', 'vehicular', 'infraestructural', 'climatico']),
-  subcategory: z.string().max(200).optional(),
-  description: z
-    .string()
-    .min(10, 'Describe el riesgo con al menos 10 caracteres')
-    .max(1000),
-  province: z.string().max(100).optional(),
-  municipality: z.string().max(100).optional(),
-  photo_url: z.string().url().max(500).optional(),
-});
 
 /**
  * GET /api/points
@@ -103,6 +88,14 @@ export async function POST(request: Request) {
     municipality = geocoded.municipality;
   }
 
+  // description puede llegar como string vacio si el cliente la incluyo
+  // sin contenido. Normalizamos a null para alinearnos con el SQL CHECK
+  // (que no acepta "" como evidencia valida y bloquearia el insert).
+  const cleanDescription =
+    parsed.data.description && parsed.data.description.trim().length > 0
+      ? parsed.data.description.trim()
+      : null;
+
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from('points')
@@ -111,7 +104,7 @@ export async function POST(request: Request) {
       lng: parsed.data.lng,
       category: parsed.data.category,
       subcategory: parsed.data.subcategory ?? null,
-      description: parsed.data.description,
+      description: cleanDescription,
       province: province ?? null,
       municipality: municipality ?? null,
       photo_url: parsed.data.photo_url ?? null,

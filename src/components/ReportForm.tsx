@@ -2,10 +2,14 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { z } from 'zod';
 
 import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 import { processImage } from '@/lib/image-process';
+import {
+  DESCRIPTION_MAX,
+  DESCRIPTION_MIN_WITHOUT_PHOTO,
+  pointInputSchema,
+} from '@/lib/point-schema';
 import type { PointInput } from '@/lib/types';
 
 const LocationPreview = dynamic(() => import('./LocationPreview'), {
@@ -13,20 +17,6 @@ const LocationPreview = dynamic(() => import('./LocationPreview'), {
   loading: () => (
     <div className="h-44 w-full animate-pulse bg-surface-raised" />
   ),
-});
-
-const reportSchema = z.object({
-  lat: z.number().min(17.5).max(20.5),
-  lng: z.number().min(-72.1).max(-68.0),
-  category: z.enum(['humano', 'vehicular', 'infraestructural', 'climatico']),
-  subcategory: z.string().optional(),
-  description: z
-    .string()
-    .min(10, 'Describe el riesgo con al menos 10 caracteres')
-    .max(1000),
-  province: z.string().optional(),
-  municipality: z.string().optional(),
-  photo_url: z.string().url().optional(),
 });
 
 interface ReportFormProps {
@@ -111,16 +101,20 @@ export default function ReportForm({
     e.preventDefault();
     setLocalError(null);
 
+    // description vacia → undefined antes de validar. Asi el refine
+    // del schema evalua "no hay descripcion" en lugar de "descripcion
+    // de 0 chars" (que falla con el mensaje del max).
+    const trimmedDescription = description.trim();
     const payload = {
       lat,
       lng,
       category,
       subcategory: subcategory || undefined,
-      description,
+      description: trimmedDescription.length > 0 ? trimmedDescription : undefined,
       photo_url: photoUrl ?? undefined,
     };
 
-    const result = reportSchema.safeParse(payload);
+    const result = pointInputSchema.safeParse(payload);
 
     if (!result.success) {
       setLocalError(result.error.issues[0]?.message ?? 'Error de validacion');
@@ -129,6 +123,23 @@ export default function ReportForm({
 
     onSubmit(result.data as PointInput);
   }
+
+  // Estado derivado de la UI: hay foto cargada → la descripcion es
+  // opcional sin min de chars. Sin foto → es requerida con minimo
+  // DESCRIPTION_MIN_WITHOUT_PHOTO chars (post-trim).
+  const hasPhoto = photoUrl !== null;
+  const trimmedDescriptionLen = description.trim().length;
+  const descriptionMeetsMin = trimmedDescriptionLen >= DESCRIPTION_MIN_WITHOUT_PHOTO;
+  const descriptionLabel = hasPhoto
+    ? 'Detalles (opcional)'
+    : `Detalles (requerido — ${DESCRIPTION_MIN_WITHOUT_PHOTO}+ caracteres)`;
+  const descriptionPlaceholder = hasPhoto
+    ? 'Contexto o detalles adicionales (opcional)...'
+    : 'Bache profundo en la curva, peligroso especialmente de noche...';
+  const counterColorClass =
+    !hasPhoto && trimmedDescriptionLen > 0 && !descriptionMeetsMin
+      ? 'text-red-600'
+      : 'text-fg-muted';
 
   return (
     <div
@@ -297,7 +308,7 @@ export default function ReportForm({
 
             <label className="block">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-                Detalles
+                {descriptionLabel}
               </span>
               <textarea
                 value={description}
@@ -305,14 +316,23 @@ export default function ReportForm({
                 disabled={busy}
                 rows={3}
                 className="mt-1.5 block w-full rounded-lg border border-surface-border bg-surface-input px-3 py-2.5 text-sm text-fg placeholder:text-fg-dim focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft disabled:opacity-60"
-                placeholder="Bache profundo en la curva, peligroso especialmente de noche..."
-                required
-                minLength={10}
-                maxLength={1000}
+                placeholder={descriptionPlaceholder}
+                // required/minLength solo cuando no hay foto. Con foto
+                // la descripcion es totalmente opcional. La validacion
+                // real ocurre en handleSubmit via pointInputSchema.
+                required={!hasPhoto}
+                minLength={hasPhoto ? undefined : DESCRIPTION_MIN_WITHOUT_PHOTO}
+                maxLength={DESCRIPTION_MAX}
               />
-              <p className="mt-1 text-right text-xs text-fg-muted">
-                {description.length}/1000
+              <p className={`mt-1 text-right text-xs ${counterColorClass}`}>
+                {description.length}/{DESCRIPTION_MAX}
               </p>
+              {hasPhoto && (
+                <p className="mt-1 text-[11px] leading-snug text-fg-muted">
+                  La foto ya documenta visualmente — el texto es contexto
+                  opcional.
+                </p>
+              )}
             </label>
 
             {displayedError && (

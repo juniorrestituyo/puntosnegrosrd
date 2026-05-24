@@ -44,7 +44,14 @@ export async function generateMetadata({
   if (!loaded) return { title: 'Punto no encontrado' };
 
   const cat = CATEGORIES[loaded.point.category].label;
-  const desc = loaded.point.description.slice(0, 140);
+  // description puede ser null (post migracion 005, reportes con solo
+  // foto). Usamos el label de la subcategoria o categoria como fallback
+  // para meta description, asi el preview en redes sociales sigue
+  // teniendo contexto cuando el ciudadano no escribio texto.
+  const desc =
+    loaded.point.description?.slice(0, 140) ??
+    loaded.point.subcategory ??
+    `Reporte ciudadano de riesgo vial - ${cat}`;
   return {
     title: `${cat} - PuntosNegrosRD`,
     description: desc,
