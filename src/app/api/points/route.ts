@@ -117,6 +117,49 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error('Insert point failed:', error);
+
+    // Mapeo de codigos PostgreSQL comunes a mensajes user-friendly
+    // para que el cliente sepa que ajustar. Devolvemos 400 (validacion)
+    // en lugar de 500 (infra) cuando el problema son los datos.
+    //
+    // 23514 = check_violation (CHECK constraint fallido)
+    // 23502 = not_null_violation
+    //
+    // Si la migracion 005 aun no esta aplicada en este Supabase, los
+    // CHECK viejos siguen activos y el caso "foto + descripcion corta"
+    // caera aqui con code 23514 mencionando points_description_check.
+    if (error.code === '23514') {
+      const msg = (error.message ?? '').toLowerCase();
+      if (
+        msg.includes('points_description_check') ||
+        msg.includes('char_length(description)')
+      ) {
+        return err(
+          'INVALID_INPUT',
+          'La descripcion no cumple los requisitos del servidor. Si tu Supabase aun no aplico la migracion 005, este es el motivo.',
+          400
+        );
+      }
+      if (msg.includes('points_has_evidence')) {
+        return err(
+          'INVALID_INPUT',
+          'Necesitas agregar al menos una foto o una descripcion del problema.',
+          400
+        );
+      }
+      return err(
+        'INVALID_INPUT',
+        'Los datos del reporte no cumplen las validaciones del servidor.',
+        400
+      );
+    }
+    if (error.code === '23502') {
+      return err(
+        'INVALID_INPUT',
+        'Falta un campo requerido. Si no agregaste foto, asegurate de llenar los detalles.',
+        400
+      );
+    }
     return err('INTERNAL_ERROR', 'No se pudo guardar el reporte', 500);
   }
 
