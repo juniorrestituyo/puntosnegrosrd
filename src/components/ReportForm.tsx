@@ -127,12 +127,12 @@ export default function ReportForm({
   // Estado derivado de la UI: hay foto cargada → la descripcion es
   // opcional sin min de chars. Sin foto → es requerida con minimo
   // DESCRIPTION_MIN_WITHOUT_PHOTO chars (post-trim).
+  // El label se mantiene como "Detalles" sin sufijo para no saturar
+  // el header del campo. La opcionalidad y el min se comunican via
+  // el hint debajo y el counter de chars (rojo cuando no cumple).
   const hasPhoto = photoUrl !== null;
   const trimmedDescriptionLen = description.trim().length;
   const descriptionMeetsMin = trimmedDescriptionLen >= DESCRIPTION_MIN_WITHOUT_PHOTO;
-  const descriptionLabel = hasPhoto
-    ? 'Detalles (opcional)'
-    : `Detalles (requerido — ${DESCRIPTION_MIN_WITHOUT_PHOTO}+ caracteres)`;
   const descriptionPlaceholder = hasPhoto
     ? 'Contexto o detalles adicionales (opcional)...'
     : 'Bache profundo en la curva, peligroso especialmente de noche...';
@@ -202,7 +202,7 @@ export default function ReportForm({
               "que pasa aqui visualmente", no un afterthought. */}
           <section className="mt-2 bg-surface-card px-4 pt-4 pb-5 sm:px-5">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-              Foto (opcional)
+              Foto
             </h3>
             {!photoUrl && !photoUploading && (
               <label
@@ -308,7 +308,7 @@ export default function ReportForm({
 
             <label className="block">
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-                {descriptionLabel}
+                Detalles
               </span>
               <textarea
                 value={description}

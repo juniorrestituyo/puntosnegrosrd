@@ -6,7 +6,7 @@
  * Reglas de evidencia (post migracion 005):
  *   - Foto y/o descripcion: al menos UNO presente.
  *   - Si hay foto, la descripcion es opcional sin minimo.
- *   - Si NO hay foto, la descripcion es requerida con minimo 20 chars
+ *   - Si NO hay foto, la descripcion es requerida con minimo 10 chars
  *     post-trim (descarta whitespace al inicio/fin).
  *   - Max 280 chars siempre (Twitter classic — fuerza concision).
  *
@@ -19,7 +19,7 @@ import { z } from 'zod';
 import { RD_BOUNDS } from './constants';
 
 export const DESCRIPTION_MAX = 280;
-export const DESCRIPTION_MIN_WITHOUT_PHOTO = 20;
+export const DESCRIPTION_MIN_WITHOUT_PHOTO = 10;
 
 const baseSchema = z.object({
   lat: z.number().min(RD_BOUNDS.minLat).max(RD_BOUNDS.maxLat),

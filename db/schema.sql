@@ -19,7 +19,7 @@
 --   Database -> Extensions -> pgcrypto (enable, usualmente ya activo)
 --
 -- LAS REGLAS DE NEGOCIO que NO viven aqui (intencional):
---   - Minimo de 20 chars en description cuando no hay foto: zod +
+--   - Minimo de 10 chars en description cuando no hay foto: zod +
 --     /api/points/route.ts. SQL solo enforce "al menos uno presente"
 --     + upper bound suave de 2000 chars.
 --   - Umbral de auto-ocultacion (5 flags): hardcoded en

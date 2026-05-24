@@ -6,7 +6,7 @@
 -- bajar la barrera de reporte cuando el ciudadano tiene foto pero no
 -- puede escribir, o viceversa.
 --
--- Las reglas de CALIDAD del MVP (descripcion 20+ chars cuando NO hay
+-- Las reglas de CALIDAD del MVP (descripcion 10+ chars cuando NO hay
 -- foto, max 280 chars siempre) viven en zod + server (no en SQL) para
 -- poder ajustarlas sin nueva migracion.
 --
