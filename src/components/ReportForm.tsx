@@ -7,7 +7,7 @@ import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 import { processImage } from '@/lib/image-process';
 import {
   DESCRIPTION_MAX,
-  DESCRIPTION_MIN_WITHOUT_PHOTO,
+  DESCRIPTION_MIN,
   pointInputSchema,
 } from '@/lib/point-schema';
 import type { PointInput } from '@/lib/types';
@@ -131,33 +131,28 @@ export default function ReportForm({
     onSubmit(result.data as PointInput);
   }
 
-  // Estado derivado de la UI: hay foto cargada → la descripcion es
-  // opcional sin min de chars. Sin foto → es requerida con minimo
-  // DESCRIPTION_MIN_WITHOUT_PHOTO chars (post-trim).
-  // El label se mantiene como "Detalles" sin sufijo para no saturar
-  // el header del campo. La opcionalidad y el min se comunican via
-  // el hint debajo y el counter de chars (rojo cuando no cumple).
+  // Estado derivado de la UI. Regla: "si pones descripcion debe
+  // tener al menos DESCRIPTION_MIN chars" — aplica con o sin foto.
+  // Si no hay descripcion (vacia), debe haber foto.
   const hasPhoto = photoUrl !== null;
   const trimmedDescriptionLen = description.trim().length;
-  const descriptionMeetsMin = trimmedDescriptionLen >= DESCRIPTION_MIN_WITHOUT_PHOTO;
+  const descriptionMeetsMin = trimmedDescriptionLen >= DESCRIPTION_MIN;
   const descriptionPlaceholder = hasPhoto
     ? 'Contexto o detalles adicionales (opcional)...'
     : 'Bache profundo en la curva, peligroso especialmente de noche...';
   const counterColorClass =
-    !hasPhoto && trimmedDescriptionLen > 0 && !descriptionMeetsMin
+    trimmedDescriptionLen > 0 && !descriptionMeetsMin
       ? 'text-red-600'
       : 'text-fg-muted';
 
   // Dos errores inline distintos para el campo Detalles:
-  //   - tooShortError: el usuario escribio entre 1 y 9 chars sin foto.
-  //     Tiempo real: aparece apenas hay chars. Comunica el min.
+  //   - tooShortError: 1-9 chars escritos. Aplica con o sin foto.
+  //     Tiempo real: aparece apenas hay chars y se mantiene hasta
+  //     llegar al min.
   //   - emptyError: foto y descripcion vacias al intentar submit. NO
-  //     se muestra al abrir el form (no satura la UI con el campo
-  //     limpio antes de que el usuario haga nada). Aparece despues
-  //     del primer click en Reportar y permanece visible mientras
-  //     siga vacio.
-  const tooShortError =
-    !hasPhoto && trimmedDescriptionLen > 0 && !descriptionMeetsMin;
+  //     se muestra al abrir el form. Aparece despues del primer click
+  //     en Reportar y permanece mientras siga vacio.
+  const tooShortError = trimmedDescriptionLen > 0 && !descriptionMeetsMin;
   const emptyError =
     submitAttempted && !hasPhoto && trimmedDescriptionLen === 0;
 
@@ -337,11 +332,12 @@ export default function ReportForm({
                 rows={3}
                 className="mt-1.5 block w-full rounded-lg border border-surface-border bg-surface-input px-3 py-2.5 text-sm text-fg placeholder:text-fg-dim focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft disabled:opacity-60"
                 placeholder={descriptionPlaceholder}
-                // required/minLength solo cuando no hay foto. Con foto
-                // la descripcion es totalmente opcional. La validacion
-                // real ocurre en handleSubmit via pointInputSchema.
+                // required solo sin foto (al menos uno necesario).
+                // minLength aplica siempre que el usuario escriba algo
+                // — HTML5 no enforce minLength en campos vacios, asi
+                // que con foto + vacio sigue siendo valido.
                 required={!hasPhoto}
-                minLength={hasPhoto ? undefined : DESCRIPTION_MIN_WITHOUT_PHOTO}
+                minLength={DESCRIPTION_MIN}
                 maxLength={DESCRIPTION_MAX}
               />
               <p className={`mt-1 text-right text-xs ${counterColorClass}`}>
@@ -349,7 +345,7 @@ export default function ReportForm({
               </p>
               {tooShortError && (
                 <p role="alert" className="mt-1 text-[11px] text-red-600">
-                  Minimo {DESCRIPTION_MIN_WITHOUT_PHOTO} caracteres.
+                  Minimo {DESCRIPTION_MIN} caracteres.
                 </p>
               )}
               {emptyError && (
