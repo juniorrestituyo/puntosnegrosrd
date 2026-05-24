@@ -7,6 +7,7 @@ import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { formatRelativeTime } from '@/lib/time';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
 import BackToMapButton from './BackToMapButton';
+import PhotoLightbox from './PhotoLightbox';
 import ReportContentButton from './ReportContentButton';
 import ShareWithAuthority from './ShareWithAuthority';
 import SideDrawer from './SideDrawer';
@@ -45,6 +46,12 @@ export default function PointDetail({
   const point = initialPoint;
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
   const [shareAuthorityOpen, setShareAuthorityOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  // Si la foto falla al cargar (404, CORS, etc.) escondemos la card
+  // entera en lugar de mostrar un icono roto. Vale la pena este flag
+  // porque las fotos vienen de Supabase Storage y pueden faltar por
+  // cosas operacionales (bucket policy, archivo borrado manualmente).
+  const [photoErrored, setPhotoErrored] = useState(false);
 
   async function handleShare() {
     const url = window.location.href;
@@ -202,19 +209,36 @@ export default function PointDetail({
           </p>
         </section>
 
-        {/* Foto */}
-        {point.photo_url && (
-          <section className="mt-3 overflow-hidden rounded-2xl bg-surface-card shadow-card ring-1 ring-surface-border">
-            <img
-              src={point.photo_url}
-              alt="Foto ciudadana del reporte"
-              className="block max-h-[480px] w-full object-contain"
-              loading="lazy"
-            />
+        {/* Foto.
+            Card con aspect-ratio fijo 4:3 + object-cover para que todas
+            las fotos se vean uniformes en el feed (independiente del
+            ratio que traiga el telefono que las saco). El usuario hace
+            tap → se abre PhotoLightbox full-screen con object-contain,
+            ahi se ve la foto completa sin recortes (escape hatch para
+            evidencia). Si la imagen falla al cargar, escondemos la
+            card entera (photoErrored). */}
+        {point.photo_url && !photoErrored && (
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            aria-label="Ver foto ampliada"
+            className="mt-3 block w-full overflow-hidden rounded-2xl bg-surface-raised text-left shadow-card ring-1 ring-surface-border transition-shadow hover:shadow-float focus:outline-none focus:ring-2 focus:ring-brand"
+          >
+            <div className="relative aspect-[4/3] w-full">
+              <img
+                src={point.photo_url}
+                alt="Foto ciudadana del reporte"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                draggable={false}
+                onError={() => setPhotoErrored(true)}
+              />
+            </div>
             <p className="border-t border-surface-divider px-4 py-1.5 text-[10px] leading-snug text-fg-muted">
-              Foto aportada por quien reporto el punto. Metadata EXIF removida.
+              Foto aportada por quien reporto el punto. Toca para verla
+              completa. Metadata EXIF removida.
             </p>
-          </section>
+          </button>
         )}
 
         {/* Ubicacion */}
@@ -503,6 +527,15 @@ export default function PointDetail({
           <ShareWithAuthority
             point={point}
             onClose={() => setShareAuthorityOpen(false)}
+          />
+        )}
+
+        {point.photo_url && (
+          <PhotoLightbox
+            src={point.photo_url}
+            alt="Foto ciudadana del reporte"
+            open={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
           />
         )}
       </div>
