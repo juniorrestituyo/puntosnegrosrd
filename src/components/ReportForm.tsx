@@ -332,12 +332,13 @@ export default function ReportForm({
                 rows={3}
                 className="mt-1.5 block w-full rounded-lg border border-surface-border bg-surface-input px-3 py-2.5 text-sm text-fg placeholder:text-fg-dim focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft disabled:opacity-60"
                 placeholder={descriptionPlaceholder}
-                // required solo sin foto (al menos uno necesario).
-                // minLength aplica siempre que el usuario escriba algo
-                // — HTML5 no enforce minLength en campos vacios, asi
-                // que con foto + vacio sigue siendo valido.
-                required={!hasPhoto}
-                minLength={DESCRIPTION_MIN}
+                // NO usamos required/minLength HTML5 — los navegadores
+                // muestran un tooltip nativo en el idioma del sistema
+                // (en ingles para muchos usuarios) que choca con nuestros
+                // mensajes en rojo inline en espanol. La validacion real
+                // ocurre en handleSubmit via pointInputSchema (zod).
+                // maxLength sigue porque solo limita la escritura, no
+                // dispara tooltip.
                 maxLength={DESCRIPTION_MAX}
               />
               <p className={`mt-1 text-right text-xs ${counterColorClass}`}>
