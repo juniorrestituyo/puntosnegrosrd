@@ -357,12 +357,6 @@ export default function ReportForm({
                   Agrega una foto o llena este campo.
                 </p>
               )}
-              {hasPhoto && (
-                <p className="mt-1 text-[11px] leading-snug text-fg-muted">
-                  La foto ya documenta visualmente — el texto es contexto
-                  opcional.
-                </p>
-              )}
             </label>
 
             {displayedError && (
