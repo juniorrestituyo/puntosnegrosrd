@@ -11,11 +11,13 @@ import type { Point } from '@/lib/types';
 
 interface ShareWithAuthorityProps {
   point: Point;
+  open: boolean;
   onClose: () => void;
 }
 
 export default function ShareWithAuthority({
   point,
+  open,
   onClose,
 }: ShareWithAuthorityProps) {
   const [copied, setCopied] = useState(false);
@@ -34,23 +36,26 @@ export default function ShareWithAuthority({
     [point, siteUrl, selected]
   );
 
-  // Cerrar con Escape
+  // ESC cierra. Guard con !open para no acumular listeners cuando
+  // el modal esta cerrado (siempre montado para animar).
   useEffect(() => {
+    if (!open) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [open, onClose]);
 
-  // Bloquear scroll del body mientras el modal esta abierto
+  // Bloquear scroll del body solo cuando el modal esta abierto.
   useEffect(() => {
+    if (!open) return;
     const original = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = original;
     };
-  }, []);
+  }, [open]);
 
   async function handleCopy() {
     const full = `${message.subject}\n\n${message.body}`;
@@ -72,11 +77,22 @@ export default function ShareWithAuthority({
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex flex-col bg-surface-base sm:items-center sm:justify-center sm:bg-black/40 sm:p-4 sm:backdrop-blur-sm"
+      className={`fixed inset-0 z-[2000] flex flex-col bg-surface-base transition-opacity duration-200 ease-out sm:items-center sm:justify-center sm:bg-black/40 sm:p-4 sm:backdrop-blur-sm ${
+        open
+          ? 'pointer-events-auto opacity-100'
+          : 'pointer-events-none opacity-0'
+      }`}
       role="dialog"
       aria-label="Compartir con autoridad"
+      aria-hidden={!open}
     >
-      <div className="relative flex h-full w-full flex-col bg-surface-base sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:overflow-hidden sm:rounded-2xl sm:bg-surface-card sm:shadow-float sm:ring-1 sm:ring-surface-border">
+      <div
+        className={`relative flex h-full w-full flex-col bg-surface-base transition-transform duration-200 ease-out sm:h-auto sm:max-h-[92vh] sm:max-w-2xl sm:overflow-hidden sm:rounded-2xl sm:bg-surface-card sm:shadow-float sm:ring-1 sm:ring-surface-border ${
+          open
+            ? 'translate-y-0 sm:scale-100'
+            : 'translate-y-full sm:translate-y-2 sm:scale-95'
+        }`}
+      >
         {/* Header sticky */}
         <header className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface-card px-4 py-3.5 sm:px-5">
           <div className="min-w-0">

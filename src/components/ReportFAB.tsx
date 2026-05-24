@@ -31,23 +31,37 @@ export default function ReportFAB({
 
   return (
     <>
-      {open && (
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          aria-label="Cerrar menu"
-          className="fixed inset-0 z-[1090] cursor-default bg-black/30 backdrop-blur-[2px]"
-        />
-      )}
+      {/* Backdrop siempre montado para animar opacidad. Al cerrar,
+          pointer-events-none lo saca del flujo interactivo. */}
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        aria-label="Cerrar menu"
+        aria-hidden={!open}
+        tabIndex={open ? 0 : -1}
+        className={`fixed inset-0 z-[1090] cursor-default bg-black/30 backdrop-blur-[2px] transition-opacity duration-150 ease-out ${
+          open
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0'
+        }`}
+      />
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute bottom-28 right-3 z-[1100] w-64 overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border sm:bottom-32 sm:right-6"
-        >
+      {/* Menu siempre montado. Animacion scale + fade desde bottom-right
+          (corner del FAB amarillo) — el menu "salta" del boton + que lo
+          activo, conectando visualmente origen y destino. */}
+      <div
+        role="menu"
+        aria-hidden={!open}
+        className={`absolute bottom-28 right-3 z-[1100] w-64 origin-bottom-right overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border transition-all duration-150 ease-out sm:bottom-32 sm:right-6 ${
+          open
+            ? 'pointer-events-auto translate-y-0 scale-100 opacity-100'
+            : 'pointer-events-none translate-y-1 scale-95 opacity-0'
+        }`}
+      >
           <button
             type="button"
             role="menuitem"
+            tabIndex={open ? 0 : -1}
             onClick={() => pick(onUseCurrentLocation)}
             className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-raised"
           >
@@ -80,6 +94,7 @@ export default function ReportFAB({
           <button
             type="button"
             role="menuitem"
+            tabIndex={open ? 0 : -1}
             onClick={() => pick(onSelectOnMap)}
             className="flex w-full items-center gap-3 border-t border-surface-divider px-4 py-3 text-left hover:bg-surface-raised"
           >
@@ -113,7 +128,6 @@ export default function ReportFAB({
             </div>
           </button>
         </div>
-      )}
 
       <button
         type="button"
