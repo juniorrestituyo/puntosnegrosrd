@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 import { processImage } from '@/lib/image-process';
@@ -45,6 +45,10 @@ export default function ReportForm({
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // Ref al input type="file". Necesario para resetear su .value en
+  // clearPhoto — los file inputs son uncontrolled por seguridad del
+  // browser, React no puede limpiarlos via setState.
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const subcategoryOptions = CATEGORIES[category].subcategories;
   const displayedError = serverError ?? localError;
@@ -95,6 +99,12 @@ export default function ReportForm({
     setPhotoPreview(null);
     setPhotoUrl(null);
     setPhotoError(null);
+    // Reset el value del <input type="file"> para garantizar que la
+    // proxima seleccion dispare onChange — incluso si el usuario
+    // vuelve a elegir el mismo archivo que acabamos de quitar.
+    // Sin esto, el browser dedupe la seleccion ('mismo path') y
+    // onChange nunca corre.
+    if (photoInputRef.current) photoInputRef.current.value = '';
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -216,6 +226,7 @@ export default function ReportForm({
               </label>
             )}
             <input
+              ref={photoInputRef}
               id="photo-input"
               type="file"
               accept="image/jpeg,image/png,image/webp"
