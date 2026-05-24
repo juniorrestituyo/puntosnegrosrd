@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { formatRelativeTime } from '@/lib/time';
 import type { Point, StatusHistoryEntry } from '@/lib/types';
+import { sharePoint } from '@/lib/share';
+
 import BackToMapButton from './BackToMapButton';
 import PhotoLightbox from './PhotoLightbox';
 import ReportContentButton from './ReportContentButton';
@@ -53,50 +55,38 @@ export default function PointDetail({
   // cosas operacionales (bucket policy, archivo borrado manualmente).
   const [photoErrored, setPhotoErrored] = useState(false);
 
-  async function handleShare() {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareState('copied');
-      setTimeout(() => setShareState('idle'), 2000);
-    } catch {
-      window.prompt('Copia este enlace:', url);
-    }
-  }
-
-  // Feedback transitorio del icono de share del header cuando caemos
-  // al fallback de portapapeles (navegadores sin Web Share API).
+  // Feedback transitorio del icono share del header cuando caemos al
+  // fallback de portapapeles (navegadores sin Web Share API). En
+  // mobile y Chrome/Edge desktop el OS sheet se encarga del feedback;
+  // en Firefox desktop este flag se activa.
   const [headerShareCopied, setHeaderShareCopied] = useState(false);
 
   /**
-   * Comparte el URL via Web Share API (sheet nativo del OS).
-   * Fallback a clipboard si el navegador no soporta navigator.share
-   * (ej. Firefox desktop). Diferente de handleShare() que SIEMPRE
-   * copia al portapapeles — este intenta primero el sheet nativo
-   * para que el usuario elija WhatsApp/Telegram/etc. directamente.
+   * Helper compartido para los dos puntos de share (icono del header
+   * + boton "Compartir" del bloque inferior). Llama a sharePoint
+   * (Web Share API + fallback clipboard) y notifica al caller que
+   * tipo de resultado paso para que decida que feedback mostrar.
    */
-  async function handleNativeShare() {
-    const url = window.location.href;
-    const title = `${CATEGORIES[point.category].label}${
-      point.subcategory ? ` - ${point.subcategory}` : ''
-    }`;
-    const text = `Reporte ciudadano en PuntosNegrosRD: ${title}`;
+  async function handleSharePoint(): Promise<'shared' | 'copied' | 'cancelled' | 'failed'> {
+    const result = await sharePoint(point, window.location.origin);
+    return result.type;
+  }
 
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title, text, url });
-        return;
-      } catch (err) {
-        if ((err as Error).name === 'AbortError') return;
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
+  /** Click del icono share del header. */
+  async function handleHeaderShare() {
+    const type = await handleSharePoint();
+    if (type === 'copied') {
       setHeaderShareCopied(true);
       setTimeout(() => setHeaderShareCopied(false), 2000);
-    } catch {
-      window.prompt('Copia este enlace:', url);
+    }
+  }
+
+  /** Click del boton "Compartir" del bloque inferior. */
+  async function handleBottomShare() {
+    const type = await handleSharePoint();
+    if (type === 'copied') {
+      setShareState('copied');
+      setTimeout(() => setShareState('idle'), 2000);
     }
   }
 
@@ -149,7 +139,7 @@ export default function PointDetail({
                 pregenerado. */}
             <button
               type="button"
-              onClick={handleNativeShare}
+              onClick={handleHeaderShare}
               aria-label={
                 headerShareCopied ? 'Enlace copiado' : 'Compartir enlace'
               }
@@ -399,7 +389,7 @@ export default function PointDetail({
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
-              onClick={handleShare}
+              onClick={handleBottomShare}
               className="flex items-center justify-center gap-2 rounded-full bg-surface-raised px-4 py-3 text-sm font-semibold text-fg ring-1 ring-surface-border transition-colors hover:bg-surface-border"
             >
               {shareState === 'copied' ? (
@@ -434,10 +424,13 @@ export default function PointDetail({
                     strokeLinejoin="round"
                     aria-hidden
                   >
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                   </svg>
-                  Copiar enlace
+                  Compartir
                 </>
               )}
             </button>
