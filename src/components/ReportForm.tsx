@@ -1,11 +1,15 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
-import { z } from 'zod';
+import { useRef, useState } from 'react';
 
 import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 import { processImage } from '@/lib/image-process';
+import {
+  DESCRIPTION_MAX,
+  DESCRIPTION_MIN,
+  pointInputSchema,
+} from '@/lib/point-schema';
 import type { PointInput } from '@/lib/types';
 
 const LocationPreview = dynamic(() => import('./LocationPreview'), {
@@ -13,20 +17,6 @@ const LocationPreview = dynamic(() => import('./LocationPreview'), {
   loading: () => (
     <div className="h-44 w-full animate-pulse bg-surface-raised" />
   ),
-});
-
-const reportSchema = z.object({
-  lat: z.number().min(17.5).max(20.5),
-  lng: z.number().min(-72.1).max(-68.0),
-  category: z.enum(['humano', 'vehicular', 'infraestructural', 'climatico']),
-  subcategory: z.string().optional(),
-  description: z
-    .string()
-    .min(10, 'Describe el riesgo con al menos 10 caracteres')
-    .max(1000),
-  province: z.string().optional(),
-  municipality: z.string().optional(),
-  photo_url: z.string().url().optional(),
 });
 
 interface ReportFormProps {
@@ -52,9 +42,21 @@ export default function ReportForm({
   const [localError, setLocalError] = useState<string | null>(null);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  // Blob procesado en memoria, listo para subir. NO se sube a Supabase
+  // Storage hasta que el usuario haga submit del reporte — evita
+  // huerfanos en storage cuando el usuario cambia de foto varias
+  // veces o cancela el reporte.
+  const [photoFile, setPhotoFile] = useState<Blob | null>(null);
+  // True durante cualquier operacion async con la foto: processImage
+  // local (cuando aun no hay photoFile) o el upload final al submit
+  // (cuando ya hay photoFile). La UI muestra el mensaje correcto
+  // segun en que fase estamos.
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // Ref al input type="file". Necesario para resetear su .value en
+  // clearPhoto — los file inputs son uncontrolled por seguridad del
+  // browser, React no puede limpiarlos via setState.
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const subcategoryOptions = CATEGORIES[category].subcategories;
   const displayedError = serverError ?? localError;
@@ -66,35 +68,24 @@ export default function ReportForm({
 
     setPhotoError(null);
     setPhotoUploading(true);
-    setPhotoUrl(null);
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview(null);
 
     try {
+      // Solo procesar localmente (canvas + EXIF strip). El upload
+      // al storage se difiere hasta el submit del reporte para no
+      // dejar huerfanos cuando el usuario cambia de foto varias
+      // veces o cancela.
       const processed = await processImage(file);
       const previewUrl = URL.createObjectURL(processed.blob);
       setPhotoPreview(previewUrl);
-
-      const formData = new FormData();
-      formData.append('file', processed.blob, 'photo.jpg');
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const json = await res.json();
-      if (!json.ok) {
-        setPhotoError(json.error?.message ?? 'No se pudo subir la foto');
-        setPhotoPreview(null);
-        URL.revokeObjectURL(previewUrl);
-        return;
-      }
-      setPhotoUrl(json.data.url as string);
+      setPhotoFile(processed.blob);
     } catch (err) {
-      console.error('Photo upload fallo:', err);
+      console.error('Photo processing failed:', err);
       setPhotoError(
         err instanceof Error ? err.message : 'Error al procesar la imagen'
       );
-      setPhotoPreview(null);
     } finally {
       setPhotoUploading(false);
     }
@@ -103,32 +94,105 @@ export default function ReportForm({
   function clearPhoto() {
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview(null);
-    setPhotoUrl(null);
+    setPhotoFile(null);
     setPhotoError(null);
+    // Reset el value del <input type="file"> para garantizar que la
+    // proxima seleccion dispare onChange — incluso si el usuario
+    // vuelve a elegir el mismo archivo que acabamos de quitar.
+    // Sin esto, el browser dedupe la seleccion ('mismo path') y
+    // onChange nunca corre.
+    if (photoInputRef.current) photoInputRef.current.value = '';
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLocalError(null);
 
+    const trimmedDescription = description.trim();
+
+    // Pre-validacion: si hay foto pendiente de subir, usamos un
+    // placeholder URL para que el refine 'al menos uno presente'
+    // pase. Las demas reglas (min 10 si hay desc, max 280) se
+    // evaluan sobre los valores reales. Si zod falla aqui, NO
+    // subimos la foto — evitamos waste de storage.
+    const preValidationPayload = {
+      lat,
+      lng,
+      category,
+      subcategory: subcategory || undefined,
+      description:
+        trimmedDescription.length > 0 ? trimmedDescription : undefined,
+      photo_url: photoFile ? 'http://pending' : undefined,
+    };
+
+    const preCheck = pointInputSchema.safeParse(preValidationPayload);
+    if (!preCheck.success) {
+      setLocalError(
+        preCheck.error.issues[0]?.message ?? 'Error de validacion'
+      );
+      return;
+    }
+
+    // Pre-validacion OK. Si hay foto, ahora si subirla al storage.
+    let uploadedPhotoUrl: string | undefined;
+    if (photoFile) {
+      setPhotoUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', photoFile, 'photo.jpg');
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const json = await res.json();
+        if (!json.ok) {
+          setLocalError(
+            json.error?.message ?? 'No se pudo subir la foto'
+          );
+          setPhotoUploading(false);
+          return;
+        }
+        uploadedPhotoUrl = json.data.url as string;
+      } catch (err) {
+        console.error('Photo upload failed:', err);
+        setLocalError('Error al subir la foto. Intenta de nuevo.');
+        setPhotoUploading(false);
+        return;
+      } finally {
+        setPhotoUploading(false);
+      }
+    }
+
+    // Payload final con URL real.
     const payload = {
       lat,
       lng,
       category,
       subcategory: subcategory || undefined,
-      description,
-      photo_url: photoUrl ?? undefined,
+      description:
+        trimmedDescription.length > 0 ? trimmedDescription : undefined,
+      photo_url: uploadedPhotoUrl,
     };
 
-    const result = reportSchema.safeParse(payload);
-
-    if (!result.success) {
-      setLocalError(result.error.issues[0]?.message ?? 'Error de validacion');
-      return;
-    }
-
-    onSubmit(result.data as PointInput);
+    onSubmit(payload as PointInput);
   }
+
+  // Estado derivado de la UI. Regla: "si pones descripcion debe
+  // tener al menos DESCRIPTION_MIN chars" — aplica con o sin foto.
+  // Si no hay descripcion (vacia), debe haber foto.
+  // No mostramos mensajes rojos inline en tiempo real — toda la
+  // comunicacion de errores ocurre via el cuadrito de displayedError
+  // que aparece despues del submit fallido.
+  const hasPhoto = photoFile !== null;
+  const trimmedDescriptionLen = description.trim().length;
+  const descriptionMeetsMin = trimmedDescriptionLen >= DESCRIPTION_MIN;
+  const descriptionPlaceholder = hasPhoto
+    ? 'Contexto o detalles adicionales (opcional)...'
+    : 'Bache profundo en la curva, peligroso especialmente de noche...';
+  const counterColorClass =
+    trimmedDescriptionLen > 0 && !descriptionMeetsMin
+      ? 'text-red-600'
+      : 'text-fg-muted';
 
   return (
     <div
@@ -191,9 +255,9 @@ export default function ReportForm({
               "que pasa aqui visualmente", no un afterthought. */}
           <section className="mt-2 bg-surface-card px-4 pt-4 pb-5 sm:px-5">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fg-muted">
-              Foto (opcional)
+              Foto
             </h3>
-            {!photoUrl && !photoUploading && (
+            {!photoFile && !photoUploading && (
               <label
                 htmlFor="photo-input"
                 className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-surface-border bg-surface-raised px-4 py-6 text-center text-sm text-fg-muted hover:border-brand hover:bg-brand-subtle"
@@ -205,6 +269,7 @@ export default function ReportForm({
               </label>
             )}
             <input
+              ref={photoInputRef}
               id="photo-input"
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -215,11 +280,11 @@ export default function ReportForm({
 
             {photoUploading && (
               <div className="mt-1.5 rounded-lg border border-surface-border bg-surface-raised px-3 py-3 text-center text-sm text-fg-muted">
-                Procesando y subiendo imagen...
+                {photoFile ? 'Subiendo foto...' : 'Procesando imagen...'}
               </div>
             )}
 
-            {photoPreview && photoUrl && (
+            {photoPreview && photoFile && !photoUploading && (
               <div className="mt-1.5 flex items-center gap-3 rounded-lg border border-surface-border bg-surface-raised p-2">
                 <img
                   src={photoPreview}
@@ -305,13 +370,18 @@ export default function ReportForm({
                 disabled={busy}
                 rows={3}
                 className="mt-1.5 block w-full rounded-lg border border-surface-border bg-surface-input px-3 py-2.5 text-sm text-fg placeholder:text-fg-dim focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft disabled:opacity-60"
-                placeholder="Bache profundo en la curva, peligroso especialmente de noche..."
-                required
-                minLength={10}
-                maxLength={1000}
+                placeholder={descriptionPlaceholder}
+                // NO usamos required/minLength HTML5 — los navegadores
+                // muestran un tooltip nativo en el idioma del sistema
+                // (en ingles para muchos usuarios) que choca con nuestros
+                // mensajes en rojo inline en espanol. La validacion real
+                // ocurre en handleSubmit via pointInputSchema (zod).
+                // maxLength sigue porque solo limita la escritura, no
+                // dispara tooltip.
+                maxLength={DESCRIPTION_MAX}
               />
-              <p className="mt-1 text-right text-xs text-fg-muted">
-                {description.length}/1000
+              <p className={`mt-1 text-right text-xs ${counterColorClass}`}>
+                {description.length}/{DESCRIPTION_MAX}
               </p>
             </label>
 

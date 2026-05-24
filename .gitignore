@@ -43,3 +43,8 @@ next-env.d.ts
 # docs operacionales con info especifica del setup (mantener locales)
 SETUP.md
 DEPLOY.md
+
+# carpeta docs/ — notas locales (snippets SQL operacionales, specs de
+# brainstorming, etc.). No queremos versionarlas: cambian de mano del
+# owner y no aportan al codigo de la aplicacion.
+docs/

@@ -103,6 +103,13 @@ export function buildShareMessage(
   // (una sola pagina, mas legible que un bloque pegado en cada email).
   const siteBase = siteUrl.replace(/\/$/, '');
 
+  // Si el reporte no tiene descripcion (solo foto + categoria, post
+  // migracion 005), salteamos el bloque "Descripcion ciudadana" — no
+  // enviamos un encabezado seguido de la nada.
+  const descriptionLines: (string | null)[] = point.description
+    ? ['Descripcion ciudadana:', point.description, '']
+    : [];
+
   const body = [
     salutation,
     '',
@@ -116,9 +123,7 @@ export function buildShareMessage(
     `Ver en mapa: ${gmaps}`,
     `Confirmaciones comunitarias: ${point.confirmation_count}`,
     '',
-    'Descripcion ciudadana:',
-    point.description,
-    '',
+    ...descriptionLines,
     'Enlace permanente del reporte (con historial y evidencia):',
     url,
     '',

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { CATEGORIES, STATUS_LABELS } from '@/lib/constants';
 import { colorForConfirmations } from '@/lib/marker-color';
 import { getIconForPoint } from '@/lib/marker-icons';
+import { sharePoint } from '@/lib/share';
 import { formatRelativeTime } from '@/lib/time';
 import type { Point } from '@/lib/types';
 
@@ -59,35 +60,17 @@ export default function PointDetailSheet({
   const [linkCopied, setLinkCopied] = useState(false);
 
   /**
-   * Comparte el URL del reporte. Web Share API si esta disponible
-   * (mobile + Chrome/Edge desktop), fallback a clipboard si no.
-   * Si el usuario cancela el sheet nativo (AbortError), no hacemos
-   * nada — no es un error real.
+   * Comparte el URL del reporte via sharePoint (Web Share API con
+   * fallback a clipboard). Si cayo al clipboard, muestra "Enlace
+   * copiado" 2 segundos; si abrio el sheet nativo del OS o el usuario
+   * lo cerro, no muestra nada.
    */
   async function handleShareLink() {
     if (!displayed) return;
-    const url = `${window.location.origin}/punto/${displayed.id}`;
-    const title = `${CATEGORIES[displayed.category].label}${
-      displayed.subcategory ? ` - ${displayed.subcategory}` : ''
-    }`;
-    const text = `Reporte ciudadano en PuntosNegrosRD: ${title}`;
-
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title, text, url });
-        return;
-      } catch (err) {
-        if ((err as Error).name === 'AbortError') return;
-        // Otros errores caen al fallback abajo.
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(url);
+    const result = await sharePoint(displayed, window.location.origin);
+    if (result.type === 'copied') {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      window.prompt('Copia este enlace:', url);
     }
   }
 
@@ -305,9 +288,11 @@ export default function PointDetailSheet({
               </Link>
             )}
 
-            <p className="mt-3 line-clamp-3 text-sm leading-snug text-fg/90">
-              {p.description}
-            </p>
+            {p.description && (
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-snug text-fg/90">
+                {p.description}
+              </p>
+            )}
 
             {/* Contador de confirmaciones.
                 - Cuando el punto esta abierto: estilo brand-azul, contador
