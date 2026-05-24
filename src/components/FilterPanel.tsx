@@ -122,21 +122,35 @@ export default function FilterPanel({
         )}
       </button>
 
-      {open && (
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          aria-label="Cerrar filtros"
-          className="fixed inset-0 z-[1090] cursor-default bg-black/20 backdrop-blur-[2px]"
-        />
-      )}
+      {/* Backdrop siempre montado para que el cambio de opacidad sea
+          animable. Al cerrar, pointer-events-none lo saca del flujo
+          interactivo aunque siga en el DOM. */}
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        aria-label="Cerrar filtros"
+        aria-hidden={!open}
+        tabIndex={open ? 0 : -1}
+        className={`fixed inset-0 z-[1090] cursor-default bg-black/20 backdrop-blur-[2px] transition-opacity duration-150 ease-out ${
+          open
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0'
+        }`}
+      />
 
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Filtros del mapa"
-          className="fixed right-3 top-[4.25rem] z-[1100] w-[280px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border sm:right-4 sm:top-[5rem]"
-        >
+      {/* Panel siempre montado. Animacion scale + fade desde top-right
+          (corner del boton de filtros) — el modal "salta" del boton
+          que lo activo, conectando visualmente origen y destino. */}
+      <div
+        role="dialog"
+        aria-label="Filtros del mapa"
+        aria-hidden={!open}
+        className={`fixed right-3 top-[4.25rem] z-[1100] w-[280px] max-w-[calc(100vw-1.5rem)] origin-top-right overflow-hidden rounded-xl bg-surface-card shadow-float ring-1 ring-surface-border transition-all duration-150 ease-out sm:right-4 sm:top-[5rem] ${
+          open
+            ? 'pointer-events-auto translate-y-0 scale-100 opacity-100'
+            : 'pointer-events-none -translate-y-1 scale-95 opacity-0'
+        }`}
+      >
           <div className="flex items-center justify-between border-b border-surface-border px-4 py-3">
             <h3 className="text-sm font-semibold text-fg">Filtros</h3>
             <button
@@ -263,7 +277,6 @@ export default function FilterPanel({
             )}
           </div>
         </div>
-      )}
     </>
   );
 }

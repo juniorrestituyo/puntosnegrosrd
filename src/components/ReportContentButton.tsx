@@ -112,16 +112,30 @@ export default function ReportContentButton({ pointId }: Props) {
         Reportar este contenido
       </button>
 
-      {open && (
+      {/* Backdrop + modal siempre montados para animar fade y slide.
+          En mobile el modal slide desde abajo (translate-y-full →
+          translate-y-0, estilo sheet). En desktop entra centrado con
+          scale + slide pequenho. El backdrop hace fade independiente. */}
+      <div
+        role="dialog"
+        aria-label="Reportar contenido"
+        aria-hidden={!open}
+        className={`fixed inset-0 z-[2000] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200 ease-out sm:items-center ${
+          open
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0'
+        }`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) close();
+        }}
+      >
         <div
-          role="dialog"
-          aria-label="Reportar contenido"
-          className="fixed inset-0 z-[2000] flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) close();
-          }}
+          className={`w-full max-w-md rounded-t-2xl bg-surface-card shadow-float ring-1 ring-surface-border transition-transform duration-200 ease-out sm:rounded-2xl ${
+            open
+              ? 'translate-y-0 sm:scale-100'
+              : 'translate-y-full sm:translate-y-2 sm:scale-95'
+          }`}
         >
-          <div className="w-full max-w-md rounded-t-2xl bg-surface-card shadow-float ring-1 ring-surface-border sm:rounded-2xl">
             <header className="flex items-center justify-between border-b border-surface-divider px-5 py-4">
               <div>
                 <h3 className="text-base font-bold tracking-tight text-fg">
@@ -209,27 +223,26 @@ export default function ReportContentButton({ pointId }: Props) {
                             <button
                               type="button"
                               onClick={() => setSelected(r.value)}
-                              className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${
+                              // Sin transition-colors: para una seleccion
+                              // tipo radio el cambio debe ser instantaneo.
+                              // El transition causaba un flash visible en
+                              // el primer click despues de abrir el modal
+                              // (probable repaint del browser al aplicar
+                              // por primera vez los estilos del estado
+                              // active).
+                              className={`w-full rounded-xl border px-4 py-3 text-left ${
                                 active
                                   ? 'border-brand bg-brand-subtle'
                                   : 'border-surface-border bg-surface-card hover:bg-surface-raised'
                               }`}
                             >
-                              <div className="flex items-center justify-between gap-3">
-                                <span
-                                  className={`text-sm font-semibold ${
-                                    active ? 'text-brand' : 'text-fg'
-                                  }`}
-                                >
-                                  {r.label}
-                                </span>
-                                {active && (
-                                  <span
-                                    aria-hidden
-                                    className="h-2 w-2 shrink-0 rounded-full bg-brand"
-                                  />
-                                )}
-                              </div>
+                              <span
+                                className={`text-sm font-semibold ${
+                                  active ? 'text-brand' : 'text-fg'
+                                }`}
+                              >
+                                {r.label}
+                              </span>
                               <p className="mt-0.5 text-xs text-fg-muted">
                                 {r.description}
                               </p>
@@ -262,7 +275,6 @@ export default function ReportContentButton({ pointId }: Props) {
             </div>
           </div>
         </div>
-      )}
     </>
   );
 }

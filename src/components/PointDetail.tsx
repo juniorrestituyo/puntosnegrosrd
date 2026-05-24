@@ -520,12 +520,11 @@ export default function PointDetail({
             la moderacion via panel admin. */}
         <ReportContentButton pointId={point.id} />
 
-        {shareAuthorityOpen && (
-          <ShareWithAuthority
-            point={point}
-            onClose={() => setShareAuthorityOpen(false)}
-          />
-        )}
+        <ShareWithAuthority
+          point={point}
+          open={shareAuthorityOpen}
+          onClose={() => setShareAuthorityOpen(false)}
+        />
 
         {point.photo_url && (
           <PhotoLightbox

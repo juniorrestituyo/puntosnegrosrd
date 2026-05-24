@@ -58,14 +58,21 @@ export default function PhotoLightbox({ src, alt, open, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  // Siempre montado (sin early return) para que la animacion del backdrop
+  // + foto sea visible al abrir y al cerrar. pointer-events-none cuando
+  // cerrado evita que el lightbox bloquee clics del detalle detras.
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Foto del reporte ampliada"
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/95"
+      aria-hidden={!open}
+      className={`fixed inset-0 z-[2000] flex items-center justify-center bg-black/95 transition-opacity duration-200 ease-out ${
+        open
+          ? 'pointer-events-auto opacity-100'
+          : 'pointer-events-none opacity-0'
+      }`}
       // Tap en el fondo (no en la imagen ni en el boton) cierra.
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -78,6 +85,7 @@ export default function PhotoLightbox({ src, alt, open, onClose }: Props) {
         type="button"
         onClick={onClose}
         aria-label="Cerrar foto"
+        tabIndex={open ? 0 : -1}
         className="absolute right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40"
         style={{ top: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
       >
@@ -99,13 +107,17 @@ export default function PhotoLightbox({ src, alt, open, onClose }: Props) {
       </button>
 
       {/* Foto. object-contain garantiza que se ve completa, sin recorte.
-          max-h/w con dvh/vw para respetar el viewport real en mobile
-          (no incluye la barra de URL, mejor que vh). */}
+          max-h/w con dvh/vw para respetar el viewport real en mobile.
+          Pequena animacion de scale (98 → 100) sincronizada con el
+          fade del backdrop para que la foto se sienta "asentandose"
+          en lugar de aparecer abrupta. */}
       <img
         src={src}
         alt={alt}
         draggable={false}
-        className="max-h-[100dvh] max-w-[100vw] select-none object-contain"
+        className={`max-h-[100dvh] max-w-[100vw] select-none object-contain transition-transform duration-200 ease-out ${
+          open ? 'scale-100' : 'scale-95'
+        }`}
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
