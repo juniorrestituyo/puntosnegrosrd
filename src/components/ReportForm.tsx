@@ -11,6 +11,7 @@ import {
   pointInputSchema,
 } from '@/lib/point-schema';
 import type { PointInput } from '@/lib/types';
+import { useBackButtonClose } from '@/lib/use-back-button-close';
 
 const LocationPreview = dynamic(() => import('./LocationPreview'), {
   ssr: false,
@@ -23,23 +24,36 @@ interface ReportFormProps {
   lat: number;
   lng: number;
   submitting?: boolean;
-  serverError?: string | null;
   onSubmit: (input: PointInput) => void;
   onCancel: () => void;
+  /**
+   * Reporta un error de validacion local (zod no pasa, foto fallo
+   * al procesar, etc.). El caller decide donde mostrarlo — en
+   * MapClient se enruta al banner flotante arriba para que sea
+   * visible aunque el form sea full-screen en mobile.
+   */
+  onError: (message: string) => void;
 }
 
 export default function ReportForm({
   lat,
   lng,
   submitting = false,
-  serverError = null,
   onSubmit,
   onCancel,
+  onError,
 }: ReportFormProps) {
   const [category, setCategory] = useState<CategoryKey>('infraestructural');
   const [subcategory, setSubcategory] = useState('');
   const [description, setDescription] = useState('');
-  const [localError, setLocalError] = useState<string | null>(null);
+  // localError eliminado: los errores se reportan al caller via onError,
+  // que los muestra en el banner flotante arriba (en lugar de un cuadro
+  // rojo dentro del form que quedaba oculto sin scroll en mobile).
+
+  // Back fisico del browser dispara onCancel (cerrar el form). El form
+  // se monta solo cuando hay 'picked' en el caller, asi que mientras
+  // vive esta abierto — pasamos true literal al hook.
+  useBackButtonClose(true, onCancel);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   // Blob procesado en memoria, listo para subir. NO se sube a Supabase
@@ -59,7 +73,6 @@ export default function ReportForm({
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const subcategoryOptions = CATEGORIES[category].subcategories;
-  const displayedError = serverError ?? localError;
   const busy = submitting || photoUploading;
 
   async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -106,7 +119,6 @@ export default function ReportForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLocalError(null);
 
     const trimmedDescription = description.trim();
 
@@ -127,9 +139,7 @@ export default function ReportForm({
 
     const preCheck = pointInputSchema.safeParse(preValidationPayload);
     if (!preCheck.success) {
-      setLocalError(
-        preCheck.error.issues[0]?.message ?? 'Error de validacion'
-      );
+      onError(preCheck.error.issues[0]?.message ?? 'Error de validacion');
       return;
     }
 
@@ -146,16 +156,14 @@ export default function ReportForm({
         });
         const json = await res.json();
         if (!json.ok) {
-          setLocalError(
-            json.error?.message ?? 'No se pudo subir la foto'
-          );
+          onError(json.error?.message ?? 'No se pudo subir la foto');
           setPhotoUploading(false);
           return;
         }
         uploadedPhotoUrl = json.data.url as string;
       } catch (err) {
         console.error('Photo upload failed:', err);
-        setLocalError('Error al subir la foto. Intenta de nuevo.');
+        onError('Error al subir la foto. Intenta de nuevo.');
         setPhotoUploading(false);
         return;
       } finally {
@@ -384,15 +392,6 @@ export default function ReportForm({
                 {description.length}/{DESCRIPTION_MAX}
               </p>
             </label>
-
-            {displayedError && (
-              <div
-                role="alert"
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-              >
-                {displayedError}
-              </div>
-            )}
           </div>
         </div>
 

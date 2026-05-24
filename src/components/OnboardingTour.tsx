@@ -20,6 +20,8 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 
+import { useBackButtonClose } from '@/lib/use-back-button-close';
+
 const STORAGE_KEY = 'pn:onboarding-v1-done';
 const PENDING_KEY = 'pn:pending-tour';
 const OPEN_EVENT = 'pn:open-tour';
@@ -232,6 +234,11 @@ export default function OnboardingTour() {
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
+
+  // Back fisico del browser cierra el tour. En mobile el tour cubre
+  // la pantalla y se siente como una pantalla aparte — back deberia
+  // cerrar el overlay, no navegar al estado anterior.
+  useBackButtonClose(active, finish);
 
   function finish() {
     setActive(false);

@@ -64,10 +64,32 @@ export default function MapClient() {
     null
   );
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  // submitError eliminado: ahora los errores del POST /api/points van
+  // directamente al banner flotante via setBanner — el ReportForm ya
+  // no muestra una caja roja interna.
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [reportMode, setReportMode] = useState<ReportMode>('idle');
   const [banner, setBanner] = useState<BannerMessage | null>(null);
+  // displayedBanner mantiene el contenido visible durante el fade-out.
+  // Cuando banner cambia a null, displayedBanner persiste hasta que
+  // la animacion termina, asi el usuario ve el texto desvanecer en
+  // lugar de un fade desde texto vacio.
+  const [displayedBanner, setDisplayedBanner] =
+    useState<BannerMessage | null>(null);
+  // isShowing controla las clases de la animacion. Se separa de
+  // banner/displayedBanner para que cuando aparece un nuevo banner,
+  // el primer paint sea con clases hidden y un tick despues
+  // transicione a visible — eso dispara la animacion de entrada. Sin
+  // este state, el banner aparece directo con clases visible y la
+  // CSS transition no tiene "from" desde donde animar.
+  const [isShowing, setIsShowing] = useState(false);
+  // Ref al timer de auto-dismiss. Lo guardamos para poder cancelarlo
+  // cuando llega un banner nuevo o el usuario cierra manualmente —
+  // asi cada banner tiene exactamente su duracion (no se le mete un
+  // timer viejo de un banner anterior que ya no existe).
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   // Tracking arranca en true: queremos auto-focus en la ubicacion del
@@ -349,7 +371,6 @@ export default function MapClient() {
 
   function handleMapClick(lat: number, lng: number) {
     if (reportMode === 'select-on-map') {
-      setSubmitError(null);
       setPicked({ lat, lng });
       setReportMode('idle');
       setBanner(null);
@@ -358,12 +379,10 @@ export default function MapClient() {
 
   function handleCancelForm() {
     setPicked(null);
-    setSubmitError(null);
   }
 
   async function handleSubmit(input: PointInput) {
     setSubmitting(true);
-    setSubmitError(null);
     try {
       const res = await fetch('/api/points', {
         method: 'POST',
@@ -372,7 +391,15 @@ export default function MapClient() {
       });
       const json = await res.json();
       if (!json.ok) {
-        setSubmitError(json.error?.message ?? 'No se pudo guardar el reporte');
+        // Server error: enviar al banner flotante en lugar de mostrar
+        // dentro del form. Asi el usuario lo ve aunque el form sea
+        // full-screen en mobile y el cuadro de error quedaria oculto
+        // abajo sin scroll.
+        setBanner({
+          type: 'error',
+          text: json.error?.message ?? 'No se pudo guardar el reporte',
+        });
+        autoDismissBanner(7000);
         return;
       }
       setPoints((prev) => [json.data as Point, ...prev]);
@@ -381,10 +408,19 @@ export default function MapClient() {
       autoDismissBanner();
     } catch (e) {
       console.error('POST /api/points fallo:', e);
-      setSubmitError('Error de red. Revisa tu conexion.');
+      setBanner({ type: 'error', text: 'Error de red. Revisa tu conexion.' });
+      autoDismissBanner(7000);
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Callback usado por ReportForm para reportar errores de validacion
+  // local (zod no pasa, etc.). Misma ruta que los errores del server:
+  // banner flotante arriba de la pantalla.
+  function handleReportFormError(message: string) {
+    setBanner({ type: 'error', text: message });
+    autoDismissBanner(7000);
   }
 
   const handleConfirm = useCallback(
@@ -476,10 +512,49 @@ export default function MapClient() {
     []
   );
 
+  // Coordina la animacion entrada/salida del banner.
+  //   - Cuando banner cambia de null a X: setea displayedBanner = X
+  //     (primer paint con clases hidden), luego en el siguiente tick
+  //     setea isShowing = true (CSS transition anima hidden→visible).
+  //   - Cuando banner cambia a null: setea isShowing = false (anima
+  //     visible→hidden), luego de 200ms (duracion de la animacion)
+  //     limpia displayedBanner.
+  useEffect(() => {
+    if (banner !== null) {
+      setDisplayedBanner(banner);
+      // setTimeout(0) garantiza que el browser pinto primero con
+      // las clases hidden antes de aplicar las visible — sin esto,
+      // ambos states cambian en el mismo paint y CSS no anima.
+      const t = setTimeout(() => setIsShowing(true), 0);
+      return () => clearTimeout(t);
+    }
+    setIsShowing(false);
+    const t = setTimeout(() => setDisplayedBanner(null), 200);
+    return () => clearTimeout(t);
+  }, [banner]);
+
+  // Auto-dismiss del banner con duracion estricta: cada banner vive
+  // exactamente ms milisegundos antes de cerrarse. Si llega un banner
+  // nuevo o el usuario cierra manualmente, el timer previo se cancela
+  // para que no afecte al siguiente.
   function autoDismissBanner(ms = 5000) {
-    setTimeout(() => {
+    if (dismissTimerRef.current !== null) {
+      clearTimeout(dismissTimerRef.current);
+    }
+    dismissTimerRef.current = setTimeout(() => {
       setBanner(null);
+      dismissTimerRef.current = null;
     }, ms);
+  }
+
+  // Cierre manual del banner (boton X). Cancela el auto-dismiss
+  // pendiente para evitar que se quede un timer huerfano.
+  function dismissBanner() {
+    if (dismissTimerRef.current !== null) {
+      clearTimeout(dismissTimerRef.current);
+      dismissTimerRef.current = null;
+    }
+    setBanner(null);
   }
 
   // Refs siempre frescos de points/userLocation para usar dentro de
@@ -610,7 +685,6 @@ export default function MapClient() {
 
         setReportMode('idle');
         setBanner(null);
-        setSubmitError(null);
         setPicked({ lat: latitude, lng: longitude });
       },
       (err) => {
@@ -731,28 +805,50 @@ export default function MapClient() {
         </div>
       )}
 
-      {/* Banner de status */}
-      {banner && reportMode !== 'select-on-map' && (
+      {/* Banner de status. fixed + z-[2100] para que aparezca encima
+          de cualquier modal full-screen. Siempre montado (mientras
+          displayedBanner tenga contenido) para animar entrada y
+          salida — el contenido visible viene de displayedBanner que
+          persiste 200ms despues de banner=null. */}
+      {displayedBanner && reportMode !== 'select-on-map' && (
         <div
-          role={banner.type === 'error' ? 'alert' : 'status'}
-          className={`pointer-events-auto absolute left-3 right-3 top-[4.25rem] z-[1095] flex items-start justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-float sm:left-1/2 sm:right-auto sm:top-[5rem] sm:-translate-x-1/2 sm:max-w-md ${
-            banner.type === 'error'
+          role={displayedBanner.type === 'error' ? 'alert' : 'status'}
+          className={`fixed left-3 right-3 top-[4.25rem] z-[2100] flex items-start justify-between gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-float transition-all duration-200 ease-out sm:left-1/2 sm:right-auto sm:top-[5rem] sm:-translate-x-1/2 sm:max-w-md ${
+            displayedBanner.type === 'error'
               ? 'bg-red-600 text-white'
               : 'bg-surface-card text-fg ring-1 ring-surface-border'
+          } ${
+            isShowing
+              ? 'pointer-events-auto translate-y-0 opacity-100'
+              : 'pointer-events-none -translate-y-2 opacity-0'
           }`}
         >
-          <span>{banner.text}</span>
+          <span>{displayedBanner.text}</span>
           <button
             type="button"
-            onClick={() => setBanner(null)}
+            onClick={dismissBanner}
             aria-label="Cerrar mensaje"
-            className={`shrink-0 rounded px-2 py-1 text-xs ${
-              banner.type === 'error'
-                ? 'bg-white/20 hover:bg-white/30'
-                : 'bg-surface-raised hover:bg-surface-border'
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
+              displayedBanner.type === 'error'
+                ? 'bg-white/20 text-white hover:bg-white/30'
+                : 'bg-surface-raised text-fg-muted hover:bg-surface-border hover:text-fg'
             }`}
           >
-            ✕
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
       )}
@@ -777,9 +873,9 @@ export default function MapClient() {
           lat={picked.lat}
           lng={picked.lng}
           submitting={submitting}
-          serverError={submitError}
           onSubmit={handleSubmit}
           onCancel={handleCancelForm}
+          onError={handleReportFormError}
         />
       )}
 

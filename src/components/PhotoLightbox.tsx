@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { useBackButtonClose } from '@/lib/use-back-button-close';
+
 interface Props {
   src: string;
   alt: string;
@@ -57,6 +59,9 @@ export default function PhotoLightbox({ src, alt, open, onClose }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // Back fisico del browser cierra el lightbox en lugar de navegar.
+  useBackButtonClose(open, onClose);
 
   // Siempre montado (sin early return) para que la animacion del backdrop
   // + foto sea visible al abrir y al cerrar. pointer-events-none cuando

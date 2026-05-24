@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useBackButtonClose } from '@/lib/use-back-button-close';
+
 type FlagReason = 'spam' | 'ofensivo' | 'duplicado' | 'falso' | 'otro';
 
 const REASONS: { value: FlagReason; label: string; description: string }[] = [
@@ -63,6 +65,9 @@ export default function ReportContentButton({ pointId }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
+
+  // Back fisico del browser cierra el modal en lugar de navegar.
+  useBackButtonClose(open, close);
 
   function close() {
     setOpen(false);

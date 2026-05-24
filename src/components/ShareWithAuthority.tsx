@@ -8,6 +8,7 @@ import {
   type AuthorityRecipient,
 } from '@/lib/share-message';
 import type { Point } from '@/lib/types';
+import { useBackButtonClose } from '@/lib/use-back-button-close';
 
 interface ShareWithAuthorityProps {
   point: Point;
@@ -56,6 +57,11 @@ export default function ShareWithAuthority({
       document.body.style.overflow = original;
     };
   }, [open]);
+
+  // Back fisico del browser cierra el modal en lugar de navegar al
+  // mapa. En mobile el modal cubre toda la pantalla — el usuario
+  // espera que back vuelva al detalle del reporte, no que salga.
+  useBackButtonClose(open, onClose);
 
   async function handleCopy() {
     const full = `${message.subject}\n\n${message.body}`;
