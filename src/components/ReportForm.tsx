@@ -40,6 +40,12 @@ export default function ReportForm({
   const [subcategory, setSubcategory] = useState('');
   const [description, setDescription] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+  // Marca true en el primer intento de submit. Habilita mostrar el
+  // mensaje "Agrega foto o llena este campo" sin saturar el form
+  // cuando el usuario recien lo abre. El mensaje "Minimo 10 chars"
+  // si aparece en tiempo real porque solo se dispara cuando ya hay
+  // chars escritos (intencion de input demostrada).
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -99,6 +105,7 @@ export default function ReportForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitAttempted(true);
     setLocalError(null);
 
     // description vacia → undefined antes de validar. Asi el refine
@@ -140,6 +147,19 @@ export default function ReportForm({
     !hasPhoto && trimmedDescriptionLen > 0 && !descriptionMeetsMin
       ? 'text-red-600'
       : 'text-fg-muted';
+
+  // Dos errores inline distintos para el campo Detalles:
+  //   - tooShortError: el usuario escribio entre 1 y 9 chars sin foto.
+  //     Tiempo real: aparece apenas hay chars. Comunica el min.
+  //   - emptyError: foto y descripcion vacias al intentar submit. NO
+  //     se muestra al abrir el form (no satura la UI con el campo
+  //     limpio antes de que el usuario haga nada). Aparece despues
+  //     del primer click en Reportar y permanece visible mientras
+  //     siga vacio.
+  const tooShortError =
+    !hasPhoto && trimmedDescriptionLen > 0 && !descriptionMeetsMin;
+  const emptyError =
+    submitAttempted && !hasPhoto && trimmedDescriptionLen === 0;
 
   return (
     <div
@@ -327,6 +347,16 @@ export default function ReportForm({
               <p className={`mt-1 text-right text-xs ${counterColorClass}`}>
                 {description.length}/{DESCRIPTION_MAX}
               </p>
+              {tooShortError && (
+                <p role="alert" className="mt-1 text-[11px] text-red-600">
+                  Minimo {DESCRIPTION_MIN_WITHOUT_PHOTO} caracteres.
+                </p>
+              )}
+              {emptyError && (
+                <p role="alert" className="mt-1 text-[11px] text-red-600">
+                  Agrega una foto o llena este campo.
+                </p>
+              )}
               {hasPhoto && (
                 <p className="mt-1 text-[11px] leading-snug text-fg-muted">
                   La foto ya documenta visualmente — el texto es contexto
