@@ -40,12 +40,6 @@ export default function ReportForm({
   const [subcategory, setSubcategory] = useState('');
   const [description, setDescription] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
-  // Marca true en el primer intento de submit. Habilita mostrar el
-  // mensaje "Agrega foto o llena este campo" sin saturar el form
-  // cuando el usuario recien lo abre. El mensaje "Minimo 10 chars"
-  // si aparece en tiempo real porque solo se dispara cuando ya hay
-  // chars escritos (intencion de input demostrada).
-  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -105,7 +99,6 @@ export default function ReportForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitAttempted(true);
     setLocalError(null);
 
     // description vacia → undefined antes de validar. Asi el refine
@@ -134,6 +127,9 @@ export default function ReportForm({
   // Estado derivado de la UI. Regla: "si pones descripcion debe
   // tener al menos DESCRIPTION_MIN chars" — aplica con o sin foto.
   // Si no hay descripcion (vacia), debe haber foto.
+  // No mostramos mensajes rojos inline en tiempo real — toda la
+  // comunicacion de errores ocurre via el cuadrito de displayedError
+  // que aparece despues del submit fallido.
   const hasPhoto = photoUrl !== null;
   const trimmedDescriptionLen = description.trim().length;
   const descriptionMeetsMin = trimmedDescriptionLen >= DESCRIPTION_MIN;
@@ -144,17 +140,6 @@ export default function ReportForm({
     trimmedDescriptionLen > 0 && !descriptionMeetsMin
       ? 'text-red-600'
       : 'text-fg-muted';
-
-  // Dos errores inline distintos para el campo Detalles:
-  //   - tooShortError: 1-9 chars escritos. Aplica con o sin foto.
-  //     Tiempo real: aparece apenas hay chars y se mantiene hasta
-  //     llegar al min.
-  //   - emptyError: foto y descripcion vacias al intentar submit. NO
-  //     se muestra al abrir el form. Aparece despues del primer click
-  //     en Reportar y permanece mientras siga vacio.
-  const tooShortError = trimmedDescriptionLen > 0 && !descriptionMeetsMin;
-  const emptyError =
-    submitAttempted && !hasPhoto && trimmedDescriptionLen === 0;
 
   return (
     <div
@@ -344,16 +329,6 @@ export default function ReportForm({
               <p className={`mt-1 text-right text-xs ${counterColorClass}`}>
                 {description.length}/{DESCRIPTION_MAX}
               </p>
-              {tooShortError && (
-                <p role="alert" className="mt-1 text-[11px] text-red-600">
-                  Minimo {DESCRIPTION_MIN} caracteres.
-                </p>
-              )}
-              {emptyError && (
-                <p role="alert" className="mt-1 text-[11px] text-red-600">
-                  Agrega una foto o llena este campo.
-                </p>
-              )}
             </label>
 
             {displayedError && (
