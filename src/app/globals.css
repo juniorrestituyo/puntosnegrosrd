@@ -11,6 +11,19 @@ body {
   height: 100%;
   background: #f8fafc;
   color: #0f172a;
+  /* iOS Safari por default aplica auto-inflation al texto en ciertos
+     contextos (rotaciones, primer paint con notch, etc) — sin este
+     override la pagina se ve "zoomeada" al cargar en iPhone, aun con
+     viewport meta correcto. El text-size-adjust:100% bloquea ese
+     auto-inflation y respeta el font-size declarado. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Defensa contra elementos absolutamente posicionados que pudieran
+     desbordar horizontalmente y forzar al browser a expandir el
+     viewport. En PWAs/maps es facil que un overlay o un tile rebote
+     unos pixeles fuera del contenedor — eso en iOS Safari activa
+     scroll horizontal global y la sensacion de "zoom out". */
+  overflow-x: hidden;
 }
 
 /* ============================================================
