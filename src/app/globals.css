@@ -26,6 +26,24 @@ body {
   overflow-x: hidden;
 }
 
+/* iOS Safari hace AUTO-ZOOM al hacer focus en inputs/textareas/selects
+   cuando su font-size es menor a 16px. Es un "feature" supuestamente
+   accesible (para ayudar a leer) pero produce dos bugs reales:
+     1. El zoom queda pegado al cerrar el teclado (Safari no siempre
+        revierte el zoom de vuelta a 1.0).
+     2. Refresh de la pagina con el zoom pegado lo preserva en la tab.
+   Sintoma del usuario: "abro la pagina en una tab nueva y se ve bien,
+   pero refresh o abrir el teclado deja la pagina zoomeada".
+   Fix: forzar font-size minimo 16px en todos los inputs. iOS Safari
+   no dispara el auto-zoom si el input ya esta a 16px+. En Android y
+   desktop la diferencia visual es minima (los inputs quedan apenas
+   mas grandes pero igual de legibles). */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 /* ============================================================
    Overrides de Leaflet para tema light (Positron/CartoDB)
    ============================================================ */
