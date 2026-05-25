@@ -34,14 +34,20 @@ body {
      2. Refresh de la pagina con el zoom pegado lo preserva en la tab.
    Sintoma del usuario: "abro la pagina en una tab nueva y se ve bien,
    pero refresh o abrir el teclado deja la pagina zoomeada".
+
    Fix: forzar font-size minimo 16px en todos los inputs. iOS Safari
    no dispara el auto-zoom si el input ya esta a 16px+. En Android y
    desktop la diferencia visual es minima (los inputs quedan apenas
-   mas grandes pero igual de legibles). */
+   mas grandes pero igual de legibles).
+
+   IMPORTANTE: !important es necesario porque las classes utility de
+   Tailwind ('text-sm' = 14px) ganan en especificidad CSS sobre un
+   selector de tipo. Sin !important, los inputs con text-sm/text-xs
+   mantienen 14px o 12px y el bug sigue presente. */
 input,
 textarea,
 select {
-  font-size: 16px;
+  font-size: 16px !important;
 }
 
 /* ============================================================
