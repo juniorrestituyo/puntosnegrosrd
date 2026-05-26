@@ -22,11 +22,7 @@ export default function MetodologiaPage() {
 
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-20 sm:px-6 sm:pt-24">
         {/* Hero */}
-        <header className="relative overflow-hidden rounded-2xl bg-surface-card p-6 shadow-card ring-1 ring-surface-border sm:p-8">
-          <div
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand via-brand-accent to-brand"
-          />
+        <header className="rounded-2xl bg-surface-card p-6 shadow-card ring-1 ring-surface-border sm:p-8">
           <h1 className="font-logo text-4xl font-bold tracking-tight text-fg sm:text-5xl">
             Metodología
           </h1>
@@ -39,11 +35,7 @@ export default function MetodologiaPage() {
 
         {/* Recolección */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Recolección
           </h2>
           <div className="space-y-3 rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -66,11 +58,7 @@ export default function MetodologiaPage() {
 
         {/* Taxonomía INTRANT (verificable) */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Taxonomía oficial INTRANT
           </h2>
           <div className="space-y-3">
@@ -160,11 +148,7 @@ export default function MetodologiaPage() {
 
         {/* Ciclo de vida del reporte */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Ciclo de vida del reporte
           </h2>
           <div className="space-y-3">
@@ -198,11 +182,7 @@ export default function MetodologiaPage() {
 
         {/* Limitaciones declaradas */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Limitaciones declaradas
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -280,11 +260,7 @@ export default function MetodologiaPage() {
 
         {/* Relación con el INTRANT */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Relación con el INTRANT
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -302,11 +278,7 @@ export default function MetodologiaPage() {
 
         {/* Referencias */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Referencias
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border sm:p-6">

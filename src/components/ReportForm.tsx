@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { CATEGORIES, type CategoryKey } from '@/lib/constants';
 import { processImage } from '@/lib/image-process';
@@ -67,10 +67,50 @@ export default function ReportForm({
   // segun en que fase estamos.
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  // Ref al input type="file". Necesario para resetear su .value en
-  // clearPhoto — los file inputs son uncontrolled por seguridad del
-  // browser, React no puede limpiarlos via setState.
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  // Dos refs porque necesitamos DOS inputs distintos:
+  //   - cameraInputRef: con capture="environment" → fuerza camara.
+  //   - galleryInputRef: sin capture → abre galeria/file picker.
+  //
+  // Razon: Android Chrome moderno (13+) usa el "Photo Picker" del SO
+  // cuando ve accept="image/*" sin capture, y ese picker NO incluye
+  // opcion de camara — Google lo saco por privacidad de "una sola app
+  // sin acceso a toda la libreria". La unica forma de darle al usuario
+  // las dos opciones es disparar inputs distintos segun lo que elija
+  // en el action sheet.
+  //
+  // En iOS Safari es menos critico (el picker nativo si incluye Camera
+  // y Photo Library en un chooser), pero usar capture="environment"
+  // tampoco hace dano alli — abre la camara igual.
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Controla el action sheet "Tomar foto / Elegir de galeria" que
+  // aparece al tocar el dropzone. La UI visible del campo de foto
+  // sigue siendo UN solo elemento — el sheet es solo el delegador
+  // entre los dos inputs ocultos.
+  const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+
+  // Back fisico cierra el sheet (no el form). El hook usa un stack
+  // global asi que con form + sheet abiertos a la vez, back cierra
+  // solo el top (el sheet). Otro back cierra el form. Ese es el
+  // comportamiento esperado en mobile.
+  useBackButtonClose(showPhotoSheet, () => setShowPhotoSheet(false));
+
+  // ESC cierra el action sheet de foto (no el form completo). El form
+  // ya tiene su propio cierre via boton X / Cancelar. Solo registramos
+  // el listener cuando el sheet esta abierto para no interferir con
+  // otros componentes (ej. selects nativos que tambien atrapan Escape).
+  useEffect(() => {
+    if (!showPhotoSheet) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setShowPhotoSheet(false);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showPhotoSheet]);
 
   const subcategoryOptions = CATEGORIES[category].subcategories;
   const busy = submitting || photoUploading;
@@ -109,12 +149,29 @@ export default function ReportForm({
     setPhotoPreview(null);
     setPhotoFile(null);
     setPhotoError(null);
-    // Reset el value del <input type="file"> para garantizar que la
-    // proxima seleccion dispare onChange — incluso si el usuario
-    // vuelve a elegir el mismo archivo que acabamos de quitar.
-    // Sin esto, el browser dedupe la seleccion ('mismo path') y
-    // onChange nunca corre.
-    if (photoInputRef.current) photoInputRef.current.value = '';
+    // Reset el value de AMBOS <input type="file"> para garantizar que
+    // la proxima seleccion dispare onChange — incluso si el usuario
+    // vuelve a elegir el mismo archivo que acabamos de quitar. Sin
+    // esto, el browser dedupe la seleccion ('mismo path') y onChange
+    // nunca corre. Reseteamos ambos porque el usuario puede haber
+    // usado cualquiera para la seleccion anterior.
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+  }
+
+  // Helper: cierra el sheet y dispara el input correspondiente.
+  // setTimeout(0) defiere el .click() para que React desmonte el
+  // sheet antes de que el browser abra el file picker nativo —
+  // algunos browsers se confunden si encadenamos setState + click
+  // sincronicamente.
+  function pickFromCamera() {
+    setShowPhotoSheet(false);
+    setTimeout(() => cameraInputRef.current?.click(), 0);
+  }
+
+  function pickFromGallery() {
+    setShowPhotoSheet(false);
+    setTimeout(() => galleryInputRef.current?.click(), 0);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -266,21 +323,44 @@ export default function ReportForm({
               Foto
             </h3>
             {!photoFile && !photoUploading && (
-              <label
-                htmlFor="photo-input"
-                className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-surface-border bg-surface-raised px-4 py-6 text-center text-sm text-fg-muted hover:border-brand hover:bg-brand-subtle"
+              <button
+                type="button"
+                onClick={() => setShowPhotoSheet(true)}
+                disabled={busy}
+                className="mt-1.5 flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-surface-border bg-surface-raised px-4 py-6 text-center text-sm text-fg-muted hover:border-brand hover:bg-brand-subtle disabled:opacity-60"
               >
                 Toca para tomar o seleccionar foto
                 <span className="mt-1 text-xs text-fg-dim">
                   JPEG/PNG hasta 3 MB. EXIF removida antes de subir.
                 </span>
-              </label>
+              </button>
             )}
+            {/* DOS inputs ocultos en lugar de uno. Razon:
+                  - Android Chrome 13+ usa el "Photo Picker" del SO con
+                    accept="image/*" sin capture, y ese picker NO incluye
+                    opcion de camara (Google lo saco por privacidad).
+                  - iOS Safari con accept restringido (jpeg/png/webp)
+                    ocultaba "Take Photo" porque la camara saca HEIC.
+                La unica forma de garantizar AMBAS opciones en Android
+                moderno es disparar inputs distintos: uno con
+                capture="environment" (camara) y otro sin capture
+                (galeria). El action sheet showPhotoSheet delega entre
+                los dos. accept="image/*" en ambos: processImage()
+                normaliza HEIC/AVIF/BMP/GIF a JPEG via canvas, asi que
+                el server siempre recibe JPEG. */}
             <input
-              ref={photoInputRef}
-              id="photo-input"
+              ref={cameraInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoSelect}
+              disabled={busy}
+              className="hidden"
+            />
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
               onChange={handlePhotoSelect}
               disabled={busy}
               className="hidden"
@@ -414,6 +494,100 @@ export default function ReportForm({
           </p>
         </footer>
       </form>
+
+      {/* Action sheet "Tomar foto / Elegir de galeria".
+          z-[2050] vive ENCIMA del form (z-[2000]) pero por debajo del
+          banner de errores (z-[2100]). Bottom-sheet en mobile, modal
+          centrado en desktop — mismo patron que ShareWithAuthority y
+          ReportContentButton.
+
+          Back fisico cierra el sheet (no el form) via useBackButtonClose
+          + stack global. Otras vias de cierre: tap fuera, ESC,
+          boton Cancelar.
+
+          Animacion: slide-up en mobile (bottom sheet "sube" desde
+          abajo, gesto nativo) y scale + fade en desktop (modal
+          centrado, mismo patron que OnboardingTour/FilterPanel).
+          Keyframes definidos en globals.css. */}
+      {showPhotoSheet && (
+        <div
+          className="fixed inset-0 z-[2050] flex items-end justify-center bg-black/50 px-0 backdrop-blur-sm sm:items-center sm:px-4"
+          onClick={() => setShowPhotoSheet(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Elegir fuente de la foto"
+        >
+          <div
+            className="w-full max-w-sm animate-[pn-sheet-up_340ms_cubic-bezier(0.33,1,0.68,1)_both] rounded-t-2xl bg-surface-card p-2 shadow-2xl ring-1 ring-surface-border sm:animate-[pn-modal-pop_260ms_cubic-bezier(0.33,1,0.68,1)_both] sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={pickFromCamera}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left text-sm font-semibold text-fg hover:bg-surface-raised"
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-brand"
+                aria-hidden
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </span>
+              Tomar foto
+            </button>
+            <button
+              type="button"
+              onClick={pickFromGallery}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left text-sm font-semibold text-fg hover:bg-surface-raised"
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-brand"
+                aria-hidden
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+              </span>
+              Elegir de galeria
+            </button>
+            <div className="my-1 border-t border-surface-border" />
+            <button
+              type="button"
+              onClick={() => setShowPhotoSheet(false)}
+              className="flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-fg-muted hover:bg-surface-raised"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

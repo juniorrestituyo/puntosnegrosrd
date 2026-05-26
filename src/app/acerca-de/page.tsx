@@ -16,11 +16,7 @@ export default function AcercaDePage() {
 
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-20 sm:px-6 sm:pt-24">
         {/* Hero */}
-        <header className="relative overflow-hidden rounded-2xl bg-surface-card p-6 shadow-card ring-1 ring-surface-border sm:p-8">
-          <div
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand via-brand-accent to-brand"
-          />
+        <header className="rounded-2xl bg-surface-card p-6 shadow-card ring-1 ring-surface-border sm:p-8">
           <h1 className="font-logo text-4xl font-bold tracking-tight text-fg sm:text-5xl">
             Acerca de PuntosNegrosRD
           </h1>
@@ -42,11 +38,7 @@ export default function AcercaDePage() {
 
         {/* Iniciativa ciudadana independiente */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Iniciativa ciudadana independiente
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -64,11 +56,7 @@ export default function AcercaDePage() {
 
         {/* Compromiso con los datos abiertos */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Compromiso con los datos abiertos
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -100,11 +88,7 @@ export default function AcercaDePage() {
 
         {/* Privacidad */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Privacidad
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -119,11 +103,7 @@ export default function AcercaDePage() {
 
         {/* ¿Cómo puedes ayudar? */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             ¿Cómo puedes ayudar?
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -195,11 +175,7 @@ export default function AcercaDePage() {
 
         {/* Sobre el contexto */}
         <section className="mt-6">
-          <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-            <span
-              aria-hidden
-              className="block h-6 w-1 rounded-full bg-brand"
-            />
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
             Sobre el contexto
           </h2>
           <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">

@@ -193,11 +193,7 @@ export default async function MetricasPage() {
 
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-20 sm:px-6 sm:pt-24">
         {/* Hero */}
-        <header className="relative overflow-hidden rounded-2xl bg-surface-card p-6 shadow-card ring-1 ring-surface-border sm:p-8">
-          <div
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand via-brand-accent to-brand"
-          />
+        <header className="rounded-2xl bg-surface-card p-6 shadow-card ring-1 ring-surface-border sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">
             Datos en vivo
           </p>
@@ -263,11 +259,7 @@ export default async function MetricasPage() {
 
             {/* Distribución por categoría INTRANT */}
             <section className="mt-6">
-              <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-                <span
-                  aria-hidden
-                  className="block h-6 w-1 rounded-full bg-brand"
-                />
+              <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
                 Distribución por taxonomía INTRANT
               </h2>
               <div className="space-y-2 rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -279,11 +271,7 @@ export default async function MetricasPage() {
 
             {/* Puntos con consenso */}
             <section className="mt-6">
-              <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-                <span
-                  aria-hidden
-                  className="block h-6 w-1 rounded-full bg-brand"
-                />
+              <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
                 Consenso comunitario
               </h2>
               <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -307,11 +295,7 @@ export default async function MetricasPage() {
 
             {/* Tendencia */}
             <section className="mt-6">
-              <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-                <span
-                  aria-hidden
-                  className="block h-6 w-1 rounded-full bg-brand"
-                />
+              <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
                 Reportes en los últimos 14 días
               </h2>
               <div className="rounded-2xl bg-surface-card p-5 shadow-card ring-1 ring-surface-border sm:p-6">
@@ -322,11 +306,7 @@ export default async function MetricasPage() {
             {/* Top confirmados */}
             {data.topConfirmed.length > 0 && (
               <section className="mt-6">
-                <h2 className="mb-3 flex items-center gap-3 px-1 text-lg font-bold tracking-tight text-fg">
-                  <span
-                    aria-hidden
-                    className="block h-6 w-1 rounded-full bg-brand"
-                  />
+                <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
                   Top 5 puntos más confirmados
                 </h2>
                 <ol className="space-y-2">
