@@ -189,6 +189,156 @@ export default function AcercaDePage() {
             </p>
           </div>
         </section>
+
+        {/* Créditos visuales — atribución requerida por la licencia
+            gratuita de Flaticon. Sin esta sección, el uso de los iconos
+            violaría los términos de Flaticon y podría considerarse
+            infracción de derechos de terceros. */}
+        <section className="mt-6">
+          <h2 className="mb-3 px-1 text-lg font-bold tracking-tight text-fg">
+            Créditos visuales
+          </h2>
+          <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
+            <p>
+              Los iconos utilizados en los marcadores del mapa fueron
+              obtenidos de{' '}
+              <a
+                href="https://www.flaticon.com"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-brand underline decoration-brand-soft underline-offset-2 hover:decoration-brand"
+              >
+                Flaticon
+              </a>{' '}
+              bajo su licencia gratuita con atribución. Autores cuyos iconos
+              aparecen en la aplicación:
+            </p>
+            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-3">
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/chattapat"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  Chattapat
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/tulpahn"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  tulpahn
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/arkinasi"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  Arkinasi
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/babycorn"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  BabyCorn
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/freepik"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  Freepik
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/zero-wing"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  zero_wing
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/syafristudio"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  SyafriStudio
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/smashicons"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  Smashicons
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/photo3idea-studio"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  photo3idea_studio
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.flaticon.com/authors/capvora"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  CapVora
+                </a>
+              </li>
+            </ul>
+            <p className="mt-4 text-xs text-fg-muted">
+              Los tiles del mapa provienen de{' '}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline"
+              >
+                OpenStreetMap
+              </a>{' '}
+              (contribuidores, bajo licencia ODbL) y son renderizados con
+              el estilo{' '}
+              <a
+                href="https://carto.com/attributions"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline"
+              >
+                CartoDB Positron
+              </a>
+              .
+            </p>
+          </div>
+        </section>
       </div>
     </main>
   );
