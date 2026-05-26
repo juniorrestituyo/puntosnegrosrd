@@ -90,6 +90,12 @@ export default function ReportForm({
   // entre los dos inputs ocultos.
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
 
+  // Back fisico cierra el sheet (no el form). El hook usa un stack
+  // global asi que con form + sheet abiertos a la vez, back cierra
+  // solo el top (el sheet). Otro back cierra el form. Ese es el
+  // comportamiento esperado en mobile.
+  useBackButtonClose(showPhotoSheet, () => setShowPhotoSheet(false));
+
   // ESC cierra el action sheet de foto (no el form completo). El form
   // ya tiene su propio cierre via boton X / Cancelar. Solo registramos
   // el listener cuando el sheet esta abierto para no interferir con
@@ -495,13 +501,14 @@ export default function ReportForm({
           centrado en desktop — mismo patron que ShareWithAuthority y
           ReportContentButton.
 
-          No usamos useBackButtonClose aqui: el sheet es transitorio
-          (el usuario elige una opcion al instante). Si encadenamos
-          dos pushState (form + sheet), el back fisico que cierra el
-          sheet dispararia popstate que el form tambien escucha y
-          cerraria el form completo. Tradeoff: back fisico cierra el
-          form (no el sheet). Aceptable porque hay Cancelar + ESC +
-          tap fuera. */}
+          Back fisico cierra el sheet (no el form) via useBackButtonClose
+          + stack global. Otras vias de cierre: tap fuera, ESC,
+          boton Cancelar.
+
+          Animacion: slide-up en mobile (bottom sheet "sube" desde
+          abajo, gesto nativo) y scale + fade en desktop (modal
+          centrado, mismo patron que OnboardingTour/FilterPanel).
+          Keyframes definidos en globals.css. */}
       {showPhotoSheet && (
         <div
           className="fixed inset-0 z-[2050] flex items-end justify-center bg-black/50 px-0 backdrop-blur-sm sm:items-center sm:px-4"
@@ -511,7 +518,7 @@ export default function ReportForm({
           aria-label="Elegir fuente de la foto"
         >
           <div
-            className="w-full max-w-sm animate-[page-enter_180ms_ease-out_both] rounded-t-2xl bg-surface-card p-2 shadow-2xl ring-1 ring-surface-border sm:rounded-2xl"
+            className="w-full max-w-sm animate-[pn-sheet-up_220ms_cubic-bezier(0.33,1,0.68,1)_both] rounded-t-2xl bg-surface-card p-2 shadow-2xl ring-1 ring-surface-border sm:animate-[pn-modal-pop_180ms_cubic-bezier(0.33,1,0.68,1)_both] sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
             style={{
               paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',

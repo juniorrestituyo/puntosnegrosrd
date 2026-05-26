@@ -173,6 +173,42 @@ select {
   }
 }
 
+/* ============================================================
+   Animaciones de modales / action sheets
+   ============================================================
+   Usadas via tailwind animate-[name_duration_easing_both] en JSX.
+   Estas keyframes SI usan transform porque viven en wrappers de
+   modales que NO contienen position:fixed descendientes propios
+   (la restriccion del PageTransition no aplica aqui — el sheet
+   es un fixed inset-0 hermano del form, no contiene mas fixed).
+
+   - pn-sheet-up: bottom sheet mobile que "sube" desde abajo.
+     Combinado con opacity para suavizar el inicio. Easing
+     cubic-bezier(0.33, 1, 0.68, 1) = "ease-out fuerte" (overshoot
+     leve hacia el final, parece "asentar").
+   - pn-modal-pop: modal centrado desktop con scale + fade.
+     Mismo patron visual que FilterPanel/OnboardingTour. */
+@keyframes pn-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pn-modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Fade-in suave cuando un marker cambia de dot a teardrop (o viceversa).
    El elemento DOM se recrea al cruzar el threshold de zoom; la animacion
    evita el "pop" visual. */
