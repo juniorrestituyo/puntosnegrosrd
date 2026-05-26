@@ -518,7 +518,7 @@ export default function ReportForm({
           aria-label="Elegir fuente de la foto"
         >
           <div
-            className="w-full max-w-sm animate-[pn-sheet-up_220ms_cubic-bezier(0.33,1,0.68,1)_both] rounded-t-2xl bg-surface-card p-2 shadow-2xl ring-1 ring-surface-border sm:animate-[pn-modal-pop_180ms_cubic-bezier(0.33,1,0.68,1)_both] sm:rounded-2xl"
+            className="w-full max-w-sm animate-[pn-sheet-up_340ms_cubic-bezier(0.33,1,0.68,1)_both] rounded-t-2xl bg-surface-card p-2 shadow-2xl ring-1 ring-surface-border sm:animate-[pn-modal-pop_260ms_cubic-bezier(0.33,1,0.68,1)_both] sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
             style={{
               paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
