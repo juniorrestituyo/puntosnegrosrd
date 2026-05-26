@@ -276,11 +276,25 @@ export default function ReportForm({
                 </span>
               </label>
             )}
+            {/* accept="image/*" es intencional — NO restringir a tipos
+                especificos (image/jpeg, image/png, etc). Si lo hacemos,
+                iOS Safari oculta la opcion "Tomar foto" del picker nativo
+                porque la camara de iPhone saca HEIC por default y el
+                browser deduce que el output no va a calificar contra el
+                filtro. Resultado: el usuario solo ve "Photo Library" y
+                no puede tomar foto desde la app. Android Chrome tiene
+                comportamiento similar en algunos vendors.
+
+                Con image/* el picker del OS muestra AMBAS opciones
+                (camara + galeria). processImage() normaliza cualquier
+                imagen (HEIC, AVIF, BMP, GIF...) a JPEG via canvas.toBlob,
+                asi que el server siempre recibe JPEG sin importar el
+                formato de entrada. */}
             <input
               ref={photoInputRef}
               id="photo-input"
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               onChange={handlePhotoSelect}
               disabled={busy}
               className="hidden"
