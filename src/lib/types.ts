@@ -27,9 +27,8 @@ export interface Point {
   updated_at: string;
   confirmation_count: number;
   /**
-   * Votos comunitarios de "ya esta resuelto". Cuando alcanza el
-   * umbral (3 por defecto), el trigger en BD auto-flippea status
-   * a 'resuelto' y registra status_history como 'auto-community'.
+   * Votos comunitarios de "ya esta resuelto". Umbral proporcional:
+   * < 5 confirmaciones = 3 votos; >= 5 = mitad de confirmaciones.
    */
   resolution_count: number;
 }
