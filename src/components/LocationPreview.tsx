@@ -78,9 +78,8 @@ export default function LocationPreview({
       className="h-44 w-full"
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-        maxZoom={18}
+        url={`https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
+        maxZoom={19}
       />
       <Marker position={[lat, lng]} icon={icon} />
     </MapContainer>

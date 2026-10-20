@@ -328,12 +328,12 @@ export default function AcercaDePage() {
               (contribuidores, bajo licencia ODbL) y son renderizados con
               el estilo{' '}
               <a
-                href="https://carto.com/attributions"
+                href="https://www.maptiler.com/copyright/"
                 target="_blank"
                 rel="noreferrer"
                 className="text-brand hover:underline"
               >
-                CartoDB Positron
+                MapTiler Dataviz
               </a>
               .
             </p>
