@@ -547,18 +547,10 @@ export default function Map({
       className={`h-full w-full ${selectMode ? 'cursor-crosshair' : ''}`}
       zoomControl={false}
     >
-      {/* Tiles light de CartoDB Positron (datos OSM, render claro minimalista).
-          keepBuffer 4: pre-carga 4 tile-widths alrededor del viewport
-          (default 2) para reducir el flash gris al panear. Trade-off:
-          ~2-4x mas requests de tiles, ok a la escala de este proyecto.
-          updateWhenZooming false: no carga tiles nuevas durante la
-          animacion de zoom — evita churn de requests cuando el usuario
-          esta haciendo zoom rapido continuo. */}
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-        maxZoom={18}
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a>'
+        url={`https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
+        maxZoom={19}
         keepBuffer={4}
         updateWhenZooming={false}
       />
