@@ -92,7 +92,7 @@ export default function MetodologiaPage() {
                   rel="noopener noreferrer"
                   className="break-all text-brand hover:underline"
                 >
-                  Telenord — INTRANT identifica puntos negros de accidentes de
+                  Telenord: INTRANT identifica puntos negros de accidentes de
                   tránsito fatales en zonas de RD
                 </a>
               </p>
@@ -166,12 +166,11 @@ export default function MetodologiaPage() {
                   />
                   <span>
                     <strong className="font-semibold text-fg">
-                      Confirmaciones
+                      Confirmaciones:
                     </strong>{' '}
-                    — otros usuarios verifican que el riesgo existe. A más
-                    confirmaciones, el marker cambia de color en el mapa
-                    (gris → amarillo → naranja → rojo), indicando mayor
-                    consenso comunitario.
+                    otros usuarios verifican que el riesgo existe. A más
+                    confirmaciones, el marker cambia de color en el mapa,
+                    indicando mayor consenso comunitario.
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -181,53 +180,22 @@ export default function MetodologiaPage() {
                   />
                   <span>
                     <strong className="font-semibold text-fg">
-                      Votos de resolución
+                      Votos de resolución:
                     </strong>{' '}
-                    — usuarios reportan que el problema ya fue atendido. Cuando
-                    se alcanza el umbral, el punto pasa automáticamente a{' '}
+                    usuarios reportan que el problema ya fue atendido. Cuando
+                    suficientes personas coinciden, el punto pasa
+                    automáticamente a{' '}
                     <strong className="font-semibold text-fg">resuelto</strong>.
+                    El umbral es proporcional: a mayor consenso sobre un riesgo,
+                    más votos se necesitan para marcarlo como resuelto.
                   </span>
                 </li>
               </ul>
               <p className="mt-4">
-                El umbral de resolución es{' '}
-                <strong className="font-semibold text-fg">proporcional</strong>{' '}
-                a las confirmaciones para evitar abuso:
-              </p>
-              <ul className="mt-2 space-y-2">
-                <li className="flex gap-3">
-                  <span
-                    aria-hidden
-                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
-                  />
-                  <span>
-                    Puntos con menos de 5 confirmaciones: se resuelven con{' '}
-                    <strong className="font-semibold text-fg">3 votos</strong>.
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span
-                    aria-hidden
-                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
-                  />
-                  <span>
-                    Puntos con 5 o más confirmaciones: se necesita al menos{' '}
-                    <strong className="font-semibold text-fg">
-                      la mitad de las confirmaciones
-                    </strong>{' '}
-                    como votos de resolución. Un punto con 20 confirmaciones
-                    requiere 10 votos para resolverse.
-                  </span>
-                </li>
-              </ul>
-              <p className="mt-4">
-                Adicionalmente, un sistema de{' '}
-                <strong className="font-semibold text-fg">
-                  moderación comunitaria
-                </strong>{' '}
-                permite reportar contenido inapropiado (spam, ofensivo,
-                duplicado o falso). Si 5 usuarios distintos marcan un punto,
-                este se oculta automáticamente del mapa.
+                Un sistema de moderación comunitaria permite reportar contenido
+                inapropiado (spam, ofensivo, duplicado o falso). Si suficientes
+                usuarios marcan un punto, este se oculta automáticamente del
+                mapa.
               </p>
             </div>
           </div>
@@ -342,7 +310,7 @@ export default function MetodologiaPage() {
             <ul className="mt-3 space-y-3 text-sm leading-relaxed text-fg/90">
               <li>
                 <div className="font-semibold text-fg">
-                  Fuente primaria de la taxonomía: Telenord — Joel Gneco
+                  Fuente primaria de la taxonomía: Telenord, Joel Gneco
                   Gross (INTRANT), 5 de marzo de 2026
                 </div>
                 <a
