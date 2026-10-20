@@ -25,7 +25,8 @@
 --   - Umbral de auto-ocultacion (5 flags): hardcoded en
 --     handle_content_flag_insert. Si se necesita ajustar, editar
 --     aqui + redeploy.
---   - Umbral escalado de auto-resolucion: greatest(5, ceil(confirms*0.5)).
+--   - Umbral de auto-resolucion: en API route resolve/route.ts
+--     (< 5 confirms = 3 votos; >= 5 = ceil(confirms/2)).
 -- ============================================================
 
 -- ============================================================
@@ -108,8 +109,7 @@ create table if not exists public.confirmations (
 create index if not exists confirmations_point_id_idx on public.confirmations (point_id);
 
 -- resolutions: votos "yo veo que ya esta resuelto". Misma logica de
--- unique constraint. Trigger handle_resolution_insert flippea points
--- a status='resuelto' al alcanzar el umbral escalado.
+-- unique constraint. La auto-resolucion se maneja en el API route.
 create table if not exists public.resolutions (
   id uuid primary key default gen_random_uuid(),
   point_id uuid not null references public.points(id) on delete cascade,
@@ -202,55 +202,22 @@ $$;
 revoke all on function public.count_recent_reports_by_ip(text, int) from public;
 grant execute on function public.count_recent_reports_by_ip(text, int) to anon, authenticated, service_role;
 
--- handle_resolution_insert: trigger AFTER INSERT en resolutions que
--- auto-flippea points.status a 'resuelto' cuando el conteo de votos
--- cruza el umbral escalado.
+-- handle_resolution_insert: REMOVIDO.
+-- La logica de auto-resolucion ahora vive en el API route
+-- (src/app/api/points/[id]/resolve/route.ts) para facilitar
+-- mantenimiento, testing y ajuste de umbrales sin migraciones.
 --
--- Umbral = greatest(5, ceil(confirmations * 0.5)).
--- Significa: minimo 5 votos siempre, y para reportes con muchos
--- testigos (>= 10 confirmaciones), el umbral sube proporcional
--- para encarecer la colusion contra reportes establecidos.
+-- Algoritmo actual (en el API route):
+--   < 5 confirmaciones: 3 votos de resolucion
+--   >= 5 confirmaciones: ceil(confirmaciones / 2)
+--
+-- La funcion se mantiene como no-op por si hay triggers residuales.
 create or replace function public.handle_resolution_insert()
 returns trigger
 language plpgsql
 security definer
 as $$
-declare
-  v_resolution_count int;
-  v_confirmation_count int;
-  v_current_status public.point_status;
-  v_threshold int;
 begin
-  select count(*)::int into v_resolution_count
-  from public.resolutions where point_id = new.point_id;
-
-  select count(*)::int into v_confirmation_count
-  from public.confirmations where point_id = new.point_id;
-
-  v_threshold := greatest(5, ceil(v_confirmation_count * 0.5)::int);
-
-  select status into v_current_status
-  from public.points where id = new.point_id;
-
-  if v_resolution_count >= v_threshold and v_current_status <> 'resuelto' then
-    update public.points
-    set status = 'resuelto'
-    where id = new.point_id;
-
-    insert into public.status_history (
-      point_id, old_status, new_status, note, changed_by
-    )
-    values (
-      new.point_id,
-      v_current_status,
-      'resuelto',
-      'Auto-resuelto: ' || v_resolution_count || ' votos de resolucion'
-        || ' (umbral: ' || v_threshold
-        || ', confirmaciones: ' || v_confirmation_count || ')',
-      'auto-community'
-    );
-  end if;
-
   return new;
 end;
 $$;

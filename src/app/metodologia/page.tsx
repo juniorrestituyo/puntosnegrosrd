@@ -4,7 +4,6 @@ import BackToMapButton from '@/components/BackToMapButton';
 import SideDrawer from '@/components/SideDrawer';
 import {
   CATEGORIES,
-  STATUS_LABELS,
   type CategoryKey,
 } from '@/lib/constants';
 
@@ -43,8 +42,9 @@ export default function MetodologiaPage() {
               Cualquier persona puede reportar un punto de riesgo desde el mapa,
               sin necesidad de crear una cuenta. El reporte requiere coordenadas
               (vía GPS o selección directa en el mapa), una categoría según el
-              marco de factores de riesgo descrito más abajo, y una descripción
-              textual de 10 a 1000 caracteres. La identidad del reportante
+              marco de factores de riesgo descrito más abajo, y al menos una
+              evidencia: una foto, una descripción de hasta 280 caracteres
+              (mínimo 10 si se escribe), o ambas. La identidad del reportante
               nunca se almacena.
             </p>
             <p>
@@ -152,31 +152,84 @@ export default function MetodologiaPage() {
             Ciclo de vida del reporte
           </h2>
           <div className="space-y-3">
-            <p className="px-1 text-sm leading-relaxed text-fg/90">
-              Cada punto reportado transita por estados que documentan la
-              trazabilidad ciudadana → institucional:
-            </p>
-            <ol className="space-y-2">
-              {(Object.entries(STATUS_LABELS) as [string, string][]).map(
-                ([key, label], idx) => (
-                  <li
-                    key={key}
-                    className="flex items-center gap-3 rounded-xl bg-surface-card p-3 text-sm shadow-card ring-1 ring-surface-border"
-                  >
-                    <span
-                      aria-hidden
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-[11px] font-bold text-brand ring-1 ring-brand-soft"
-                    >
-                      {idx + 1}
-                    </span>
-                    <code>{key}</code>
-                    <strong className="ml-1 font-semibold text-fg">
-                      {label}
-                    </strong>
-                  </li>
-                )
-              )}
-            </ol>
+            <div className="rounded-2xl bg-surface-card p-5 text-sm leading-relaxed text-fg/90 shadow-card ring-1 ring-surface-border sm:p-6">
+              <p>
+                Un reporte nace con status{' '}
+                <strong className="font-semibold text-fg">nuevo</strong> y
+                puede recibir dos tipos de interacción comunitaria:
+              </p>
+              <ul className="mt-3 space-y-3">
+                <li className="flex gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                  />
+                  <span>
+                    <strong className="font-semibold text-fg">
+                      Confirmaciones
+                    </strong>{' '}
+                    — otros usuarios verifican que el riesgo existe. A más
+                    confirmaciones, el marker cambia de color en el mapa
+                    (gris → amarillo → naranja → rojo), indicando mayor
+                    consenso comunitario.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                  />
+                  <span>
+                    <strong className="font-semibold text-fg">
+                      Votos de resolución
+                    </strong>{' '}
+                    — usuarios reportan que el problema ya fue atendido. Cuando
+                    se alcanza el umbral, el punto pasa automáticamente a{' '}
+                    <strong className="font-semibold text-fg">resuelto</strong>.
+                  </span>
+                </li>
+              </ul>
+              <p className="mt-4">
+                El umbral de resolución es{' '}
+                <strong className="font-semibold text-fg">proporcional</strong>{' '}
+                a las confirmaciones para evitar abuso:
+              </p>
+              <ul className="mt-2 space-y-2">
+                <li className="flex gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                  />
+                  <span>
+                    Puntos con menos de 5 confirmaciones: se resuelven con{' '}
+                    <strong className="font-semibold text-fg">3 votos</strong>.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                  />
+                  <span>
+                    Puntos con 5 o más confirmaciones: se necesita al menos{' '}
+                    <strong className="font-semibold text-fg">
+                      la mitad de las confirmaciones
+                    </strong>{' '}
+                    como votos de resolución. Un punto con 20 confirmaciones
+                    requiere 10 votos para resolverse.
+                  </span>
+                </li>
+              </ul>
+              <p className="mt-4">
+                Adicionalmente, un sistema de{' '}
+                <strong className="font-semibold text-fg">
+                  moderación comunitaria
+                </strong>{' '}
+                permite reportar contenido inapropiado (spam, ofensivo,
+                duplicado o falso). Si 5 usuarios distintos marcan un punto,
+                este se oculta automáticamente del mapa.
+              </p>
+            </div>
           </div>
         </section>
 

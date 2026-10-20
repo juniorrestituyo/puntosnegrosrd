@@ -229,9 +229,7 @@ export default function DatosAbiertosPage() {
                   </td>
                   <td className="px-4 py-2.5 text-xs text-fg-muted">enum</td>
                   <td className="px-4 py-2.5">
-                    <code>nuevo</code>, <code>corroborado</code>,{' '}
-                    <code>notificado</code>, <code>en_atencion</code>,{' '}
-                    <code>resuelto</code>.
+                    <code>nuevo</code>, <code>resuelto</code>.
                   </td>
                 </tr>
                 <tr className="border-b border-surface-divider transition-colors hover:bg-surface-raised/40">
